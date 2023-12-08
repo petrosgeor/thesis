@@ -1,4 +1,5 @@
 # Ignore data files
 cifar-100/
 Neural_Networks/
+__pycache__/
 # Add more patterns as needed
