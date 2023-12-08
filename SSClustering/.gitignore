@@ -1,0 +1,4 @@
+# Ignore data files
+MNIST/
+CIFAR10/
+.idea/

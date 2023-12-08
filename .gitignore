@@ -1,0 +1,4 @@
+# Ignore data files
+cifar-100/
+Neural_Networks/
+# Add more patterns as needed
