@@ -120,6 +120,7 @@ linked_dataset = LinkedDataset(dataset, num_links=0)
 
 dataloader1 = DataLoader(dataset, batch_size=500)
 dataloader2 = DataLoader(linked_dataset, batch_size=100)
+dataloader2 = None
 #
 contrastive_training(dataloader1, dataloader2, num_epochs=100)
 
