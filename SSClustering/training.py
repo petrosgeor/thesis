@@ -47,7 +47,7 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
                 except StopIteration:
                     dataloader_iterator = iter(sup_dataloader)
                     image_batch, related_images_batch, relations_batch = next(dataloader_iterator)
-            print(i)
+            #print(i)
             X = X.to(device)
             z_i = net(augmentation(X))
             z_j = net(augmentation(X))
