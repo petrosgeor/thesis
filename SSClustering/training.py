@@ -6,7 +6,7 @@ from models import *
 from augmentations import *
 from dataset import *
 import numpy as np
-from kmeans_pytorch import kmeans
+#from kmeans_pytorch import kmeans
 from clustering import *
 import os
 device = 'cuda'
