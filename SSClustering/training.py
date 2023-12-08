@@ -119,7 +119,7 @@ linked_dataset = LinkedDataset(dataset, num_links=200)
 dataloader1 = DataLoader(dataset, batch_size=2000)
 dataloader2 = DataLoader(linked_dataset, batch_size=100)
 dataloader2 = None
-#
-contrastive_training(dataloader1, dataloader2, num_epochs=100)
+
+#contrastive_training(dataloader1, dataloader2, num_epochs=100)
 
 print("yeah")
