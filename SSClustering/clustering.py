@@ -71,17 +71,29 @@ class ClusterEntropyLoss(nn.Module):
     def forward(self, probs: torch.Tensor):
         priors = torch.mean(probs, dim=0)
         return torch.sum(priors * priors.log())
+    
+class KLClusterDivergance(nn.Module):
+    def __init__(self):
+        super(KLClusterDivergance, self).__init__()
+        self.target_dist = torch.full(10, fill_value=1/10)
+    
+    def forward(self, probs: torch.Tensor):
+        p = torch.mean(probs, dim=0)
+        return torch.sum(p * (p/self.target_dist).log())
+
+
 
 def train_cluster_head(embeddings: np.ndarray, labels: np.ndarray, n_neighbors: int=20):
     dataset = ClusterDataset(embeddings=embeddings, labels=labels, n_neighbors=n_neighbors) 
-    dataloader = DataLoader(dataset, batch_size=500, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=2000, shuffle=True)
     num_classes = len(np.unique(labels))
     #print('1')
     ClusterNet = ClusterHead(n_features_in=dataset.n_features).to(device)
     ClusterNet.float()
     constistency_criterion = ClusterConsistencyLoss()
     optimizer = optim.Adam(ClusterNet.parameters(), lr=10**(-3))
-    entropy_criterion = ClusterEntropyLoss()
+    #entropy_criterion = ClusterEntropyLoss()
+    kl_criterion = KLClusterDivergance()
     for epoch in range(0, 50):
         print('epoch is: ', epoch)
         for i, (embeddings, neighbor_embeddings, _) in enumerate(dataloader):
@@ -96,7 +108,7 @@ def train_cluster_head(embeddings: np.ndarray, labels: np.ndarray, n_neighbors: 
             #print(probs_neighbors.shape)
             probs_neighbors = probs_neighbors.reshape(n_samples, n_neighbors, num_classes)
             #print((loss(probs, probs_neighbors)).shape)
-            loss = constistency_criterion(probs, probs_neighbors) + entropy_criterion(probs)
+            loss = constistency_criterion(probs, probs_neighbors) + 10*kl_criterion(probs)
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
