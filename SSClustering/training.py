@@ -113,8 +113,6 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
         train_cluster_head(embeddings.cpu().numpy(), all_labels.numpy(), n_neighbors=20)
 
 
-
-
 dataset = CIFAR10()
 linked_dataset = LinkedDataset(dataset, num_links=200)
 
