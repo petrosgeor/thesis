@@ -34,7 +34,7 @@ class ClusterHead(nn.Module):
 
 
 class ClusterDataset(Dataset):
-    def __init__(self, embeddings: np.ndarray, labels: np.ndarray, n_neighbors: int=20):
+    def __init__(self, embeddings: torch.Tensor, labels: torch.Tensor, n_neighbors: int=20):
         self.embeddings = embeddings
         self.labels = labels
         self.n_features = embeddings.shape[1]
@@ -42,8 +42,11 @@ class ClusterDataset(Dataset):
         self.indices = self.find_nearest_embeddings()
 
     def find_nearest_embeddings(self):
-        nbrs = NearestNeighbors(n_neighbors=self.n_neighbors).fit(self.embeddings)
-        _, indices = nbrs.kneighbors(self.embeddings)
+        # nbrs = NearestNeighbors(n_neighbors=self.n_neighbors).fit(self.embeddings)
+        # _, indices = nbrs.kneighbors(self.embeddings)
+        # return indices
+        distances = torch.matmul(self.embeddings, self.embeddings.T)
+        indices = torch.topk(distances, k=self.n_neighbors, dim=1)[1]
         return indices
 
     def __getitem__(self,item):
