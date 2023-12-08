@@ -219,34 +219,11 @@ class Network(nn.Module):
 
 
 
-
-
-# class LogisticRegr(nn.Module):
-#     def __init__(self, n_features_in, n_classes):
-#         super(LogisticRegr, self).__init__()
-#         self.n_features_in = n_features_in
-#         self.n_classes = n_classes
-#         self.softmax = nn.Softmax(dim=1)
-#         self.linear = nn.Linear(in_features=self.n_features_in, out_features=self.n_classes)
-#
-#
-#     def forward(self, x):
-#         logits = self.linear(x)
-#         probs = self.softmax(logits)
-#         return probs
-#
-
-# # resnet, hidden_dim = get_resnet('resnet18')
-# # net = Network(resnet, hidden_dim, feature_dim=128, class_num=10)
-#
-# cluhead = ClusterHead(n_features_in=128)
-# # x = torch.rand((7, 3, 32, 32))
-# # print(net.forward_c(x))
-#
-# y = torch.randn(20, 128)
-# print(cluhead(y))
-
-
+'''
+resnet, hidden_dim = get_resnet('resnet34')
+x = torch.randn((10, 3, 32, 32))
+print(resnet(x).shape)
+'''
 
 
 
