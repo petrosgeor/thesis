@@ -8,8 +8,13 @@ from dataset import *
 import numpy as np
 from kmeans_pytorch import kmeans
 from clustering import *
-
+import os
 device = 'cuda'
+
+
+# Set the CUDA_VISIBLE_DEVICES environment variable to the desired GPU ID
+gpu_id = input("Enter the GPU ID to be used (e.g., 0, 1, 2, ...): ")
+os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
 
 def give_random_images(image_embeddings, number):
     pass
@@ -113,8 +118,8 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
 dataset = CIFAR10()
 linked_dataset = LinkedDataset(dataset, num_links=0)
 
-# dataloader1 = DataLoader(dataset, batch_size=500)
-# dataloader2 = DataLoader(linked_dataset, batch_size=100)
+dataloader1 = DataLoader(dataset, batch_size=500)
+dataloader2 = DataLoader(linked_dataset, batch_size=100)
 #
-# contrastive_training(dataloader1, dataloader2, num_epochs=1)
+contrastive_training(dataloader1, dataloader2, num_epochs=100)
 
