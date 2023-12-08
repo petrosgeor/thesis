@@ -123,9 +123,9 @@ def train_cluster_head(embeddings: np.ndarray, labels: np.ndarray, n_neighbors: 
             true_labels.append(labels)
 
         predictions = torch.cat(predictions, dim=0)
-        print(predictions)
-        print('the number of 0 is: ', torch.where(predictions == 0)[0].numel())
-        print('the number of 5 is: ', torch.where(predictions == 5)[0].numel())
+        # print(predictions)
+        # print('the number of 0 is: ', torch.where(predictions == 0)[0].numel())
+        # print('the number of 5 is: ', torch.where(predictions == 5)[0].numel())
         
         true_labels = torch.cat(true_labels, dim=0)
         print('the NMI is: ', calculate_NMI(predictions.cpu().numpy(), true_labels.numpy()))
