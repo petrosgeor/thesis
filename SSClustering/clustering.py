@@ -95,7 +95,6 @@ def train_cluster_head(embeddings: np.ndarray, labels: np.ndarray, n_neighbors: 
     #entropy_criterion = ClusterEntropyLoss()
     kl_criterion = KLClusterDivergance()
     for epoch in range(0, 50):
-        print('epoch is: ', epoch)
         for i, (embeddings, neighbor_embeddings, _) in enumerate(dataloader):
             embeddings = embeddings.to(device)
             n_samples = embeddings.shape[0]
@@ -105,9 +104,7 @@ def train_cluster_head(embeddings: np.ndarray, labels: np.ndarray, n_neighbors: 
 
             probs = ClusterNet(embeddings.float())
             probs_neighbors = ClusterNet(((neighbor_embeddings.reshape(n_samples*n_neighbors, n_features))).float())
-            #print(probs_neighbors.shape)
             probs_neighbors = probs_neighbors.reshape(n_samples, n_neighbors, num_classes)
-            #print((loss(probs, probs_neighbors)).shape)
             loss = constistency_criterion(probs, probs_neighbors) + 10*kl_criterion(probs)
             loss.backward()
             optimizer.step()
@@ -123,10 +120,6 @@ def train_cluster_head(embeddings: np.ndarray, labels: np.ndarray, n_neighbors: 
             true_labels.append(labels)
 
         predictions = torch.cat(predictions, dim=0)
-        # print(predictions)
-        # print('the number of 0 is: ', torch.where(predictions == 0)[0].numel())
-        # print('the number of 5 is: ', torch.where(predictions == 5)[0].numel())
-        
         true_labels = torch.cat(true_labels, dim=0)
         print('the NMI is: ', calculate_NMI(predictions.cpu().numpy(), true_labels.numpy()))
 
