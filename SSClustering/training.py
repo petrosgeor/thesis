@@ -119,10 +119,10 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
 dataset = CIFAR10()
 linked_dataset = LinkedDataset(dataset, num_links=200)
 
-dataloader1 = DataLoader(dataset, batch_size=1000, shuffle=True)
+dataloader1 = DataLoader(dataset, batch_size=1500, shuffle=True)
 dataloader2 = DataLoader(linked_dataset, batch_size=100)
 dataloader2 = None
 
-net = contrastive_training(dataloader1, dataloader2, num_epochs=100)
+net = contrastive_training(dataloader1, dataloader2, num_epochs=300)
 torch.save(net.state_dict(), 'NeuralNets/ResNetBackbone.pth')
 
