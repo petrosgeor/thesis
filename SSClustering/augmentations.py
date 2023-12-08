@@ -8,7 +8,7 @@ class Identity_Augmentation:
     def __init__(self):
         self.identity_aug = v2.Compose(
             [
-                v2.Resize((32, 32), interpolation=Image.BICUBIC),
+                v2.Resize((32, 32), interpolation=Image.BICUBIC, antialias=True),
                 v2.ToImage(),
                 v2.ToDtype(torch.float32, scale=True)
             ]
