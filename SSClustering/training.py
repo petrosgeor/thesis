@@ -122,3 +122,4 @@ dataloader2 = None
 #
 contrastive_training(dataloader1, dataloader2, num_epochs=100)
 
+print("yeah")
