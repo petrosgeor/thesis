@@ -102,13 +102,13 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
                 all_labels = []
                 for j, (X, labels) in enumerate(unsup_dataloader):
                     X = X.to(device)
-                    batch_embeddings = net.forward_r(id_augmentation(X))
+                    batch_embeddings = net(id_augmentation(X))
                     embeddings.append(batch_embeddings)             # maybe i should move them to the cpu
                     all_labels.append(labels)
 
                 embeddings = torch.cat(embeddings, dim=0)
                 all_labels = torch.cat(all_labels, dim=0)
-                VisualizeWithTSNE(embeddings.cpu().numpy(), all_labels.numpy())
+                #VisualizeWithTSNE(embeddings.cpu().numpy(), all_labels.numpy())
                 #cluster_ids_x, cluster_centers = kmeans(X=embeddings, num_clusters=10,distance='euclidean', device=device)
                 #print('for epoch: ', epoch, ' the NMI is: ', calculate_NMI(predictions=cluster_ids_x.cpu().numpy(), true_labels=all_labels.numpy()))
             train_cluster_head(embeddings.cpu().numpy(), all_labels.numpy(), n_neighbors=20)
