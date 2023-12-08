@@ -96,22 +96,24 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
             total_loss.backward()
             optimizer.step()
             optimizer.zero_grad()
-        if (epoch + 1)%5 == 0:
-            with torch.no_grad():
-                embeddings = []
-                all_labels = []
-                for j, (X, labels) in enumerate(unsup_dataloader):
-                    X = X.to(device)
-                    batch_embeddings = net(id_augmentation(X))
-                    embeddings.append(batch_embeddings)             # maybe i should move them to the cpu
-                    all_labels.append(labels)
+    return net
+        # if (epoch + 1)%5 == 0:
+        #     with torch.no_grad():
+        #         embeddings = []
+        #         all_labels = []
+        #         for j, (X, labels) in enumerate(unsup_dataloader):
+        #             X = X.to(device)
+        #             batch_embeddings = net(id_augmentation(X))
+        #             embeddings.append(batch_embeddings)             # maybe i should move them to the cpu
+        #             all_labels.append(labels)
 
-                embeddings = (torch.cat(embeddings, dim=0)).cpu()
-                all_labels = torch.cat(all_labels, dim=0)
-                #VisualizeWithTSNE(embeddings.cpu().numpy(), all_labels.numpy())
-                #cluster_ids_x, cluster_centers = kmeans(X=embeddings, num_clusters=10,distance='euclidean', device=device)
-                #print('for epoch: ', epoch, ' the NMI is: ', calculate_NMI(predictions=cluster_ids_x.cpu().numpy(), true_labels=all_labels.numpy()))
-            train_cluster_head(embeddings, all_labels, n_neighbors=20)
+        #         embeddings = (torch.cat(embeddings, dim=0)).cpu()
+        #         all_labels = torch.cat(all_labels, dim=0)
+        #         VisualizeWithTSNE(embeddings.cpu().numpy(), all_labels.numpy())
+        #         cluster_ids_x, cluster_centers = kmeans(X=embeddings, num_clusters=10,distance='euclidean', device=device)
+        #         print('for epoch: ', epoch, ' the NMI is: ', calculate_NMI(predictions=cluster_ids_x.cpu().numpy(), true_labels=all_labels.numpy()))
+        #     train_cluster_head(embeddings, all_labels, n_neighbors=20)
+
 
 
 dataset = CIFAR10()
@@ -121,6 +123,6 @@ dataloader1 = DataLoader(dataset, batch_size=1000, shuffle=True)
 dataloader2 = DataLoader(linked_dataset, batch_size=100)
 dataloader2 = None
 
-contrastive_training(dataloader1, dataloader2, num_epochs=100)
-
+net = contrastive_training(dataloader1, dataloader2, num_epochs=100)
+torch.save(net.state_dict(), 'NeuralNets/ResNetBackbone.pth')
 

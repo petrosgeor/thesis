@@ -1,5 +1,6 @@
 # Ignore data files
 MNIST/
 CIFAR10/
+NeuralNets/
 .idea/
 __pycache__/
