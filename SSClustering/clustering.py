@@ -80,6 +80,7 @@ def train_cluster_head(embeddings: np.ndarray, labels: np.ndarray, n_neighbors: 
     optimizer = optim.Adam(ClusterNet.parameters(), lr=10**(-3))
     entropy_criterion = ClusterEntropyLoss()
     for epoch in range(0, 50):
+        print('epoch is: ', epoch)
         for i, (embeddings, neighbor_embeddings, _) in enumerate(dataloader):
             embeddings = embeddings.to(device)
             n_samples = embeddings.shape[0]
