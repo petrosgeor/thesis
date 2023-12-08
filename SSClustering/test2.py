@@ -13,7 +13,7 @@ x = np.array([[1,2],
 
 
 
-
+print("i pushed and pulled")
 
 
 
