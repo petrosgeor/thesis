@@ -116,9 +116,9 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
 
 
 dataset = CIFAR10()
-linked_dataset = LinkedDataset(dataset, num_links=0)
+linked_dataset = LinkedDataset(dataset, num_links=200)
 
-dataloader1 = DataLoader(dataset, batch_size=500)
+dataloader1 = DataLoader(dataset, batch_size=2000)
 dataloader2 = DataLoader(linked_dataset, batch_size=100)
 dataloader2 = None
 #
