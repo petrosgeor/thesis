@@ -159,7 +159,7 @@ def train_clustering_network(unsup_dataloader, sup_dataloader, num_epochs=2, t_c
 
 
 
-def run_pretraining():
+def run_pretraining_function():
     if run_pretraining == 'yes':
         consider_links = input('do you want to consider any links?')
         assert (consider_links == 'yes') | (consider_links == 'no'), 'the answer must be yes or no'
@@ -175,4 +175,4 @@ def run_pretraining():
     else:
         return 'no pretraining will take place'
 
-run_pretraining()
+run_pretraining_function()
