@@ -38,7 +38,7 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
     SoftPosLoss = SoftNNLossPos(temperature=0.5)
     SoftNegLoss = SoftNNLossNeg(temperature=0.5)
     SoftLoss = SoftNNLoss(temperature=0.5)
-    optimizer = optim.Adam(net.parameters(), lr=10**(-3))
+    optimizer = optim.Adam(net.parameters(), lr=10**(-4))
     for epoch in range(num_epochs):
         #with torch.no_grad():
         if consider_links == True:
