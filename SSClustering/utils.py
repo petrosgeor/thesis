@@ -203,6 +203,7 @@ class SoftNNLossEuclidean(nn.Module):
 
 def VisualizeWithTSNE(resnet_embeddings: np.ndarray, labels: np.ndarray) -> None:
     assert (type(resnet_embeddings) == np.ndarray) and (type(labels) == np.ndarray), 'input should be numpy arrays not tensors or lists'
+    plt.switch_backend('Agg')
     X_embedded = TSNE(n_components=2).fit_transform(resnet_embeddings)
     unique_labels = np.unique(labels)
 
@@ -218,6 +219,7 @@ def VisualizeWithTSNE(resnet_embeddings: np.ndarray, labels: np.ndarray) -> None
     plt.title('Scatter Plot of Samples by Label')
     #plt.show()
     plt.savefig('NeuralNets/plots/first_plot.png')
+    plt.switch_backend('TkAgg')
 
 
 
