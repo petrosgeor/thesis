@@ -113,6 +113,10 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
                 #cluster_ids_x, cluster_centers = kmeans(X=embeddings, num_clusters=10,distance='euclidean', device=device)
                 #print('for epoch: ', epoch, ' the NMI is: ', calculate_NMI(predictions=cluster_ids_x.cpu().numpy(), true_labels=all_labels.numpy()))
             train_cluster_head(embeddings, all_labels, n_neighbors=20)
+    if consider_links == False:
+        torch.save(net.state_dict(), 'NeuralNets/ResNetBackbone.pth')
+    elif consider_links == True:
+        torch.save(net.state_dict(), 'NeuralNets/ResNetBackboneLinks')
     return net
         
 def VisualizedResNetBackBoneEmbeddings():
@@ -141,16 +145,13 @@ def VisualizedResNetBackBoneEmbeddings():
     VisualizeWithTSNE(resnet_embeddings=embeddings.numpy(), labels=labels.numpy())
 
 
-VisualizedResNetBackBoneEmbeddings()
+dataset = CIFAR10()
+linked_dataset = LinkedDataset(dataset, num_links=200)
 
+dataloader1 = DataLoader(dataset, batch_size=1500, shuffle=True)
+dataloader2 = DataLoader(linked_dataset, batch_size=100)
+#dataloader2 = None
 
-# dataset = CIFAR10()
-# linked_dataset = LinkedDataset(dataset, num_links=200)
-
-# dataloader1 = DataLoader(dataset, batch_size=1500, shuffle=True)
-# dataloader2 = DataLoader(linked_dataset, batch_size=100)
-# dataloader2 = None
-
-# net = contrastive_training(dataloader1, dataloader2, num_epochs=300)
+net = contrastive_training(dataloader1, dataloader2, num_epochs=300)
 # torch.save(net.state_dict(), 'NeuralNets/ResNetBackbone.pth')
 
