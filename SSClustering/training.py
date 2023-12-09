@@ -130,7 +130,7 @@ def VisualizedResNetBackBoneEmbeddings():
         for i, (X_batch, labels_batch) in enumerate(dataloader):
             X_batch = X_batch.to(device)
             X_batch = aug(X_batch)
-            batch_embeddings = net(X_batch)
+            batch_embeddings = net.forward_r(X_batch)
             
             embeddings.append(batch_embeddings.cpu())
             labels.append(labels_batch)
