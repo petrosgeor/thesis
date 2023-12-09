@@ -20,7 +20,7 @@ def give_random_images(image_embeddings, number):
     pass
 
 
-def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contrastive=0.5):
+def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contrastive=0.5, consider_links: bool = False):
     resnet, hidden_dim = get_resnet('resnet34')
     net = Network(resnet=resnet, hidden_dim=hidden_dim, feature_dim=128, class_num=10)
     
@@ -38,10 +38,10 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
     optimizer = optim.Adam(net.parameters(), lr=10**(-3))
     for epoch in range(num_epochs):
         #with torch.no_grad():
-        if sup_dataloader is not None:
+        if consider_links == True:
             dataloader_iterator = iter(sup_dataloader)
         for i, (X, _) in enumerate(unsup_dataloader):
-            if sup_dataloader is not None:
+            if consider_links == True:
                 try:
                     image_batch, related_images_batch, relations_batch = next(dataloader_iterator)
                 except StopIteration:
@@ -54,7 +54,7 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
             loss1 = InfoNCE(z_i, z_j)
 
             loss2 = 0
-            if sup_dataloader is not None:
+            if consider_links == True:
                 for j in range(0, image_batch.shape[0]):
                     indices_pos = torch.where(relations_batch[j, :] == 1)[0]
                     indices_neg = torch.where(relations_batch[j, :] == -1)[0]
