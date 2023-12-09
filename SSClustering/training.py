@@ -14,6 +14,9 @@ device = 'cuda'
 
 # Set the CUDA_VISIBLE_DEVICES environment variable to the desired GPU ID
 gpu_id = input("Enter the GPU ID to be used (e.g., 0, 1, 2, ...): ")
+run_pretraining = input("do you want to run the pretraining step? ")
+assert (run_pretraining == 'yes') | (run_pretraining == 'no'), 'the answer must be yes or no'
+
 os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
 
 def give_random_images(image_embeddings, number):
@@ -145,13 +148,31 @@ def VisualizedResNetBackBoneEmbeddings():
     VisualizeWithTSNE(resnet_embeddings=embeddings.numpy(), labels=labels.numpy())
 
 
-dataset = CIFAR10()
-linked_dataset = LinkedDataset(dataset, num_links=200)
+def train_clustering_network(unsup_dataloader, sup_dataloader, num_epochs=2, t_contrastive=0.5, consider_links: bool = False):
+    pretrained = input('which PRETRAINED model should i consider, the one with links or without? type links or no_links')
+    assert (pretrained == 'links') | (pretrained == 'no_links')
+    resnet, hidden_dim = get_resnet('resnet34')
+    clusternet = Network(resnet=resnet, hidden_dim=hidden_dim)
+    if pretrained == 'no_links':
+        clusternet.load_state_dict(torch.load())
 
-dataloader1 = DataLoader(dataset, batch_size=1500, shuffle=True)
-dataloader2 = DataLoader(linked_dataset, batch_size=100)
-#dataloader2 = None
 
-net = contrastive_training(dataloader1, dataloader2, num_epochs=300)
-# torch.save(net.state_dict(), 'NeuralNets/ResNetBackbone.pth')
 
+
+def run_pretraining():
+    if run_pretraining == 'yes':
+        consider_links = input('do you want to consider any links?')
+        assert (consider_links == 'yes') | (consider_links == 'no'), 'the answer must be yes or no'
+        dataset = CIFAR10()
+        linked_dataset = LinkedDataset(dataset, num_links=5000)
+
+        dataloader1 = DataLoader(dataset, batch_size=1500, shuffle=True)
+        dataloader2 = DataLoader(linked_dataset, batch_size=100)
+        if consider_links == 'no':
+            dataloader2 = None
+
+        net = contrastive_training(dataloader1, dataloader2, num_epochs=300)
+    else:
+        return 'no pretraining will take place'
+
+run_pretraining()

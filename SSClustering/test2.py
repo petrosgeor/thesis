@@ -6,14 +6,10 @@ from numpy.linalg import norm
 from sklearn.metrics.pairwise import cosine_similarity
 
 
-x = np.array([[1,2],
-              [3,4],
-              [-1, -2],
-              [-3, -4]])
+x = input('type a number')
 
 
 
-print("i pushed and pulled")
 
 
 
