@@ -223,6 +223,16 @@ def VisualizeWithTSNE(resnet_embeddings: np.ndarray, labels: np.ndarray) -> None
 
 
 
+def find_indices_of_closest_embeddings(embedings: torch.Tensor, n_neighbors: int = 20, distance: str = 'cosine') -> torch.Tensor:
+    assert (distance == 'cosine') | (distance == 'euclidean'), 'the distance must be cosine or euclidean'
+
+    if (distance == 'cosine'):
+        D = torch.matmul(embedings, embedings.T)
+        indices = torch.topk(D, k=n_neighbors, dim=1)
+    elif (distance == 'euclidean'):
+        D = torch.cdist(embedings, embedings)
+        indices = torch.topk(D, k=n_neighbors, dim=1, largest=False)
+    return indices
 
 
 

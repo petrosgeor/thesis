@@ -121,18 +121,8 @@ def train_cluster_head(embeddings: np.ndarray, labels: np.ndarray, n_neighbors: 
 
         predictions = torch.cat(predictions, dim=0)
         true_labels = torch.cat(true_labels, dim=0)
-        print('the NMI is: ', calculate_NMI(predictions.cpu().numpy(), true_labels.numpy()))
+        #print('the NMI is: ', calculate_NMI(predictions.cpu().numpy(), true_labels.numpy()))
+        return calculate_NMI(predictions.cpu().numpy(), true_labels.numpy())
 
-
-
-
-'''x = np.random.randn(1000, 128)
-labels = np.random.randint(0, 10, size=(1000, ))
-train_cluster_head(x, labels)
-
-x = torch.tensor([[[1,2,3],[10,20,30]], [[-1,-2,-3],[-10,-20,-30]]])
-
-
-'''
 
 

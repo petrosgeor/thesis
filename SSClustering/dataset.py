@@ -80,7 +80,11 @@ class CIFAR10(Dataset):
 
 
 
+
 class LinkedDataset(Dataset):
+    '''
+    contains the images that are Linked or can not link
+    '''
     def __init__(self, cifardataset: CIFAR10, num_links: int = 1000):
         self.data, self.A_matrix, self.labels_subset = random_links2label(cifardataset.data, cifardataset.Ids, num_links=num_links)
         self.related_images, self.relations, self.knowledge_list = self.organize_images()
@@ -131,6 +135,19 @@ class LinkedDataset(Dataset):
             related_images_padded.append(padded_tensor)
         return related_images_padded, padded_relations
 
+
+
+class SCANdatasetWithNeighbors(Dataset):
+    def __init__(self, data: torch.Tensor, Ids: torch.Tensor, neighbor_indices: torch.Tensor):
+        self.data = data
+        self.Ids = Ids
+        self.neighbor_indices = neighbor_indices
+
+    def __getitem__(self, item):
+        return self.data[item,:], self.Ids[item], self.data[self.neighbor_indices[item, :], :]
+
+    def __len__(self):
+        return (self.Ids).numel()
 
 
 

@@ -35,9 +35,9 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
     id_augmentation = Identity_Augmentation()
 
     InfoNCE = InfoNCELoss(temperature=0.5)
-    SoftPosLoss = SoftNNLossPosEuclidean(temperature=0.5)
-    SoftNegLoss = SoftnnLossNegEuclidean(temperature=0.5)
-    SoftLoss = SoftNNLossEuclidean(temperature=0.5)
+    SoftPosLoss = SoftNNLossPos(temperature=0.5)
+    SoftNegLoss = SoftNNLossNeg(temperature=0.5)
+    SoftLoss = SoftNNLoss(temperature=0.5)
     optimizer = optim.Adam(net.parameters(), lr=10**(-3))
     for epoch in range(num_epochs):
         #with torch.no_grad():
@@ -115,7 +115,8 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
                 #VisualizeWithTSNE(embeddings.cpu().numpy(), all_labels.numpy())
                 #cluster_ids_x, cluster_centers = kmeans(X=embeddings, num_clusters=10,distance='euclidean', device=device)
                 #print('for epoch: ', epoch, ' the NMI is: ', calculate_NMI(predictions=cluster_ids_x.cpu().numpy(), true_labels=all_labels.numpy()))
-            train_cluster_head(embeddings, all_labels, n_neighbors=20)
+            #train_cluster_head(embeddings, all_labels, n_neighbors=20)
+            print('For epoch ', epoch, 'the NMI is: ', train_cluster_head(embeddings, all_labels, n_neighbors=20))
     if consider_links == False:
         torch.save(net.state_dict(), 'NeuralNets/ResNetBackbone.pth')
     elif consider_links == True:
@@ -148,13 +149,51 @@ def VisualizedResNetBackBoneEmbeddings():
     VisualizeWithTSNE(resnet_embeddings=embeddings.numpy(), labels=labels.numpy())
 
 
-def train_clustering_network(unsup_dataloader, sup_dataloader, num_epochs=2, t_contrastive=0.5, consider_links: bool = False):
+def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bool = False):
     pretrained = input('which PRETRAINED model should i consider, the one with links or without? type links or no_links')
     assert (pretrained == 'links') | (pretrained == 'no_links')
     resnet, hidden_dim = get_resnet('resnet34')
     clusternet = Network(resnet=resnet, hidden_dim=hidden_dim)
     if pretrained == 'no_links':
-        clusternet.load_state_dict(torch.load())
+        clusternet.load_state_dict(torch.load('NeuralNets/ResNetBackbone.pth'))
+    elif pretrained == 'links':
+        clusternet.load_state_dict(torch.load('NeuralNets/ResNetBackboneLinks'))
+    
+    clusternet.to(device)
+    dataset = CIFAR10()
+    linked_dataset = LinkedDataset(dataset, num_links=5000)
+    cifar_dataloader = DataLoader(CIFAR10, batch_size=500, shuffle=False)
+    id_aug = Identity_Augmentation()
+    embeddings = []
+    with torch.no_grad():
+        for i, (X_batch, _) in enumerate(cifar_dataloader):
+            X_batch = X_batch.to(device)
+            embeddings_batch = clusternet(id_aug(X_batch))
+            embeddings.append(embeddings_batch.cpu())
+        
+    embeddings = torch.cat(embeddings, dim=0)
+    neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine')
+
+    ############    SCAN DATASET    #######
+    scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
+    scan_dataloader = DataLoader(scan_dataset, batch_size=128, shuffle=True)
+    links_dataloader = DataLoader(linked_dataset, batch_size=128, shuffle=True)
+
+    for epoch in range(0, num_epochs):
+        if consider_links == True:
+            dataloader_iterator = iter(links_dataloader)
+        for i, (images, _, neighbor_images) in enumerate(scan_dataloader):
+            if consider_links == True:
+                try:
+                    image_batch, related_images_batch, relations_batch = next(dataloader_iterator)
+                except StopIteration:
+                    dataloader_iterator = iter(links_dataloader)
+                    image_batch, related_images_batch, relations_batch = next(dataloader_iterator)
+            
+
+
+
+
 
 
 
@@ -169,9 +208,9 @@ def run_pretraining_function():
         dataloader1 = DataLoader(dataset, batch_size=1500, shuffle=True)
         dataloader2 = DataLoader(linked_dataset, batch_size=100)
         if consider_links == 'no':
-            dataloader2 = None
-
-        net = contrastive_training(dataloader1, dataloader2, num_epochs=300)
+            net = contrastive_training(dataloader1, dataloader2, num_epochs=300, consider_links=False)
+        elif consider_links == 'yes':
+            net = contrastive_training(dataloader1, dataloader2, num_epochs=300, consider_links=True)
     else:
         return 'no pretraining will take place'
 
