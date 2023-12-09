@@ -6,8 +6,7 @@ from sklearn import metrics
 import matplotlib.pyplot as plt
 from torch.nn import functional as F
 from sklearn.manifold import TSNE
-
-
+from models import *
 
 device = 'cuda'
 
@@ -217,6 +216,16 @@ def VisualizeWithTSNE(resnet_embeddings: np.ndarray, labels: np.ndarray) -> None
     plt.ylabel('Feature 2')
     plt.legend()
     plt.title('Scatter Plot of Samples by Label')
-    plt.show()
+    #plt.show()
+    plt.savefig('NeuralNets/plots/first_plot.png')
+
+
+
+
+
+
+
+
+
 
 

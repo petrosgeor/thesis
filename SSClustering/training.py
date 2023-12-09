@@ -115,16 +115,42 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
             train_cluster_head(embeddings, all_labels, n_neighbors=20)
     return net
         
+def VisualizedResNetBackBoneEmbeddings():
+    resnet, hidden_dim = get_resnet('resnet34')
+    net = Network(resnet=resnet, hidden_dim=hidden_dim, feature_dim=128, class_num=10)
+    net.load_state_dict(torch.load('NeuralNets/ResNetBackbone.pth'))
+    dataset = CIFAR10()
+    dataloader = DataLoader(dataset, batch_size=1000, shuffle=False)
+    embeddings = []
+    labels = []
+    net.float()
+    net.to(device)
+    aug = Identity_Augmentation()
+    with torch.no_grad():
+        for i, (X_batch, labels_batch) in enumerate(dataloader):
+            X_batch = X_batch.to(device)
+            X_batch = aug(X_batch)
+            batch_embeddings = net(X_batch)
+            
+            embeddings.append(batch_embeddings.cpu())
+            labels.append(labels_batch)
+        
+        embeddings = torch.cat(embeddings, dim=0)
+        labels = torch.cat(labels, dim=0)
+
+    VisualizeWithTSNE(resnet_embeddings=embeddings.numpy(), labels=labels.numpy())
 
 
+VisualizedResNetBackBoneEmbeddings()
 
-dataset = CIFAR10()
-linked_dataset = LinkedDataset(dataset, num_links=200)
 
-dataloader1 = DataLoader(dataset, batch_size=1500, shuffle=True)
-dataloader2 = DataLoader(linked_dataset, batch_size=100)
-dataloader2 = None
+# dataset = CIFAR10()
+# linked_dataset = LinkedDataset(dataset, num_links=200)
 
-net = contrastive_training(dataloader1, dataloader2, num_epochs=300)
-torch.save(net.state_dict(), 'NeuralNets/ResNetBackbone.pth')
+# dataloader1 = DataLoader(dataset, batch_size=1500, shuffle=True)
+# dataloader2 = DataLoader(linked_dataset, batch_size=100)
+# dataloader2 = None
+
+# net = contrastive_training(dataloader1, dataloader2, num_epochs=300)
+# torch.save(net.state_dict(), 'NeuralNets/ResNetBackbone.pth')
 
