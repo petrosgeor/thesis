@@ -201,7 +201,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
         for i, (images_u, _, neighbor_images) in enumerate(scan_dataloader):
             if consider_links == True:
                 try:
-                    images_l, related_images, relations = next(dataloader_iterator)
+                    image_l, related_images, relations = next(dataloader_iterator)
                 except StopIteration:
                     dataloader_iterator = iter(linked_dataloader)
                     image_l, related_images, relations = next(dataloader_iterator)
