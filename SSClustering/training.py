@@ -209,9 +209,6 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
             probs_neighbors = clusternet.forward_c(neighbor_images)
             probs_neighbors = probs_neighbors.reshape(n_images_u, n_neighbors, n_classes)
 
-            print(images_u.shape)
-            print(neighbor_images.shape)
-
             loss1 = ConsistencyLoss.forward(probs, probs_neighbors)
             
             loss2 = 0
