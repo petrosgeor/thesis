@@ -227,6 +227,8 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
 
             #loss3 = EntropyLoss.forward(probs=probs)
             loss3 = kl_loss.forward(probs=probs)
+            if (i%10) == 0:
+                print(loss1.item(), loss2.item(), loss3.item())
 
             total_loss = loss1 + loss2 + 10*loss3
             total_loss.backward()
@@ -252,6 +254,8 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
                 print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
                 print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
                 print(f"Accuracy (ACC): {acc:.2f}%")
+            x = torch.unique(predictions, return_inverse=False, return_counts=True)
+            print(x)
 
 def run_pretraining_function():
     if run_pretraining == 'yes':
