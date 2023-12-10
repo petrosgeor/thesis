@@ -280,6 +280,6 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 run_pretraining_function()
-train_clustering_network(num_epochs=50, consider_links=False)
+train_clustering_network(num_epochs=50, consider_links=True)
 
 
