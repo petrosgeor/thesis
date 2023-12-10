@@ -64,13 +64,14 @@ class InfoNCELossEuclidean(nn.Module):
 class ClusterConsistencyLoss(nn.Module):
     def __init__(self):
         super(ClusterConsistencyLoss, self).__init__()
+        self.small_number = 1e-6
 
     def forward(self, probs1: torch.Tensor, probs2: torch.Tensor, relations: torch.Tensor = None) -> torch.Tensor:
         if relations == None:
-            inner_products = (probs1 * probs2).sum(dim=1)
+            inner_products = (probs1 * probs2).sum(dim=1) + self.small_number
             return -torch.mean(inner_products.log())
         elif relations is not None:
-            inner_products = (probs1 * probs2).sum(dim=1)
+            inner_products = (probs1 * probs2).sum(dim=1) + self.small_number
             inner_products_log = inner_products.log()
             return -torch.mean(relations * inner_products_log)
 
