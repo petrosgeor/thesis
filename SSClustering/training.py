@@ -217,13 +217,15 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
             loss1 = ConsistencyLoss.forward(probs1=probs, probs2=probs_neighbors, relations=None)
 
             ####    LINKED IMAGES LOSS  ####
-            image_l = id_aug(image_l.to(device))
-            related_images = id_aug(related_images.to(device))
-            relations = relations.to(device)
-            p = clusternet.forward_c(image_l)
-            p_linked = clusternet.forward_c(related_images)
+            loss2 = 0
+            if consider_links == True:
+                image_l = id_aug(image_l.to(device))
+                related_images = id_aug(related_images.to(device))
+                relations = relations.to(device)
+                p = clusternet.forward_c(image_l)
+                p_linked = clusternet.forward_c(related_images)
 
-            loss2 = ConsistencyLoss.forward(probs1=p, probs2=p_linked, relations=relations)
+                loss2 = ConsistencyLoss.forward(probs1=p, probs2=p_linked, relations=relations)
 
             #loss3 = EntropyLoss.forward(probs=probs)
             loss3 = kl_loss.forward(probs=probs)
@@ -274,6 +276,6 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 run_pretraining_function()
-train_clustering_network(num_epochs=20, consider_links=True)
+train_clustering_network(num_epochs=50, consider_links=False)
 
 
