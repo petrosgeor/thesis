@@ -190,72 +190,75 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4))
     ConsistencyLoss = ClusterConsistencyLoss()
     EntropyLoss = ClusterEntropyLoss()
-    for epoch in range(0, num_epochs):
-        if consider_links == True:
-            dataloader_iterator = iter(linked_dataloader)
-        for i, (images_u, _, neighbor_images) in enumerate(scan_dataloader):
-            if consider_links == True:
-                try:
-                    image_l, related_images, relations_batch = next(dataloader_iterator)
-                except StopIteration:
-                    dataloader_iterator = iter(linked_dataloader)
-                    image_l, related_images, relations_batch = next(dataloader_iterator)
-            n_images_u = images_u.shape[0]
-            ####    SCAN LOSS   ####
-            images_u = id_aug(images_u.to(device))
-            neighbor_images = id_aug(neighbor_images.to(device))
-            neighbor_images = neighbor_images.reshape(n_images_u * n_neighbors, 3, 32, 32)
-            probs = clusternet.forward_c(images_u)
-            probs_neighbors = clusternet.forward_c(neighbor_images)
-            probs_neighbors = probs_neighbors.reshape(n_images_u, n_neighbors, n_classes)
 
-            loss1 = ConsistencyLoss.forward(probs, probs_neighbors)
+    print('the mean of images with same neighbors is: ', np.mean(scan_dataloader.dataset.same_Ids_list))
+
+    # for epoch in range(0, num_epochs):
+    #     if consider_links == True:
+    #         dataloader_iterator = iter(linked_dataloader)
+    #     for i, (images_u, _, neighbor_images) in enumerate(scan_dataloader):
+    #         if consider_links == True:
+    #             try:
+    #                 image_l, related_images, relations_batch = next(dataloader_iterator)
+    #             except StopIteration:
+    #                 dataloader_iterator = iter(linked_dataloader)
+    #                 image_l, related_images, relations_batch = next(dataloader_iterator)
+    #         n_images_u = images_u.shape[0]
+    #         ####    SCAN LOSS   ####
+    #         images_u = id_aug(images_u.to(device))
+    #         neighbor_images = id_aug(neighbor_images.to(device))
+    #         neighbor_images = neighbor_images.reshape(n_images_u * n_neighbors, 3, 32, 32)
+    #         probs = clusternet.forward_c(images_u)
+    #         probs_neighbors = clusternet.forward_c(neighbor_images)
+    #         probs_neighbors = probs_neighbors.reshape(n_images_u, n_neighbors, n_classes)
+
+    #         loss1 = ConsistencyLoss.forward(probs, probs_neighbors)
             
-            loss2 = 0
-            if consider_links == True:
-                for j in range(0, image_l.shape[0]):
-                    indices_pos = torch.where(relations_batch[j, :] == 1)[0]
-                    indices_neg = torch.where(relations_batch[j, :] == -1)[0]
-                    image = image_l[j, :].to(device)
-                    image_probs = clusternet.forward_c(image)
+    #         loss2 = 0
+    #         if consider_links == True:
+    #             for j in range(0, image_l.shape[0]):
+    #                 indices_pos = torch.where(relations_batch[j, :] == 1)[0]
+    #                 indices_neg = torch.where(relations_batch[j, :] == -1)[0]
+    #                 image = image_l[j, :].to(device)
+    #                 image_probs = clusternet.forward_c(image)
 
-                    if indices_pos.numel() == 0:
-                        images_neg = (related_images[j, indices_neg]).to(device)
-                        image_neg_probs = clusternet.forward_c(images_neg)
-                        loss2 = loss2 + (torch.matmul(image_neg_probs, image_probs).log()).sum()
+    #                 if indices_pos.numel() == 0:
+    #                     images_neg = (related_images[j, indices_neg]).to(device)
+    #                     image_neg_probs = clusternet.forward_c(images_neg)
+    #                     loss2 = loss2 + (torch.matmul(image_neg_probs, image_probs).log()).sum()
                     
-                    elif indices_neg.numel() == 0:
-                        images_pos = (related_images[j, indices_pos]).to(device)
-                        images_pos_probs = clusternet.forward_c(images_pos)
-                        loss2 = loss2 - (torch.matmul(images_pos_probs, image_probs).log()).sum()
+    #                 elif indices_neg.numel() == 0:
+    #                     images_pos = (related_images[j, indices_pos]).to(device)
+    #                     images_pos_probs = clusternet.forward_c(images_pos)
+    #                     loss2 = loss2 - (torch.matmul(images_pos_probs, image_probs).log()).sum()
                     
-                    else: 
-                        images_neg = (related_images[j, indices_neg]).to(device)
-                        image_neg_probs = clusternet.forward_c(images_neg)
-                        images_pos = (related_images[j, indices_pos]).to(device)
-                        images_pos_probs = clusternet.forward_c(images_pos)
+    #                 else: 
+    #                     images_neg = (related_images[j, indices_neg]).to(device)
+    #                     image_neg_probs = clusternet.forward_c(images_neg)
+    #                     images_pos = (related_images[j, indices_pos]).to(device)
+    #                     images_pos_probs = clusternet.forward_c(images_pos)
 
-                        loss2 = loss2 + (torch.matmul(image_neg_probs, image_probs).log()).sum()
-                        loss2 = loss2 - (torch.matmul(images_pos_probs, image_probs).log()).sum()
-            loss3 = EntropyLoss.forward(probs)
+    #                     loss2 = loss2 + (torch.matmul(image_neg_probs, image_probs).log()).sum()
+    #                     loss2 = loss2 - (torch.matmul(images_pos_probs, image_probs).log()).sum()
+    #         loss3 = EntropyLoss.forward(probs)
 
-            total_loss = loss1 + loss2/(linked_dataloader.batch_size) + 5*loss3
-            total_loss.backward()
-            optimizer.step()
-            optimizer.zero_grad()
+    #         total_loss = loss1 + loss2/(linked_dataloader.batch_size) + 5*loss3
+    #         total_loss.backward()
+    #         optimizer.step()
+    #         optimizer.zero_grad()
         
-        with torch.no_grad():
-            predictions = []
-            true_labels = []
-            for i, (images_u, labels_batch, _) in enumerate(scan_dataloader):
-                images_u = (id_aug(images_u)).to(device)
-                batch_probs = clusternet.forward_c(images_u)
-                predictions.append(torch.argmax(batch_probs, dim=1).cpu())
-                true_labels.append(labels_batch)
+    #     with torch.no_grad():
+    #         predictions = []
+    #         true_labels = []
+    #         for i, (images_u, labels_batch, _) in enumerate(scan_dataloader):
+    #             images_u = (id_aug(images_u)).to(device)
+    #             batch_probs = clusternet.forward_c(images_u)
+    #             predictions.append(torch.argmax(batch_probs, dim=1).cpu())
+    #             true_labels.append(labels_batch)
             
-            predictions = torch.cat(predictions, dim=0)
-            true_labels = torch.cat(true_labels, dim=0)
-        print('Epoch ',epoch,' NMI is: ', calculate_NMI(predictions=predictions.numpy(), true_labels=true_labels.numpy()))
+    #         predictions = torch.cat(predictions, dim=0)
+    #         true_labels = torch.cat(true_labels, dim=0)
+    #     print('Epoch ',epoch,' NMI is: ', calculate_NMI(predictions=predictions.numpy(), true_labels=true_labels.numpy()))
 
 
 

@@ -143,12 +143,24 @@ class SCANdatasetWithNeighbors(Dataset):
         self.Ids = Ids
         self.neighbor_indices = neighbor_indices
         self.n_neighbors = neighbor_indices.shape[1]
+        self.same_Ids_list = self.find_percentage_of_consistency()
 
     def __getitem__(self, item):
         return self.data[item,:], self.Ids[item], self.data[self.neighbor_indices[item, :], :]
 
     def __len__(self):
         return (self.Ids).numel()
+    
+    def find_percentage_of_consistency(self) -> list:
+        same_Ids_list = []
+        for i in range(self.Ids.numel()):
+            Id = self.Ids[i]
+            neighbor_indices = self.neighbor_indices[i, :]
+            neighbor_Ids = self.Ids[neighbor_indices]
+            same_Id = torch.where(neighbor_Ids == Id)[0].numel()
+            same_Ids_list.append(same_Id)
+        return same_Ids_list
+
 
 
 
