@@ -93,7 +93,7 @@ def train_cluster_head(embeddings: np.ndarray, labels: np.ndarray, n_neighbors: 
     ClusterNet = ClusterHead(n_features_in=dataset.n_features).to(device)
     ClusterNet.float()
     constistency_criterion = ClusterConsistencyLoss()
-    optimizer = optim.Adam(ClusterNet.parameters(), lr=10**(-3))
+    optimizer = optim.Adam(ClusterNet.parameters(), lr=10**(-4), weight_decay=10**(-4))
     #entropy_criterion = ClusterEntropyLoss()
     kl_criterion = KLClusterDivergance()
     for epoch in range(0, 50):
