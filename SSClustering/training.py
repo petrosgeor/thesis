@@ -189,7 +189,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     n_neighbors = scan_dataloader.dataset.n_neighbors
     n_classes = (torch.unique(scan_dataloader.dataset.Ids)).numel()
     ####
-    optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4))
+    optimizer = optim.Adam(clusternet.parameters(), lr=10**(-3))
     ConsistencyLoss = losses.ClusterConsistencyLoss()
     #EntropyLoss = losses.ClusterEntropyLoss()
     kl_loss = losses.KLClusterDivergance()
