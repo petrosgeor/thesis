@@ -10,6 +10,7 @@ import numpy as np
 from clustering import *
 from evaluate import *
 import os
+from losses.losses import *
 device = 'cuda'
 
 
@@ -214,7 +215,6 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
             probs_neighbors = probs_neighbors.reshape(n_images_u, n_neighbors, n_classes)
 
             loss1 = ConsistencyLoss.forward(probs, probs_neighbors)
-            print(i)
             loss2 = 0
             # if consider_links == True:
             #     print('if this print we have a problem')

@@ -7,6 +7,8 @@ from torch.nn import functional as F
 import torch.optim as optim
 from sklearn import metrics
 
+
+
 device = 'cuda'
 
 def calculate_NMI(predictions: np.ndarray, true_labels: np.ndarray, n_clusters: int = 10) -> int:
