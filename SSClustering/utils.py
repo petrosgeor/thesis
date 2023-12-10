@@ -228,10 +228,10 @@ def find_indices_of_closest_embeddings(embedings: torch.Tensor, n_neighbors: int
 
     if (distance == 'cosine'):
         D = torch.matmul(embedings, embedings.T)
-        indices = torch.topk(D, k=n_neighbors, dim=1)
+        indices = torch.topk(D, k=n_neighbors, dim=1)[1]
     elif (distance == 'euclidean'):
         D = torch.cdist(embedings, embedings)
-        indices = torch.topk(D, k=n_neighbors, dim=1, largest=False)
+        indices = torch.topk(D, k=n_neighbors, dim=1, largest=False)[1]
     return indices
 
 
