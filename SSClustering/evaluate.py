@@ -96,7 +96,7 @@ def get_y_preds(y_true, cluster_assignments, n_clusters):
 
 
 
-from sklearn.datasets import make_blobs  # For generating sample data
+'''from sklearn.datasets import make_blobs  # For generating sample data
 from sklearn.cluster import KMeans  # For clustering
 
 # Generate sample data with 5 clusters
@@ -112,4 +112,4 @@ nmi, ari, acc = cluster_metric(y_true, pred_labels)
 # Print the evaluation metrics
 print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
 print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
-print(f"Accuracy (ACC): {acc:.2f}%")
+print(f"Accuracy (ACC): {acc:.2f}%")'''
