@@ -242,6 +242,8 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
                     predictions.append(batch_predictions.cpu())
                     true_labels.append(labels_batch)
                 
+                true_labels = torch.cat(true_labels, dim=0)
+                predictions = torch.cat(predictions, dim=0)
                 nmi, ari, acc = cluster_metric(label=true_labels.numpy(), pred=predictions.numpy())
                 print('------ Epoch: ', epoch,' ------')
                 # Print the evaluation metrics
