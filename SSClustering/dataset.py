@@ -87,13 +87,34 @@ class LinkedDataset(Dataset):
     '''
     def __init__(self, cifardataset: CIFAR10, num_links: int = 1000):
         self.data, self.A_matrix, self.labels_subset = random_links2label(cifardataset.data, cifardataset.Ids, num_links=num_links)
+        self.linked_indices = self.find_linked_indices()    # this list contains all the related images. e.g at [0] we have all the indices of A_matrix which are not 0
         self.related_images, self.relations, self.knowledge_list = self.organize_images()
+        # find linked indices just as in SCAN
 
     def __getitem__(self, item):
-        return self.data[item], self.related_images[item], self.relations[item]
+        #return self.data[item], self.related_images[item], self.relations[item]
+        image = self.data[item]
+        image_related_indices = self.linked_indices[item]
+        n_related_indices = image_related_indices.numel()
+        assert n_related_indices >= 1, 'there is some image with no related indices, there must be a bug'
+        random_index_index = torch.randint(0, n_related_indices, (1,)).item()
+        random_column = image_related_indices[random_index_index]
+
+        linked_image = self.data[random_column]
+        relation = self.A_matrix[item, random_column]
+        return image, linked_image, relation
     
     def __len__(self):
         return self.data.shape[0]
+
+
+    def find_linked_indices(self):
+        n_samples = self.A_matrix.shape[0]
+        linked_indices = []         # linked_indices[0] contains all the columns of the A_matrix which are not 0 (related images to the first image)
+        for i in range(0, n_samples):
+            not_zero_columns = torch.where(self.A_matrix[i, :] != 0)[0]
+            linked_indices.append(not_zero_columns)
+        return linked_indices
 
     def organize_images(self):
         n_images = self.data.shape[0]
@@ -143,10 +164,16 @@ class SCANdatasetWithNeighbors(Dataset):
         self.Ids = Ids
         self.neighbor_indices = neighbor_indices
         self.n_neighbors = neighbor_indices.shape[1]
-        self.same_Ids_list = self.find_percentage_of_consistency()
+        self.same_Ids_list = self.find_percentage_of_consistency()      # used to find the percentage of neighbors that share the same Id
 
     def __getitem__(self, item):
-        return self.data[item,:], self.Ids[item], self.data[self.neighbor_indices[item, :], :]
+        '''
+        returns an image, it's Id, and a random Neighbor
+        '''
+        related_indices = self.neighbor_indices[item, :]
+        random_index_index = torch.randint(0, self.n_neighbors, (1,)).item()        # random index from the index tensor
+        random_index = related_indices[random_index_index]
+        return self.data[item,:], self.Ids[item], self.data[random_index, :]
 
     def __len__(self):
         return (self.Ids).numel()
@@ -168,8 +195,10 @@ class SCANdatasetWithNeighbors(Dataset):
 
 # dataset = CIFAR10()
 # linked_dataset = LinkedDataset(dataset, num_links=1000)
+# dataloader2 = DataLoader(linked_dataset, batch_size=100)
 
-
+# for i, (images1, images2, relations) in enumerate(dataloader2):
+#     print(images2.shape)
 
 # rows_with_1 = torch.where(torch.vstack(linked_dataset.relations) == 1)
 
