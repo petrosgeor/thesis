@@ -4,17 +4,6 @@ import numpy as np
 
 device = 'cuda'
 
-class ClusterConsistencyLoss(nn.Module):
-    def __init__(self):
-        super(ClusterConsistencyLoss, self).__init__()
-    def forward(self, probs: torch.Tensor, probs_neighbors: torch.Tensor) -> torch.Tensor:
-        inner_products = torch.bmm(probs_neighbors, probs.unsqueeze(1).transpose(1,2))
-        inner_products = inner_products.squeeze()
-        l = torch.sum(inner_products.log(), dim=1)
-        return -torch.mean(l)
-
-
-
 
 class InfoNCELoss(nn.Module):
     def __init__(self, temperature: float) -> None:
@@ -70,6 +59,30 @@ class InfoNCELossEuclidean(nn.Module):
         denominator = (~mask * Sim_matrix).sum(dim=1)
         return -torch.mean((nominator/denominator).log())
 
+
+
+class ClusterConsistencyLoss(nn.Module):
+    def __init__(self):
+        super(ClusterConsistencyLoss, self).__init__()
+
+    def forward(self, probs1: torch.Tensor, probs2: torch.Tensor, relations: torch.Tensor = None) -> torch.Tensor:
+        if relations == None:
+            inner_products = (probs1 * probs2).sum(dim=1)
+            return -torch.mean(inner_products.log())
+        elif relations is not None:
+            inner_products = (probs1 * probs2).sum(dim=1)
+            inner_products_log = inner_products.log()
+            return -torch.mean(relations * inner_products_log)
+
+
+
+
+class ClusterEntropyLoss(nn.Module):
+    def __init__(self):
+        super(ClusterEntropyLoss, self).__init__()
+    def forward(self, probs: torch.Tensor):
+        priors = torch.mean(probs, dim=0)
+        return torch.sum(priors * priors.log())
 
 
 
