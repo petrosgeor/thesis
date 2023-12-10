@@ -163,7 +163,7 @@ def create_SCAN_dl_LINKED_dl(net: Network) -> tuple:   # creates dataloaders for
             embeddings.append(embeddings_batch.cpu())
         
         embeddings = torch.cat(embeddings, dim=0)
-        neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine')
+        neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=10)
     scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
     scan_dataloader = DataLoader(scan_dataset, batch_size=128, shuffle=True)
     linked_dataloader = DataLoader(linked_dataset, batch_size=128, shuffle=True)
