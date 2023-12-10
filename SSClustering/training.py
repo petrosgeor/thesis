@@ -190,7 +190,6 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4))
     ConsistencyLoss = ClusterConsistencyLoss()
     EntropyLoss = ClusterEntropyLoss()
-
     for epoch in range(0, num_epochs):
         if consider_links == True:
             dataloader_iterator = iter(linked_dataloader)
@@ -204,11 +203,14 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
             n_images_u = images_u.shape[0]
             ####    SCAN LOSS   ####
             images_u = id_aug(images_u.to(device))
-            neighbor_images = neighbor_images.to(device)
+            neighbor_images = id_aug(neighbor_images.to(device))
             neighbor_images = neighbor_images.reshape(n_images_u * n_neighbors, 3, 32, 32)
             probs = clusternet.forward_c(images_u)
             probs_neighbors = clusternet.forward_c(neighbor_images)
             probs_neighbors = probs_neighbors.reshape(n_images_u, n_neighbors, n_classes)
+
+            print(images_u.shape)
+            print(neighbor_images.shape)
 
             loss1 = ConsistencyLoss.forward(probs, probs_neighbors)
             
