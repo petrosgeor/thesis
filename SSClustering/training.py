@@ -167,8 +167,8 @@ def create_SCAN_dl_LINKED_dl(net: Network) -> tuple:   # creates dataloaders for
         embeddings = torch.cat(embeddings, dim=0)
         neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=20)
     scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
-    scan_dataloader = DataLoader(scan_dataset, batch_size=300, shuffle=True)
-    linked_dataloader = DataLoader(linked_dataset, batch_size=128, shuffle=True)
+    scan_dataloader = DataLoader(scan_dataset, batch_size=1200, shuffle=True)
+    linked_dataloader = DataLoader(linked_dataset, batch_size=256, shuffle=True)
     return scan_dataloader, linked_dataloader
 
 
@@ -191,7 +191,8 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     ####
     optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4))
     ConsistencyLoss = losses.ClusterConsistencyLoss()
-    EntropyLoss = losses.ClusterEntropyLoss()
+    #EntropyLoss = losses.ClusterEntropyLoss()
+    kl_loss = losses.KLClusterDivergance()
 
     print('the mean of images with same neighbors is: ', np.mean(scan_dataloader.dataset.same_Ids_list))
     clusternet.train()
@@ -224,9 +225,10 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
 
             loss2 = ConsistencyLoss.forward(probs1=p, probs2=p_linked, relations=relations)
 
-            loss3 = EntropyLoss.forward(probs=probs)
+            #loss3 = EntropyLoss.forward(probs=probs)
+            loss3 = kl_loss.forward(probs=probs)
 
-            total_loss = loss1 + loss2 + 5*loss3
+            total_loss = loss1 + loss2 + 10*loss3
             total_loss.backward()
             optimizer.step()
             optimizer.zero_grad()

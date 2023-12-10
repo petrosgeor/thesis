@@ -85,6 +85,14 @@ class ClusterEntropyLoss(nn.Module):
         return torch.sum(priors * priors.log())
 
 
+class KLClusterDivergance(nn.Module):
+    def __init__(self):
+        super(KLClusterDivergance, self).__init__()
+        self.target_dist = torch.full((10, ), fill_value=1/10).to(device)
+    
+    def forward(self, probs: torch.Tensor):
+        p = torch.mean(probs, dim=0)
+        return torch.sum(p * (p/self.target_dist).log())
 
 
 
