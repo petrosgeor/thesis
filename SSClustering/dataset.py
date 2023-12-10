@@ -142,6 +142,7 @@ class SCANdatasetWithNeighbors(Dataset):
         self.data = data
         self.Ids = Ids
         self.neighbor_indices = neighbor_indices
+        self.n_neighbors = neighbor_indices.shape[1]
 
     def __getitem__(self, item):
         return self.data[item,:], self.Ids[item], self.data[self.neighbor_indices[item, :], :]
@@ -152,8 +153,11 @@ class SCANdatasetWithNeighbors(Dataset):
 
 
 
+
 # dataset = CIFAR10()
 # linked_dataset = LinkedDataset(dataset, num_links=1000)
+
+
 
 # rows_with_1 = torch.where(torch.vstack(linked_dataset.relations) == 1)
 

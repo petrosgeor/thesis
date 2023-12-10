@@ -149,12 +149,13 @@ def VisualizedResNetBackBoneEmbeddings():
     VisualizeWithTSNE(resnet_embeddings=embeddings.numpy(), labels=labels.numpy())
 
 
-def create_SCAN_dl_LINKED_dl(net: Network, pretrained: str) -> tuple:
+def create_SCAN_dl_LINKED_dl(net: Network) -> tuple:   # creates dataloaders for both the SCAN and LINKED datasets
     dataset = CIFAR10()
     linked_dataset = LinkedDataset(dataset, num_links=5000)
     cifar_dataloader = DataLoader(dataset, batch_size=500, shuffle=False)
     id_aug = Identity_Augmentation()
     embeddings = []
+    net.eval()
     with torch.no_grad():
         for i, (X_batch, _) in enumerate(cifar_dataloader):
             X_batch = X_batch.to(device)
@@ -164,7 +165,10 @@ def create_SCAN_dl_LINKED_dl(net: Network, pretrained: str) -> tuple:
         embeddings = torch.cat(embeddings, dim=0)
         neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine')
     scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
-    
+    scan_dataloader = DataLoader(scan_dataset, batch_size=128, shuffle=True)
+    linked_dataloader = DataLoader(linked_dataset, batch_size=128, shuffle=True)
+    return scan_dataloader, linked_dataloader
+
 
 def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bool = False):
     pretrained = input('which PRETRAINED model should i consider, the one with links or without? type links or no_links')
@@ -177,43 +181,73 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
         clusternet.load_state_dict(torch.load('NeuralNets/ResNetBackboneLinks'))
     
     clusternet.to(device)
-    dataset = CIFAR10()
-    linked_dataset = LinkedDataset(dataset, num_links=5000)
-    cifar_dataloader = DataLoader(CIFAR10, batch_size=500, shuffle=False)
     id_aug = Identity_Augmentation()
-    embeddings = []
-    with torch.no_grad():
-        for i, (X_batch, _) in enumerate(cifar_dataloader):
-            X_batch = X_batch.to(device)
-            embeddings_batch = clusternet(id_aug(X_batch))
-            embeddings.append(embeddings_batch.cpu())
-        
-    embeddings = torch.cat(embeddings, dim=0)
-    neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine')
-
-    ############    SCAN DATASET    #######
-    scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
-    scan_dataloader = DataLoader(scan_dataset, batch_size=128, shuffle=True)
-    links_dataloader = DataLoader(linked_dataset, batch_size=128, shuffle=True)
+    
+    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet)
+    n_neighbors = scan_dataloader.dataset.n_neighbors
+    n_classes = (torch.unique(scan_dataloader.dataset.Ids)).numel()
+    ####
+    optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4))
+    ConsistencyLoss = ClusterConsistencyLoss()
 
     for epoch in range(0, num_epochs):
         if consider_links == True:
-            dataloader_iterator = iter(links_dataloader)
+            dataloader_iterator = iter(linked_dataloader)
         for i, (images_u, _, neighbor_images) in enumerate(scan_dataloader):
             if consider_links == True:
                 try:
                     image_l, related_images, relations_batch = next(dataloader_iterator)
                 except StopIteration:
-                    dataloader_iterator = iter(links_dataloader)
+                    dataloader_iterator = iter(linked_dataloader)
                     image_l, related_images, relations_batch = next(dataloader_iterator)
-            
+            n_images_u = images_u.shape[0]
             ####    SCAN LOSS   ####
             images_u = id_aug(images_u.to(device))
             neighbor_images = neighbor_images.to(device)
-            neighbor_images = neighbor_images.reshape()
-            embeddings = clusternet.forward_c(images_u)
-            neighbor_embeddings = clusternet.forward_c()
+            neighbor_images = neighbor_images.reshape(n_images_u * n_neighbors, 3, 32, 32)
+            probs = clusternet.forward_c(images_u)
+            probs_neighbors = clusternet.forward_c(neighbor_images)
+            probs_neighbors = probs_neighbors.reshape(n_images_u, n_neighbors, n_classes)
+
+            loss1 = ConsistencyLoss.forward(probs, probs_neighbors)
             
+            loss2 = 0
+            if consider_links == True:
+                for j in range(0, image_l.shape[0]):
+                    indices_pos = torch.where(relations_batch[j, :] == 1)[0]
+                    indices_neg = torch.where(relations_batch[j, :] == -1)[0]
+                    image = image_l[j, :].to(device)
+                    image_probs = clusternet.forward_c(image)
+
+                    if indices_pos.numel() == 0:
+                        images_neg = (related_images[j, indices_neg]).to(device)
+                        image_neg_probs = clusternet.forward_c(images_neg)
+                        loss2 = loss2 + (torch.matmul(image_neg_probs, image_probs).log()).sum()
+                    
+                    elif indices_neg.numel() == 0:
+                        images_pos = (related_images[j, indices_pos]).to(device)
+                        images_pos_probs = clusternet.forward_c(images_pos)
+                        loss2 = loss2 - (torch.matmul(images_pos_probs, image_probs).log()).sum()
+                    
+                    else: 
+                        images_neg = (related_images[j, indices_neg]).to(device)
+                        image_neg_probs = clusternet.forward_c(images_neg)
+                        images_pos = (related_images[j, indices_pos]).to(device)
+                        images_pos_probs = clusternet.forward_c(images_pos)
+
+                        loss2 = loss2 + (torch.matmul(image_neg_probs, image_probs).log()).sum()
+                        loss2 = loss2 - (torch.matmul(images_pos_probs, image_probs).log()).sum()
+            
+            total_loss = loss1 + loss2/(linked_dataloader.batch_size)
+            total_loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+        
+        with torch.no_grad():
+            for i, (images_u, _, neighbor_images) in enumerate(scan_dataloader):
+                pass
+
+
 
 
 
@@ -239,3 +273,6 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 run_pretraining_function()
+
+
+

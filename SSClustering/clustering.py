@@ -59,7 +59,7 @@ class ClusterDataset(Dataset):
 class ClusterConsistencyLoss(nn.Module):
     def __init__(self):
         super(ClusterConsistencyLoss, self).__init__()
-    def forward(self, probs, probs_neighbors):
+    def forward(self, probs: torch.Tensor, probs_neighbors: torch.Tensor) -> torch.Tensor:
         inner_products = torch.bmm(probs_neighbors, probs.unsqueeze(1).transpose(1,2))
         inner_products = inner_products.squeeze()
         l = torch.sum(inner_products.log(), dim=1)
