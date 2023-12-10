@@ -102,7 +102,7 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
             optimizer.step()
             optimizer.zero_grad()
     
-        if (epoch + 1)%5 == 0:
+        if (epoch + 1)%10 == 0:
             with torch.no_grad():
                 embeddings = []
                 all_labels = []
@@ -295,6 +295,6 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 run_pretraining_function()
-train_clustering_network(num_epochs=20, consider_links=False)
+#train_clustering_network(num_epochs=20, consider_links=False)
 
 
