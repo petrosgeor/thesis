@@ -8,6 +8,7 @@ from dataset import *
 import numpy as np
 #from kmeans_pytorch import kmeans
 from clustering import *
+from evaluate import *
 import os
 device = 'cuda'
 
@@ -215,31 +216,32 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
             loss1 = ConsistencyLoss.forward(probs, probs_neighbors)
             
             loss2 = 0
-            if consider_links == True:
-                for j in range(0, image_l.shape[0]):
-                    indices_pos = torch.where(relations_batch[j, :] == 1)[0]
-                    indices_neg = torch.where(relations_batch[j, :] == -1)[0]
-                    image = image_l[j, :].to(device)
-                    image_probs = clusternet.forward_c(image)
+            # if consider_links == True:
+            #     print('if this print we have a problem')
+            #     for j in range(0, image_l.shape[0]):
+            #         indices_pos = torch.where(relations_batch[j, :] == 1)[0]
+            #         indices_neg = torch.where(relations_batch[j, :] == -1)[0]
+            #         image = image_l[j, :].to(device)
+            #         image_probs = clusternet.forward_c(image)
 
-                    if indices_pos.numel() == 0:
-                        images_neg = (related_images[j, indices_neg]).to(device)
-                        image_neg_probs = clusternet.forward_c(images_neg)
-                        loss2 = loss2 + (torch.matmul(image_neg_probs, image_probs).log()).sum()
+            #         if indices_pos.numel() == 0:
+            #             images_neg = (related_images[j, indices_neg]).to(device)
+            #             image_neg_probs = clusternet.forward_c(images_neg)
+            #             loss2 = loss2 + (torch.matmul(image_neg_probs, image_probs).log()).sum()
                     
-                    elif indices_neg.numel() == 0:
-                        images_pos = (related_images[j, indices_pos]).to(device)
-                        images_pos_probs = clusternet.forward_c(images_pos)
-                        loss2 = loss2 - (torch.matmul(images_pos_probs, image_probs).log()).sum()
+            #         elif indices_neg.numel() == 0:
+            #             images_pos = (related_images[j, indices_pos]).to(device)
+            #             images_pos_probs = clusternet.forward_c(images_pos)
+            #             loss2 = loss2 - (torch.matmul(images_pos_probs, image_probs).log()).sum()
                     
-                    else: 
-                        images_neg = (related_images[j, indices_neg]).to(device)
-                        image_neg_probs = clusternet.forward_c(images_neg)
-                        images_pos = (related_images[j, indices_pos]).to(device)
-                        images_pos_probs = clusternet.forward_c(images_pos)
+            #         else: 
+            #             images_neg = (related_images[j, indices_neg]).to(device)
+            #             image_neg_probs = clusternet.forward_c(images_neg)
+            #             images_pos = (related_images[j, indices_pos]).to(device)
+            #             images_pos_probs = clusternet.forward_c(images_pos)
 
-                        loss2 = loss2 + (torch.matmul(image_neg_probs, image_probs).log()).sum()
-                        loss2 = loss2 - (torch.matmul(images_pos_probs, image_probs).log()).sum()
+            #             loss2 = loss2 + (torch.matmul(image_neg_probs, image_probs).log()).sum()
+            #             loss2 = loss2 - (torch.matmul(images_pos_probs, image_probs).log()).sum()
             loss3 = EntropyLoss.forward(probs)
 
             total_loss = loss1 + loss2/(linked_dataloader.batch_size) + 5*loss3
@@ -258,7 +260,12 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
             
             predictions = torch.cat(predictions, dim=0)
             true_labels = torch.cat(true_labels, dim=0)
-        print('Epoch ',epoch,' NMI is: ', calculate_NMI(predictions=predictions.numpy(), true_labels=true_labels.numpy()))
+        #print('Epoch ',epoch,' NMI is: ', calculate_NMI(predictions=predictions.numpy(), true_labels=true_labels.numpy()))
+        print('----------- Epoch ', epoch, ' -------------')
+        nmi, ari, acc = cluster_metric(true_labels.numpy(), predictions.numpy())
+        print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
+        print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
+        print(f"Accuracy (ACC): {acc:.2f}%")
 
 
 
