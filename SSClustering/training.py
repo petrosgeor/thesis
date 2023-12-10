@@ -26,7 +26,7 @@ def give_random_images(image_embeddings, number):
 
 
 def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contrastive=0.5, consider_links: bool = False):
-    resnet, hidden_dim = get_resnet('resnet34')
+    resnet, hidden_dim = get_resnet('resnet18')
     net = Network(resnet=resnet, hidden_dim=hidden_dim, feature_dim=128, class_num=10)
     
     n_samples = unsup_dataloader.batch_size         # the batch size of the unsupervised dataloader (used for InfoNCE)
