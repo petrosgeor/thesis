@@ -171,10 +171,10 @@ def create_SCAN_dl_LINKED_dl(net: Network) -> tuple:   # creates dataloaders for
 
 
 def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bool = False):
-    pretrained = input('which PRETRAINED model should i consider, the one with links or without? type links or no_links')
+    pretrained = input('which PRETRAINED model should i consider, the one with links or without? type links or no_links: ')
     assert (pretrained == 'links') | (pretrained == 'no_links'), 'please type links or no_links'
     resnet, hidden_dim = get_resnet('resnet34')
-    clusternet = Network(resnet=resnet, hidden_dim=hidden_dim)
+    clusternet = Network(resnet=resnet, hidden_dim=hidden_dim, feature_dim=128, class_num=10)
     if pretrained == 'no_links':
         clusternet.load_state_dict(torch.load('NeuralNets/ResNetBackbone.pth'))
     elif pretrained == 'links':
