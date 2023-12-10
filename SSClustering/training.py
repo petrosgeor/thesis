@@ -249,24 +249,6 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
                 print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
                 print(f"Accuracy (ACC): {acc:.2f}%")
 
-
-
-
-            
-
-            
-
-
-
-
-
-
-
-
-
-
-
-
 def run_pretraining_function():
     if run_pretraining == 'yes':
         consider_links = input('do you want to consider any links?')
@@ -284,6 +266,6 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 run_pretraining_function()
-#train_clustering_network(num_epochs=20, consider_links=False)
+train_clustering_network(num_epochs=20, consider_links=True)
 
 
