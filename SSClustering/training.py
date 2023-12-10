@@ -189,6 +189,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     ####
     optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4))
     ConsistencyLoss = ClusterConsistencyLoss()
+    EntropyLoss = ClusterEntropyLoss()
 
     for epoch in range(0, num_epochs):
         if consider_links == True:
@@ -237,15 +238,27 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
 
                         loss2 = loss2 + (torch.matmul(image_neg_probs, image_probs).log()).sum()
                         loss2 = loss2 - (torch.matmul(images_pos_probs, image_probs).log()).sum()
-            
-            total_loss = loss1 + loss2/(linked_dataloader.batch_size)
+            loss3 = EntropyLoss.forward(probs)
+
+            total_loss = loss1 + loss2/(linked_dataloader.batch_size) + 5*loss3
             total_loss.backward()
             optimizer.step()
             optimizer.zero_grad()
         
         with torch.no_grad():
-            for i, (images_u, _, neighbor_images) in enumerate(scan_dataloader):
-                pass
+            predictions = []
+            true_labels = []
+            for i, (images_u, labels_batch, _) in enumerate(scan_dataloader):
+                images_u = (id_aug(images_u)).to(device)
+                batch_probs = clusternet.forward_c(images_u)
+                predictions.append(torch.argmax(batch_probs, dim=1).cpu())
+                true_labels.append(labels_batch)
+            
+            predictions = torch.cat(predictions, dim=0)
+            true_labels = torch.cat(true_labels, dim=0)
+        print('Epoch ',epoch,' NMI is: ', calculate_NMI(predictions=predictions.numpy(), true_labels=true_labels.numpy()))
+
+
 
 
 
@@ -273,6 +286,6 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 run_pretraining_function()
-
+train_clustering_network(num_epochs=20, consider_links=False)
 
 
