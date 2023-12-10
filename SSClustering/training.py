@@ -231,11 +231,13 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
             loss3 = kl_loss.forward(probs=probs)
             if consider_links == True:
                 if (i%10) == 0:
-                    print(loss1.item(), loss2.item(), loss3.item())
+                    pass
+                    #print(loss1.item(), loss2.item(), loss3.item())
             
             elif consider_links == False:
                 if (i%10) == 0:
-                    print(loss1.item(), loss3.item())
+                    #print(loss1.item(), loss3.item())
+                    pass
             total_loss = loss1 + 10**(-2)*loss2 + 10*loss3
             total_loss.backward()
             optimizer.step()
