@@ -192,8 +192,10 @@ def deterministic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_co
     Ids_np = Ids.numpy()
     unique_Ids = np.unique(Ids_np)
     dictionary = {}
-    for i in unique_Ids:
-        dictionary[i] = np.where(Ids_np == i)[0]
+    for i in range(unique_Ids.shape[0]):
+        x = unique_Ids[i]
+        dictionary[x] = np.where(Ids_np == i)[0]
+    print(dictionary[0][0:5])
     
     for i in range(0, n_samples):
         if (i%10) == 0:
@@ -212,4 +214,5 @@ def deterministic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_co
     
 
 
+random_tensor = torch.randint(0, 10, (10000,))
 
