@@ -153,7 +153,7 @@ def VisualizedResNetBackBoneEmbeddings():
 
 def create_SCAN_dl_LINKED_dl(net: Network) -> tuple:   # creates dataloaders for both the SCAN and LINKED datasets
     dataset = CIFAR10(proportion=1/6)
-    linked_dataset = LinkedDataset(dataset, num_links=20000)
+    linked_dataset = LinkedDataset(dataset, num_links=5000)
     cifar_dataloader = DataLoader(dataset, batch_size=2000, shuffle=False)
     id_aug = Identity_Augmentation()
     embeddings = []
@@ -192,7 +192,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     optimizer = optim.SGD(clusternet.parameters(), lr=10**(-2))
     ConsistencyLoss = losses.ClusterConsistencyLoss()
     #EntropyLoss = losses.ClusterEntropyLoss()
-    kl_loss = losses.KLClusterDivergance()
+    #kl_loss = losses.KLClusterDivergance()
 
     print('the mean of images with same neighbors is: ', np.mean(scan_dataloader.dataset.same_Ids_list))
     clusternet.train()
@@ -235,7 +235,8 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
 
                 loss2 = ConsistencyLoss(probs1=p_id, probs2=p_linked_id, relations=relations) + ConsistencyLoss(p_clr, p_linked_clr, relations)
             #loss3 = EntropyLoss.forward(probs=probs)
-            loss3 = kl_loss.forward(probs=probs)
+            loss3 = 0
+            #loss3 = kl_loss.forward(probs=probs)
             if consider_links == True:
                 if (i%10) == 0:
                     pass

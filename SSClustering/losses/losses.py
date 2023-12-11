@@ -80,11 +80,15 @@ class ClusterConsistencyLoss(nn.Module):
 
 
 class ClusterEntropyLoss(nn.Module):
-    def __init__(self):
+    def __init__(self, n_classes=10):
         super(ClusterEntropyLoss, self).__init__()
+        self.n_classes = torch.tensor([n_classes])
+        self.target_entropy = (self.n_classes).log()
     def forward(self, probs: torch.Tensor):
         priors = torch.mean(probs, dim=0)
-        return torch.sum(priors * priors.log())
+        entropy = -(priors * priors.log()).sum()
+        diff = (entropy - self.target_entropy)**2
+        return diff
 
 
 class KLClusterDivergance(nn.Module):
