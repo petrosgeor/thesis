@@ -84,7 +84,7 @@ class CIFAR10(Dataset):
             return data, Ids, class2Id
 
     @staticmethod
-    def keep_part_of_dataset(data: torch.Tensor, labels: torch.Tensor, proportion: int=1/6):
+    def keep_part_of_dataset(data: torch.Tensor, labels: torch.Tensor, proportion: int=1):
         assert (proportion <= 1) and (proportion > 0), 'proportion must be set to a number between 0 and 1'
         n_samples = labels.numel()
         n_samples_keep = int(n_samples * proportion)

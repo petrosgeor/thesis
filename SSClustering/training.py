@@ -152,7 +152,7 @@ def VisualizedResNetBackBoneEmbeddings():
 
 
 def create_SCAN_dl_LINKED_dl(net: Network) -> tuple:   # creates dataloaders for both the SCAN and LINKED datasets
-    dataset = CIFAR10(proportion=1/6)
+    dataset = CIFAR10(proportion=1)
     linked_dataset = LinkedDataset(dataset, num_links=5000)
     cifar_dataloader = DataLoader(dataset, batch_size=2000, shuffle=False)
     id_aug = Identity_Augmentation()
@@ -165,7 +165,7 @@ def create_SCAN_dl_LINKED_dl(net: Network) -> tuple:   # creates dataloaders for
             embeddings.append(embeddings_batch.cpu())
         
         embeddings = torch.cat(embeddings, dim=0)
-        neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=20)
+        neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=40)
     scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
     scan_dataloader = DataLoader(scan_dataset, batch_size=1200, shuffle=True, num_workers=2)
     linked_dataloader = DataLoader(linked_dataset, batch_size=256, shuffle=True, num_workers=2)
@@ -251,7 +251,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
             optimizer.step()
             optimizer.zero_grad()
 
-        if (epoch + 1)%7 == 0:
+        if (epoch + 1)%10 == 0:
             true_labels = []
             predictions = []
             true_labels_conf = []
@@ -305,6 +305,6 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 run_pretraining_function()
-train_clustering_network(num_epochs=500, consider_links=True)
+train_clustering_network(num_epochs=2000, consider_links=True)
 
 
