@@ -151,17 +151,7 @@ def VisualizedResNetBackBoneEmbeddings():
     VisualizeWithTSNE(resnet_embeddings=embeddings.numpy(), labels=labels.numpy())
 
 
-def create_SCAN_dl_LINKED_dl() -> tuple:   # creates dataloaders for both the SCAN and LINKED datasets
-    pretrained = input('which PRETRAINED model should i consider, the one with links or without? type links or no_links: ')
-    assert (pretrained == 'links') | (pretrained == 'no_links'), 'please type links or no_links'
-    resnet, hidden_dim = get_resnet('resnet18')
-    net = Network(resnet=resnet, hidden_dim=hidden_dim, feature_dim=128, class_num=10)
-    if pretrained == 'no_links':
-        net.load_state_dict(torch.load('NeuralNets/ResNetBackbone.pth'))
-    elif pretrained == 'links':
-        net.load_state_dict(torch.load('NeuralNets/ResNetBackboneLinks'))
-
-    net.to(device)
+def create_SCAN_dl_LINKED_dl(net: Network) -> tuple:   # creates dataloaders for both the SCAN and LINKED datasets
     dataset = CIFAR10()
     linked_dataset = LinkedDataset(dataset, num_links=20000)
     cifar_dataloader = DataLoader(dataset, batch_size=500, shuffle=False)
@@ -183,13 +173,19 @@ def create_SCAN_dl_LINKED_dl() -> tuple:   # creates dataloaders for both the SC
 
 
 def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bool = False):
+    pretrained = input('which PRETRAINED model should i consider, the one with links or without? type links or no_links: ')
+    assert (pretrained == 'links') | (pretrained == 'no_links'), 'please type links or no_links'
     resnet, hidden_dim = get_resnet('resnet18')
     clusternet = Network(resnet=resnet, hidden_dim=hidden_dim, feature_dim=128, class_num=10)
-
+    if pretrained == 'no_links':
+        clusternet.load_state_dict(torch.load('NeuralNets/ResNetBackbone.pth'))
+    elif pretrained == 'links':
+        clusternet.load_state_dict(torch.load('NeuralNets/ResNetBackboneLinks'))
+    
     clusternet.to(device)
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
-    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl()
+    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet)
     n_neighbors = scan_dataloader.dataset.n_neighbors
     n_classes = (torch.unique(scan_dataloader.dataset.Ids)).numel()
     ####
@@ -264,7 +260,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
                     images_batch = id_aug(images_batch.to(device))
                     batch_probs = clusternet.forward_c(images_batch)
                     torch.where(batch_probs >= 0.85)
-
+                    
                     batch_predictions = torch.argmax(batch_probs, dim=1)
                     predictions.append(batch_predictions.cpu())
                     true_labels.append(labels_batch)
@@ -273,6 +269,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
                 predictions = torch.cat(predictions, dim=0)
                 nmi, ari, acc = cluster_metric(label=true_labels.numpy(), pred=predictions.numpy())
                 print('------ Epoch: ', epoch,' ------')
+                # Print the evaluation metrics
                 print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
                 print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
                 print(f"Accuracy (ACC): {acc:.2f}%")
