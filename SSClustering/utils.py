@@ -189,24 +189,25 @@ def deterministic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_co
     indices = []
     n_samples = Ids.shape[0]
     n_false = n_neighbors - n_correct
+    Ids_np = Ids.numpy()
+    unique_Ids = np.unique(Ids_np)
+    dictionary = {}
+    for i in unique_Ids:
+        dictionary[i] = np.where(Ids_np == i)[0]
+    
     for i in range(0, n_samples):
-        if (i%10) == 0:
-            print(i)
-        current_id = Ids[i]
-        same_indices = torch.where(Ids == current_id)[0]
-        same_indices = randomly_permute_tensor(same_indices)
-        indices_correct = same_indices[:n_correct]
+        current_id = Ids_np[i]
+        correct_indices = np.random.choice(dictionary[current_id], size=n_correct, replace=False)
+        new_id = np.random.choice(range(n_samples))
+        while new_id==current_id:
+            new_id = np.random.choice(range(n_samples))
 
-        different_indices = torch.where(Ids != current_id)[0]
-        different_indices = randomly_permute_tensor(different_indices)
-        indices_false = different_indices[:n_false]
-        idx_tensor = torch.cat((indices_correct, indices_false), dim=0)
-        indices.append(idx_tensor)
-    indices = torch.stack(indices)
-    return indices
+        false_indices = np.random.choice(dictionary[new_id], size=n_false, replace=False)
+        ii = np.hstack((correct_indices, false_indices))
+        indices.append(ii)
+    indices = np.vstack(indices)
+    return torch.from_numpy(indices)
+    
 
 
-
-x = torch.randn(5)
-print(randomly_permute_tensor(x))
 
