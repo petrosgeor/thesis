@@ -196,6 +196,8 @@ def deterministic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_co
         dictionary[i] = np.where(Ids_np == i)[0]
     
     for i in range(0, n_samples):
+        if (i%10) == 0:
+            print(i)
         current_id = Ids_np[i]
         correct_indices = np.random.choice(dictionary[current_id], size=n_correct, replace=False)
         new_id = np.random.choice(range(n_samples))
