@@ -195,22 +195,21 @@ def deterministic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_co
     for i in range(unique_Ids.shape[0]):
         x = unique_Ids[i]
         dictionary[x] = np.where(Ids_np == i)[0]
-    print(dictionary[0][0:5])
+    #print(dictionary[0][0:5])
     
     for i in range(0, n_samples):
-        if (i%10) == 0:
-            print(i)
         current_id = Ids_np[i]
         correct_indices = np.random.choice(dictionary[current_id], size=n_correct, replace=False)
-        new_id = np.random.choice(range(n_samples))
-        while new_id==current_id:
-            new_id = np.random.choice(range(n_samples))
-
+        new_id = np.random.choice(range(unique_Ids.shape[0]))
+        while new_id == current_id:
+            new_id = np.random.choice(range(unique_Ids.shape[0]))
+        #print('new id is ', new_id)
         false_indices = np.random.choice(dictionary[new_id], size=n_false, replace=False)
         ii = np.hstack((correct_indices, false_indices))
         indices.append(ii)
     indices = np.vstack(indices)
     return torch.from_numpy(indices)
     
+
 
 
