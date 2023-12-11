@@ -189,7 +189,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     n_neighbors = scan_dataloader.dataset.n_neighbors
     n_classes = (torch.unique(scan_dataloader.dataset.Ids)).numel()
     ####
-    optimizer = optim.SGD(clusternet.parameters(), lr=10**(-2))
+    optimizer = optim.SGD(clusternet.parameters(), lr=1)
     ConsistencyLoss = losses.ClusterConsistencyLoss()
     #EntropyLoss = losses.ClusterEntropyLoss()
     kl_loss = losses.KLClusterDivergance()
@@ -289,6 +289,6 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 run_pretraining_function()
-train_clustering_network(num_epochs=50, consider_links=True)
+train_clustering_network(num_epochs=500, consider_links=True)
 
 
