@@ -192,7 +192,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     optimizer = optim.SGD(clusternet.parameters(), lr=10**(-2))
     ConsistencyLoss = losses.ClusterConsistencyLoss()
     #EntropyLoss = losses.ClusterEntropyLoss()
-    #kl_loss = losses.KLClusterDivergance()
+    kl_loss = losses.KLClusterDivergance()
 
     print('the mean of images with same neighbors is: ', np.mean(scan_dataloader.dataset.same_Ids_list))
     clusternet.train()
@@ -236,7 +236,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
                 loss2 = ConsistencyLoss(probs1=p_id, probs2=p_linked_id, relations=relations) + ConsistencyLoss(p_clr, p_linked_clr, relations)
             #loss3 = EntropyLoss.forward(probs=probs)
             loss3 = 0
-            #loss3 = kl_loss.forward(probs=probs)
+            loss3 = kl_loss.forward(probs=probs)
             if consider_links == True:
                 if (i%10) == 0:
                     pass
@@ -254,28 +254,39 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
         if (epoch + 1)%7 == 0:
             true_labels = []
             predictions = []
-            true_labels_sure = []
-            predictions_sure = []
+            true_labels_conf = []
+            predictions_conf = []
             with torch.no_grad():
                 for i, (images_batch, labels_batch, _) in enumerate(scan_dataloader):
                     images_batch = id_aug(images_batch.to(device))
                     batch_probs = clusternet.forward_c(images_batch)
-                    torch.where(batch_probs >= 0.85)
+                    indices_conf = torch.where(batch_probs >= 0.85)
                     
+                    true_labels_conf.append(labels_batch[indices_conf[0].cpu()])
+                    predictions_conf.append(indices_conf[1].cpu())
+
                     batch_predictions = torch.argmax(batch_probs, dim=1)
                     predictions.append(batch_predictions.cpu())
                     true_labels.append(labels_batch)
                 
+                true_labels_conf = torch.cat(true_labels_conf, dim=0)
+                predictions_conf = torch.cat(predictions_conf, dim=0)
                 true_labels = torch.cat(true_labels, dim=0)
                 predictions = torch.cat(predictions, dim=0)
                 nmi, ari, acc = cluster_metric(label=true_labels.numpy(), pred=predictions.numpy())
-                print('------ Epoch: ', epoch,' ------')
+                print('------------------- Epoch: ', epoch,' ---------------------')
                 # Print the evaluation metrics
                 print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
                 print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
                 print(f"Accuracy (ACC): {acc:.2f}%")
+                print('confident examples \n')
+                nmi, ari, acc = cluster_metric(label=true_labels_conf.numpy(), pred=predictions_conf.numpy())
+                print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
+                print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
+                print(f"Accuracy (ACC): {acc:.2f}%")
+
             x = torch.unique(predictions, return_inverse=False, return_counts=True)
-            print(x)
+
 
 def run_pretraining_function():
     if run_pretraining == 'yes':
