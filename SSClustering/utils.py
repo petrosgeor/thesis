@@ -180,10 +180,31 @@ def find_indices_of_closest_embeddings(embedings: torch.Tensor, n_neighbors: int
         indices = torch.topk(D, k=n_neighbors, dim=1, largest=False)[1]
     return indices
 
+def randomly_permute_tensor(x: torch.Tensor):
+    n = x.size(0)
+    rand_indices = torch.randperm(n)
+    return x[rand_indices]
+
+def deterministic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_correct: int = 16) -> torch.Tensor:
+    indices = []
+    n_samples = Ids.shape[0]
+    n_false = n_neighbors - n_correct
+    for i in range(0, n_samples):
+        current_id = Ids[i]
+        same_indices = torch.where(Ids == current_id)[0]
+        same_indices = randomly_permute_tensor(same_indices)
+        indices_correct = same_indices[:n_correct]
+
+        different_indices = torch.where(Ids != current_id)[0]
+        different_indices = randomly_permute_tensor(different_indices)
+        indices_false = different_indices[:n_false]
+        idx_tensor = torch.cat((indices_correct, indices_false), dim=0)
+        indices.append(idx_tensor)
+    indices = torch.stack(indices)
+    return indices
 
 
 
-
-
-
+x = torch.randn(5)
+print(randomly_permute_tensor(x))
 

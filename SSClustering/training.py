@@ -151,7 +151,7 @@ def VisualizedResNetBackBoneEmbeddings():
     VisualizeWithTSNE(resnet_embeddings=embeddings.numpy(), labels=labels.numpy())
 
 
-def create_SCAN_dl_LINKED_dl(net: Network) -> tuple:   # creates dataloaders for both the SCAN and LINKED datasets
+def create_SCAN_dl_LINKED_dl(net: Network, deterministic_neighbors = False) -> tuple:   # creates dataloaders for both the SCAN and LINKED datasets
     dataset = CIFAR10(proportion=1)
     linked_dataset = LinkedDataset(dataset, num_links=5000)
     cifar_dataloader = DataLoader(dataset, batch_size=2000, shuffle=False)
@@ -165,7 +165,11 @@ def create_SCAN_dl_LINKED_dl(net: Network) -> tuple:   # creates dataloaders for
             embeddings.append(embeddings_batch.cpu())
         
         embeddings = torch.cat(embeddings, dim=0)
-        neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=40)
+        if deterministic_neighbors == False:
+            neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=20)
+        elif deterministic_neighbors == True:
+            neighbor_indices = deterministic_closest_indices(Ids=dataset.Ids, n_neighbors=20, n_correct=16)
+
     scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
     scan_dataloader = DataLoader(scan_dataset, batch_size=1200, shuffle=True, num_workers=2)
     linked_dataloader = DataLoader(linked_dataset, batch_size=256, shuffle=True, num_workers=2)
@@ -185,7 +189,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     clusternet.to(device)
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
-    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet)
+    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, deterministic_neighbors=True)
     n_neighbors = scan_dataloader.dataset.n_neighbors
     n_classes = (torch.unique(scan_dataloader.dataset.Ids)).numel()
     ####
