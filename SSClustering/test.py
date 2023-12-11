@@ -7,7 +7,7 @@ from sklearn.manifold import SpectralEmbedding
 
 
 
-x = torch.randn((100, 100))
-print(torch.where(x >= 0.5))
+x = torch.tensor([1,2,3])
+y = torch.empty()
 
 
