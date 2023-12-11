@@ -1,7 +1,7 @@
 import pickle
 import torch
 import numpy as np
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, Subset
 import random
 from utils import *
 from models import *
@@ -57,9 +57,11 @@ print(random_links2label(data, labels, num_links=len(labels)))
 '''
 
 class CIFAR10(Dataset):
-    def __init__(self) -> None:
+    def __init__(self, proportion = 1) -> None:
+        self.proportion = proportion
         self.data, self.Ids, self.class2Id = self.load_data()
         
+
     def __getitem__(self, item):
         return self.data[item,:], self.Ids[item]
 
@@ -75,8 +77,19 @@ class CIFAR10(Dataset):
 
         with open(path + 'class2Id.pkl', 'rb') as file:
             class2Id = pickle.load(file)
-        
-        return data, Ids, class2Id
+        if self.proportion == None:
+            return data, Ids, class2Id
+        else:
+            data, Ids = self.keep_part_of_dataset(data, Ids, self.proportion)
+            return data, Ids, class2Id
+
+    @staticmethod
+    def keep_part_of_dataset(data: torch.Tensor, labels: torch.Tensor, proportion: int=1/6):
+        assert (proportion <= 1) and (proportion > 0), 'proportion must be set to a number between 0 and 1'
+        n_samples = labels.numel()
+        n_samples_keep = int(n_samples * proportion)
+        numbers = random.sample(range(n_samples), n_samples_keep)
+        return data[numbers], labels[numbers]
 
 
 
@@ -193,8 +206,12 @@ class SCANdatasetWithNeighbors(Dataset):
 
 
 
-# dataset = CIFAR10()
-# linked_dataset = LinkedDataset(dataset, num_links=1000)
+#dataset = CIFAR10(proportion=1)
+# n = dataset.__len__()
+# numbers = random.sample(range(n), int(n/6))
+# subset1 = Subset(dataset, indices=numbers)
+
+#linked_dataset = LinkedDataset(dataset, num_links=1000)
 # dataloader2 = DataLoader(linked_dataset, batch_size=100)
 
 # for i, (images1, images2, relations) in enumerate(dataloader2):

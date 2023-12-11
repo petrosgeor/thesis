@@ -152,7 +152,7 @@ def VisualizedResNetBackBoneEmbeddings():
 
 
 def create_SCAN_dl_LINKED_dl(net: Network) -> tuple:   # creates dataloaders for both the SCAN and LINKED datasets
-    dataset = CIFAR10()
+    dataset = CIFAR10(proportion=1/6)
     linked_dataset = LinkedDataset(dataset, num_links=20000)
     cifar_dataloader = DataLoader(dataset, batch_size=2000, shuffle=False)
     id_aug = Identity_Augmentation()
