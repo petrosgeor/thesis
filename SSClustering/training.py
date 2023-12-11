@@ -167,8 +167,8 @@ def create_SCAN_dl_LINKED_dl(net: Network) -> tuple:   # creates dataloaders for
         embeddings = torch.cat(embeddings, dim=0)
         neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=20)
     scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
-    scan_dataloader = DataLoader(scan_dataset, batch_size=1200, shuffle=True)
-    linked_dataloader = DataLoader(linked_dataset, batch_size=256, shuffle=True)
+    scan_dataloader = DataLoader(scan_dataset, batch_size=1200, shuffle=True, num_workers=2)
+    linked_dataloader = DataLoader(linked_dataset, batch_size=256, shuffle=True, num_workers=2)
     return scan_dataloader, linked_dataloader
 
 
@@ -184,7 +184,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     
     clusternet.to(device)
     id_aug = Identity_Augmentation()
-    augmentations = SimCLRaugment()
+    aug_clr = SimCLRaugment()
     scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet)
     n_neighbors = scan_dataloader.dataset.n_neighbors
     n_classes = (torch.unique(scan_dataloader.dataset.Ids)).numel()
@@ -209,24 +209,31 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
             n_images_u = images_u.shape[0]
 
             ####    SCAN LOSS   ####
-
-            images_u = id_aug(images_u.to(device))
+            images_u = images_u.to(device)
+            images_u_id = id_aug(images_u)  # identity augmentation
+            images_u_clr = aug_clr(images_u)
             neighbor_images = id_aug(neighbor_images.to(device))
-            probs = clusternet.forward_c(images_u)
+            probs = clusternet.forward_c(images_u_id)   # probabilites of identity images
+            probs_clr = clusternet.forward_c(images_u_clr)  # probabilities of CLR images
             probs_neighbors = clusternet.forward_c(neighbor_images)
-            loss1 = ConsistencyLoss.forward(probs1=probs, probs2=probs_neighbors, relations=None)
+            loss1 = ConsistencyLoss.forward(probs1=probs, probs2=probs_neighbors, relations=None) + ConsistencyLoss.forward(probs1=probs, probs2=probs_clr)
 
             ####    LINKED IMAGES LOSS  ####
             loss2 = 0
             if consider_links == True:
-                image_l = id_aug(image_l.to(device))
-                related_images = id_aug(related_images.to(device))
+                image_l = image_l.to(device)
+                image_l_id = id_aug(image_l)
+                image_l_clr = aug_clr(image_l)
+                related_images = related_images.to(device)
+                related_images_id = id_aug(related_images)
+                related_images_clr = aug_clr(related_images)
                 relations = relations.to(device)
-                p = clusternet.forward_c(image_l)
-                p_linked = clusternet.forward_c(related_images)
+                p_id = clusternet.forward_c(image_l_id)
+                p_linked_id = clusternet.forward_c(related_images_id)
+                p_clr = clusternet.forward_c(image_l_clr)
+                p_linked_clr = clusternet.forward_c(related_images_clr)
 
-                loss2 = ConsistencyLoss.forward(probs1=p, probs2=p_linked, relations=relations)
-
+                loss2 = ConsistencyLoss(probs1=p_id, probs2=p_linked_id, relations=relations) + ConsistencyLoss(p_clr, p_linked_clr, relations)
             #loss3 = EntropyLoss.forward(probs=probs)
             loss3 = kl_loss.forward(probs=probs)
             if consider_links == True:
@@ -243,7 +250,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
             optimizer.step()
             optimizer.zero_grad()
 
-        if (epoch + 1)%2 == 0:
+        if (epoch + 1)%7 == 0:
             true_labels = []
             predictions = []
             with torch.no_grad():
