@@ -154,21 +154,21 @@ def VisualizedResNetBackBoneEmbeddings():
 def create_SCAN_dl_LINKED_dl(net: Network, deterministic_neighbors = False) -> tuple:   # creates dataloaders for both the SCAN and LINKED datasets
     dataset = CIFAR10(proportion=1)
     linked_dataset = LinkedDataset(dataset, num_links=5000)
-    cifar_dataloader = DataLoader(dataset, batch_size=2000, shuffle=False)
-    id_aug = Identity_Augmentation()
-    embeddings = []
-    net.eval()
-    with torch.no_grad():
-        for i, (X_batch, _) in enumerate(cifar_dataloader):
-            X_batch = X_batch.to(device)
-            embeddings_batch = net(id_aug(X_batch))
-            embeddings.append(embeddings_batch.cpu())
-        
-        embeddings = torch.cat(embeddings, dim=0)
-        if deterministic_neighbors == False:
+    if deterministic_neighbors == False:
+        cifar_dataloader = DataLoader(dataset, batch_size=2000, shuffle=False)
+        id_aug = Identity_Augmentation()
+        embeddings = []
+        net.eval()
+        with torch.no_grad():
+            for i, (X_batch, _) in enumerate(cifar_dataloader):
+                X_batch = X_batch.to(device)
+                embeddings_batch = net(id_aug(X_batch))
+                embeddings.append(embeddings_batch.cpu())
+            
+            embeddings = torch.cat(embeddings, dim=0)
             neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=20)
-        elif deterministic_neighbors == True:
-            neighbor_indices = deterministic_closest_indices(Ids=dataset.Ids, n_neighbors=20, n_correct=16)
+    elif deterministic_neighbors == True:
+        neighbor_indices = deterministic_closest_indices(Ids=dataset.Ids, n_neighbors=20, n_correct=16)
 
     scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
     scan_dataloader = DataLoader(scan_dataset, batch_size=1200, shuffle=True, num_workers=2)

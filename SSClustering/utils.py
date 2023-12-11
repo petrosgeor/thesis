@@ -190,6 +190,8 @@ def deterministic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_co
     n_samples = Ids.shape[0]
     n_false = n_neighbors - n_correct
     for i in range(0, n_samples):
+        if (i%10) == 0:
+            print(i)
         current_id = Ids[i]
         same_indices = torch.where(Ids == current_id)[0]
         same_indices = randomly_permute_tensor(same_indices)
