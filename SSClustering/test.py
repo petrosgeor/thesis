@@ -6,8 +6,11 @@ from sklearn.manifold import SpectralEmbedding
 
 
 
+mean = 35
+std = 10
 
-x = torch.tensor([1,2,3])
-y = torch.empty()
+
+x = np.floor(np.random.normal(mean, std, 1))
+
 
 

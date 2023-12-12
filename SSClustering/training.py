@@ -168,7 +168,8 @@ def create_SCAN_dl_LINKED_dl(net: Network, deterministic_neighbors = False) -> t
             embeddings = torch.cat(embeddings, dim=0)
             neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=20)
     elif deterministic_neighbors == True:
-        neighbor_indices = deterministic_closest_indices(Ids=dataset.Ids, n_neighbors=50, n_correct=35)
+        #neighbor_indices = deterministic_closest_indices(Ids=dataset.Ids, n_neighbors=50, n_correct=35)
+        neighbor_indices = probabilistic_closest_indices(Ids=dataset.Ids, n_neighbors=50, n_correct_mean=35)
 
     scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
     scan_dataloader = DataLoader(scan_dataset, batch_size=1200, shuffle=True, num_workers=2)
@@ -309,6 +310,6 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 run_pretraining_function()
-train_clustering_network(num_epochs=2000, consider_links=False)
+train_clustering_network(num_epochs=2000, consider_links=True)
 
 

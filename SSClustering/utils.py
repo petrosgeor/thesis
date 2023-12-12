@@ -210,6 +210,37 @@ def deterministic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_co
     indices = np.vstack(indices)
     return torch.from_numpy(indices)
     
+def probabilistic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_correct_mean: int = 16) -> torch.Tensor:
+    indices = []
+    n_samples = Ids.shape[0]
+    Ids_np = Ids.numpy()
+    unique_Ids = np.unique(Ids_np)
+    dictionary = {}
+    for i in range(unique_Ids.shape[0]):
+        x = unique_Ids[i]
+        dictionary[x] = np.where(Ids_np == i)[0]
+    
+    for i in range(0, n_samples):
+        current_id = Ids_np[i]
+        n_correct = int(np.clip(np.random.normal(n_correct_mean, 5, 1), a_min=0, a_max=n_neighbors))
+
+        n_false = n_neighbors - n_correct
+
+        correct_indices = np.random.choice(dictionary[current_id], size=n_correct, replace=False)
+        new_id = np.random.choice(range(unique_Ids.shape[0]))
+        while new_id == current_id:
+            new_id = np.random.choice(range(unique_Ids.shape[0]))
+        
+        false_indices = np.random.choice(dictionary[new_id], size=n_false, replace=False)
+        ii = np.hstack((correct_indices, false_indices))
+        indices.append(ii)
+    
+    indices = np.vstack(indices)
+    return torch.from_numpy(indices)
+
+
+random_tensor = torch.randint(0, 10, size=(10000,))
+indices = probabilistic_closest_indices(random_tensor)
 
 
 
