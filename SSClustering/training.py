@@ -54,7 +54,7 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
                     image_batch, related_images_batch, relations_batch = next(dataloader_iterator)
             #print(i)
             X = X.to(device)
-            z_i = net(augmentation(X))
+            z_i = net(id_augmentation(X))
             z_j = net(augmentation(X))
             loss1 = InfoNCE(z_i, z_j)
 
@@ -304,7 +304,7 @@ def run_pretraining_function():
         dataset = CIFAR10()
         linked_dataset = LinkedDataset(dataset, num_links=5000)
 
-        dataloader1 = DataLoader(dataset, batch_size=1500, shuffle=True)
+        dataloader1 = DataLoader(dataset, batch_size=2200, shuffle=True)
         dataloader2 = DataLoader(linked_dataset, batch_size=100)
         if consider_links == 'no':
             net = contrastive_training(dataloader1, dataloader2, num_epochs=500, consider_links=False, t_contrastive=0.2)
