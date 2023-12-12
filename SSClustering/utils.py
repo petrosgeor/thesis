@@ -5,7 +5,7 @@ import numpy as np
 from sklearn import metrics
 import matplotlib.pyplot as plt
 from torch.nn import functional as F
-from sklearn.manifold import TSNE
+from sklearn.manifold import TSNE, MDS
 from models import *
 
 device = 'cuda'
@@ -185,6 +185,12 @@ def randomly_permute_tensor(x: torch.Tensor):
     rand_indices = torch.randperm(n)
     return x[rand_indices]
 
+
+def MDS_closest_indices(embedding: torch.Tensor, n_neighbors: int = 20) -> torch.Tensor:
+    embeddings_np = embedding.numpy()
+    
+
+
 def deterministic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_correct: int = 16) -> torch.Tensor:
     indices = []
     n_samples = Ids.shape[0]
@@ -209,7 +215,9 @@ def deterministic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_co
         indices.append(ii)
     indices = np.vstack(indices)
     return torch.from_numpy(indices)
-    
+
+
+
 def probabilistic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_correct_mean: int = 16) -> torch.Tensor:
     indices = []
     n_samples = Ids.shape[0]
