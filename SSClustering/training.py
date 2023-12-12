@@ -169,7 +169,7 @@ def create_SCAN_dl_LINKED_dl(net: Network, deterministic_neighbors = False) -> t
             neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=20)
     elif deterministic_neighbors == True:
         #neighbor_indices = deterministic_closest_indices(Ids=dataset.Ids, n_neighbors=50, n_correct=35)
-        neighbor_indices = probabilistic_closest_indices(Ids=dataset.Ids, n_neighbors=50, n_correct_mean=35)
+        neighbor_indices = probabilistic_closest_indices(Ids=dataset.Ids, n_neighbors=20, n_correct_mean=12)
 
     scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
     scan_dataloader = DataLoader(scan_dataset, batch_size=1200, shuffle=True, num_workers=2)
@@ -190,7 +190,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     clusternet.to(device)
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
-    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, deterministic_neighbors=False)
+    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, deterministic_neighbors=True)
     n_neighbors = scan_dataloader.dataset.n_neighbors
     n_classes = (torch.unique(scan_dataloader.dataset.Ids)).numel()
     ####
