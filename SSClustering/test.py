@@ -3,7 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
 from sklearn.manifold import MDS
+from scipy.special import binom
 
+
+print(binom(4, 2))
 
 
 # mean = 35
@@ -33,7 +36,13 @@ from sklearn.manifold import MDS
 # plt.grid(True)
 # plt.show()
 
-x = np.random.randn(60000, 128)
-mds = MDS()
-mds.fit(x)
-print(mds.dissimilarity_matrix_.shape)
+# x = np.random.randn(60000, 128)
+# mds = MDS()
+# mds.fit(x)
+# print(mds.dissimilarity_matrix_.shape)
+
+
+
+x = torch.randint(0, 10, size=(100,))
+
+unique = torch.unique(x, return_counts=True)

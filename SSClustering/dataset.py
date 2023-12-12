@@ -7,6 +7,7 @@ from utils import *
 from models import *
 from augmentations import *
 import matplotlib.pyplot as plt
+from scipy.special import binom
 
 torch.manual_seed(42)
 random.seed(42)
@@ -178,6 +179,7 @@ class SCANdatasetWithNeighbors(Dataset):
         self.neighbor_indices = neighbor_indices
         self.n_neighbors = neighbor_indices.shape[1]
         self.same_Ids_list = self.find_percentage_of_consistency()      # used to find the percentage of neighbors that share the same Id
+        self.correct_links_list = self.find_correct_links_in_neighborhood()
 
     def __getitem__(self, item):
         '''
@@ -201,6 +203,21 @@ class SCANdatasetWithNeighbors(Dataset):
             same_Ids_list.append(same_Id)
         return same_Ids_list
 
+    def find_correct_links_in_neighborhood(self) -> list:
+        correct_links_list = []
+        total_links = binom(self.n_neighbors, 2)
+        for i in range(0, self.neighbor_indices.shape[0]):
+            correct_links = 0
+            neighbor_Ids = self.Ids[self.neighbor_indices[i, :]]
+            Ids_count = torch.unique(neighbor_Ids, return_counts=True)[1]
+
+            for j in range(0, Ids_count.shape[0]):
+                if Ids_count[j].item() == 1:
+                    continue
+                
+                correct_links += binom(Ids_count[j].item(), 2)
+            correct_links_list.append(correct_links/total_links)
+        return correct_links_list
 
 
 
