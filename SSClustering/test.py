@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
-from sklearn.manifold import MDS
+from sklearn.manifold import MDS, LocallyLinearEmbedding
 from scipy.special import binom
 
 
@@ -42,7 +42,9 @@ print(binom(4, 2))
 # print(mds.dissimilarity_matrix_.shape)
 
 
+x = np.random.randn(60000, 128)
+lle = LocallyLinearEmbedding()
+lle.fit(x)
 
-x = torch.randint(0, 10, size=(100,))
 
-unique = torch.unique(x, return_counts=True)
+

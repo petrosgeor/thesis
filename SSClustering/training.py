@@ -36,7 +36,7 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
     augmentation = SimCLRaugment()
     id_augmentation = Identity_Augmentation()
 
-    InfoNCE = losses.InfoNCELoss(temperature=0.5)
+    InfoNCE = losses.InfoNCELoss(temperature=t_contrastive)
     SoftPosLoss = SoftNNLossPos(temperature=0.5)
     SoftNegLoss = SoftNNLossNeg(temperature=0.5)
     SoftLoss = SoftNNLoss(temperature=0.5)
@@ -151,10 +151,11 @@ def VisualizedResNetBackBoneEmbeddings():
     VisualizeWithTSNE(resnet_embeddings=embeddings.numpy(), labels=labels.numpy())
 
 
-def create_SCAN_dl_LINKED_dl(net: Network, deterministic_neighbors = False) -> tuple:   # creates dataloaders for both the SCAN and LINKED datasets
+def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neighbors=20) -> tuple:   # creates dataloaders for both the SCAN and LINKED datasets
     dataset = CIFAR10(proportion=1)
     linked_dataset = LinkedDataset(dataset, num_links=5000)
-    if deterministic_neighbors == False:
+    assert (take_neighbors == 'neuralnet') | (take_neighbors == 'deterministic') | (take_neighbors == 'probabilistic')
+    if take_neighbors == 'neuralnet':
         cifar_dataloader = DataLoader(dataset, batch_size=2000, shuffle=False)
         id_aug = Identity_Augmentation()
         embeddings = []
@@ -166,10 +167,12 @@ def create_SCAN_dl_LINKED_dl(net: Network, deterministic_neighbors = False) -> t
                 embeddings.append(embeddings_batch.cpu())
             
             embeddings = torch.cat(embeddings, dim=0)
-            neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=20)
-    elif deterministic_neighbors == True:
+            neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=n_neighbors)
+    elif take_neighbors == 'probabilistic':
         #neighbor_indices = deterministic_closest_indices(Ids=dataset.Ids, n_neighbors=50, n_correct=35)
-        neighbor_indices = probabilistic_closest_indices(Ids=dataset.Ids, n_neighbors=20, n_correct_mean=8)
+        neighbor_indices = probabilistic_closest_indices(Ids=dataset.Ids, n_neighbors=n_neighbors, n_correct_mean=8)
+    elif take_neighbors == 'deterministic':
+        neighbor_indices = deterministic_closest_indices(Ids=dataset.Ids, n_neighbors=n_neighbors, n_correct=8)
 
     scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
     scan_dataloader = DataLoader(scan_dataset, batch_size=1200, shuffle=True, num_workers=2)
@@ -177,7 +180,7 @@ def create_SCAN_dl_LINKED_dl(net: Network, deterministic_neighbors = False) -> t
     return scan_dataloader, linked_dataloader
 
 
-def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bool = False):
+def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bool = False, n_neighbors=20):
     pretrained = input('which PRETRAINED model should i consider, the one with links or without? type links or no_links: ')
     assert (pretrained == 'links') | (pretrained == 'no_links'), 'please type links or no_links'
     resnet, hidden_dim = get_resnet('resnet18')
@@ -190,7 +193,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     clusternet.to(device)
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
-    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, deterministic_neighbors=False)
+    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, deterministic_neighbors=False, n_neighbors=n_neighbors)
     n_neighbors = scan_dataloader.dataset.n_neighbors
     n_classes = (torch.unique(scan_dataloader.dataset.Ids)).numel()
     ####
@@ -304,9 +307,9 @@ def run_pretraining_function():
         dataloader1 = DataLoader(dataset, batch_size=1500, shuffle=True)
         dataloader2 = DataLoader(linked_dataset, batch_size=100)
         if consider_links == 'no':
-            net = contrastive_training(dataloader1, dataloader2, num_epochs=300, consider_links=False)
+            net = contrastive_training(dataloader1, dataloader2, num_epochs=300, consider_links=False, t_contrastive=0.2)
         elif consider_links == 'yes':
-            net = contrastive_training(dataloader1, dataloader2, num_epochs=300, consider_links=True)
+            net = contrastive_training(dataloader1, dataloader2, num_epochs=300, consider_links=True, t_contrastive=0.2)
     else:
         return 'no pretraining will take place'
 
