@@ -33,6 +33,6 @@ from sklearn.manifold import MDS
 # plt.grid(True)
 # plt.show()
 
-x = np.random.randn(2000, 100)
+x = np.random.randn(60000, 128)
 mds = MDS()
 mds.fit(x)

@@ -239,8 +239,14 @@ def probabilistic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_co
     return torch.from_numpy(indices)
 
 
-random_tensor = torch.randint(0, 10, size=(10000,))
-indices = probabilistic_closest_indices(random_tensor)
+
+
+
+
+
+
+# random_tensor = torch.randint(0, 10, size=(10000,))
+# indices = probabilistic_closest_indices(random_tensor)
 
 
 
