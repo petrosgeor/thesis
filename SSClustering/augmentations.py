@@ -39,8 +39,8 @@ class SimCLRaugment:
         self.s = 1
         self.size = size
         self.color_jitter = v2.ColorJitter()
-        self.data_transforms = v2.Compose([#v2.RandomResizedCrop(size=size, antialias=True),
-                                           v2.Resize((32, 32), interpolation=Image.BICUBIC, antialias=True),
+        self.data_transforms = v2.Compose([v2.RandomResizedCrop(size=size, antialias=True),
+                                           #v2.Resize((32, 32), interpolation=Image.BICUBIC, antialias=True),
                                            v2.RandomHorizontalFlip(),
                                            v2.RandomApply([self.color_jitter], p=0.8),
                                            v2.RandomGrayscale(p=0.2),
