@@ -307,9 +307,9 @@ def run_pretraining_function():
         dataloader1 = DataLoader(dataset, batch_size=2200, shuffle=True)
         dataloader2 = DataLoader(linked_dataset, batch_size=100)
         if consider_links == 'no':
-            net = contrastive_training(dataloader1, dataloader2, num_epochs=500, consider_links=False, t_contrastive=0.2)
+            net = contrastive_training(dataloader1, dataloader2, num_epochs=500, consider_links=False, t_contrastive=0.7)
         elif consider_links == 'yes':
-            net = contrastive_training(dataloader1, dataloader2, num_epochs=500, consider_links=True, t_contrastive=0.2)
+            net = contrastive_training(dataloader1, dataloader2, num_epochs=500, consider_links=True, t_contrastive=0.7)
     else:
         return 'no pretraining will take place'
 
