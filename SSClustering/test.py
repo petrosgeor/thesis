@@ -36,3 +36,4 @@ from sklearn.manifold import MDS
 x = np.random.randn(60000, 128)
 mds = MDS()
 mds.fit(x)
+print(mds.dissimilarity_matrix_.shape)
