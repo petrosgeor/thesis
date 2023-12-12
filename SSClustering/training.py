@@ -264,7 +264,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
                 for i, (images_batch, labels_batch, _) in enumerate(scan_dataloader):
                     images_batch = id_aug(images_batch.to(device))
                     batch_probs = clusternet.forward_c(images_batch)
-                    indices_conf = torch.where(batch_probs >= 0.85)
+                    indices_conf = torch.where(batch_probs >= 0.95)
                     
                     true_labels_conf.append(labels_batch[indices_conf[0].cpu()])
                     predictions_conf.append(indices_conf[1].cpu())
@@ -309,6 +309,6 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 run_pretraining_function()
-train_clustering_network(num_epochs=2000, consider_links=True)
+train_clustering_network(num_epochs=2000, consider_links=False)
 
 
