@@ -153,7 +153,7 @@ def VisualizedResNetBackBoneEmbeddings():
 
 def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neighbors=20) -> tuple:   # creates dataloaders for both the SCAN and LINKED datasets
     dataset = CIFAR10(proportion=1)
-    linked_dataset = LinkedDataset(dataset, num_links=5000)
+    linked_dataset = LinkedDataset(dataset, num_links=20000)
     assert (take_neighbors == 'neuralnet') | (take_neighbors == 'neuralnet') | (take_neighbors == 'probabilistic')
     if take_neighbors == 'neuralnet':
         cifar_dataloader = DataLoader(dataset, batch_size=500, shuffle=False)######
@@ -201,7 +201,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     clusternet.to(device)
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
-    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='neuralnet', n_neighbors=n_neighbors)
+    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='probabilistic', n_neighbors=n_neighbors)
     n_neighbors = scan_dataloader.dataset.n_neighbors
     n_classes = (torch.unique(scan_dataloader.dataset.Ids)).numel()
     ####
@@ -266,7 +266,6 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
                     pass
             total_loss = loss1 + loss2 + 10*loss3
             total_loss.backward()
-            print(clusternet.cluster_projector[2].weight.grad)
             optimizer.step()
             optimizer.zero_grad()
 
