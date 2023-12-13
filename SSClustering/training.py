@@ -203,16 +203,15 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     clusternet.to(device)
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
-    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='probabilistic', n_neighbors=n_neighbors)
+    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='neuralnet', n_neighbors=n_neighbors)
     #return scan_dataloader
-    #n_neighbors = scan_dataloader.dataset.n_neighbors
     optimizer = optim.SGD(clusternet.parameters(), lr=10**(-2))
     ConsistencyLoss = losses.ClusterConsistencyLoss()
     kl_loss = losses.KLClusterDivergance()
 
-    # print('the mean of images with same neighbors is: ', np.mean(scan_dataloader.dataset.same_Ids_list))
-    # print('the variance of images with same neighbors is ', np.var(scan_dataloader.dataset.same_Ids_list))
-    # print('the mean of neighborhood consistecy links is: ', np.mean(scan_dataloader.dataset.correct_links_list))
+    print('the mean of images with same neighbors is: ', np.mean(scan_dataloader.dataset.same_Ids_list))
+    print('the variance of images with same neighbors is ', np.var(scan_dataloader.dataset.same_Ids_list))
+    print('the mean of neighborhood consistecy links is: ', np.mean(scan_dataloader.dataset.correct_links_list))
     clusternet.train()
     for epoch in range(0, num_epochs):
         if consider_links == True:
