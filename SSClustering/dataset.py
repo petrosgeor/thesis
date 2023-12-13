@@ -21,6 +21,27 @@ def plot_image_from_tensor(tensor):
     plt.axis('off')
     plt.show()
 
+def fill_A_matrix(A_matrix: torch.Tensor):
+    '''
+    if A[i,j] = 1 and A[j,k] = -1 then A[i, k] = -1 also
+    '''
+    n_samples = A_matrix.shape[0]
+    for i in range(0, n_samples):
+        y = torch.where(A_matrix[i, :] == 1)[0]
+        if y.numel() == 0:
+            continue
+
+        for j in range(0, y.shape[0]):
+            ii = y[j].item()
+            idx_minus = torch.where(A_matrix[ii,:] == -1)[0]
+            if idx_minus.numel() == 0:
+                continue
+            x = torch.full_like(idx_minus, fill_value=i)
+            A_matrix[x, idx_minus] = -1
+    return A_matrix
+
+
+
 def create_A_matrix(labels):
     size = labels.size(0)
     A_matrix = torch.zeros(size, size)
@@ -39,10 +60,11 @@ def create_A_matrix(labels):
 
     assert (torch.any(A_matrix != 0, dim=1)).all().item(), 'not all rows contain atleast one value which is not 0'
     assert (torch.any(A_matrix != 0, dim=0)).all().item(), 'not all columns contain atleast one value which is not 0'
+    A_matrix = fill_A_matrix(A_matrix)
     return A_matrix
 
 
-# labels = torch.tensor([1,2,3,4, 1, 1])
+# labels = torch.tensor([1,2,3,1, 1, 1, 1, 1, 3])
 # print(create_A_matrix(labels))
 
 def random_links2label(data:torch.Tensor, labels: torch.Tensor, num_links: int):
@@ -50,7 +72,7 @@ def random_links2label(data:torch.Tensor, labels: torch.Tensor, num_links: int):
     labels_subset = labels[indices]
     X_subset = data[indices]
     A_matrix = create_A_matrix(labels=labels_subset)
-    return X_subset, A_matrix, labels_subset
+    return X_subset, A_matrix, labels_subset, indices
 
 '''labels = torch.tensor([1,1,2,3,1])
 data = torch.randn((len(labels), 100))
@@ -100,7 +122,7 @@ class LinkedDataset(Dataset):
     contains the images that are Linked or can not link
     '''
     def __init__(self, cifardataset: CIFAR10, num_links: int = 1000):
-        self.data, self.A_matrix, self.labels_subset = random_links2label(cifardataset.data, cifardataset.Ids, num_links=num_links)
+        self.data, self.A_matrix, self.labels_subset, self.picked_indices = random_links2label(cifardataset.data, cifardataset.Ids, num_links=num_links)
         self.linked_indices = self.find_linked_indices()    # this list contains all the related images. e.g at [0] we have all the indices of A_matrix which are not 0
         self.related_images, self.relations, self.knowledge_list = self.organize_images()
         # find linked indices just as in SCAN
@@ -221,50 +243,50 @@ class SCANdatasetWithNeighbors(Dataset):
 
 
 
-
-# aug = SimCLRaugment()
-# id_aug = Identity_Augmentation()
-# dataset = CIFAR10(proportion=1)
-# x = aug(dataset.data[200])
-# y = id_aug(dataset.data[200])
-# plot_image_from_tensor(y)
-# plot_image_from_tensor(x)
-# n = dataset.__len__()
-# numbers = random.sample(range(n), int(n/6))
-# subset1 = Subset(dataset, indices=numbers)
-
-#linked_dataset = LinkedDataset(dataset, num_links=1000)
-# dataloader2 = DataLoader(linked_dataset, batch_size=100)
-
-# for i, (images1, images2, relations) in enumerate(dataloader2):
-#     print(images2.shape)
-
-# rows_with_1 = torch.where(torch.vstack(linked_dataset.relations) == 1)
-
-
-
-# plot_image_from_tensor(linked_dataset.data[15])
-# plot_image_from_tensor(linked_dataset.related_images[15][1])
-# print(linked_dataset.relations[15])
-
-
-
-
-# dataloader1 = DataLoader(dataset, batch_size=1000)
-# dataloader2 = DataLoader(linked_dataset, batch_size=100)
-# aug = SimCLRaugment()
-
-# num_epochs = 3
-# for epoch in range(num_epochs):
-#     dataloader_iterator = iter(dataloader2)
-#     for i, X in enumerate(dataloader1):
-#         try:
-#             image, related_images, relations = next(dataloader_iterator)
-#         except StopIteration:
-#             dataloader_iterator = iter(dataloader2)
-#             image, related_images, relations = next(dataloader_iterator)
-#             print(relations.shape)
+class ClearedSCANDataset(Dataset):
+    def __init__(self, data: torch.Tensor, Ids: torch.Tensor, neighbor_indices: torch.Tensor, 
+                 picked_indices: torch.Tensor, A_matrix: torch.Tensor):
+        '''
+        original_indices: the indices selected to get link. We will clean the neighbor_indices by using them
+        '''
+        self.data = data
+        self.Ids = Ids
+        self.picked_indices = picked_indices
+        self.neighbor_indices_cleaned = self.clean_neighbors(A_matrix, neighbor_indices)
     
+
+    def __getitem__(self, item):
+        image = self.data[item]
+        image_neighbor_indices = self.neighbor_indices_cleaned[item]
+        n_neighbors = image_neighbor_indices.numel()
+        random_index_index = torch.randint(0, n_neighbors, (1,)).item()
+        random_column = image_neighbor_indices[random_index_index]
+
+        neighbor_image = self.data[random_column]
+        return image, self.Ids[item], neighbor_image
+    
+    def __len__(self):
+        return self.Ids.shape[0]
+
+
+    def clean_neighbors(self, A_matrix, neighbor_indices):
+        d1 = {}
+        for i in range(0, self.picked_indices.shape[0]):
+            d1[self.picked_indices[i].item()] = i
+        #d2 = {v: k for k, v in d1.items()}
+
+        neighbor_indices_cleaned = []
+        for i in range(0, self.data.shape[0]):
+            neighbors = neighbor_indices[i, :].tolist()
+            if i in d1:
+                for j in neighbors:
+                    if j in d1:
+                        if A_matrix[d1[i],d1[j]] == -1:
+                            neighbors.remove(j)
+
+            neighbor_indices_cleaned.append(torch.tensor(neighbors))
+        return neighbor_indices_cleaned
+
 
 
 
