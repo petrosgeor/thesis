@@ -315,7 +315,7 @@ def run_pretraining_function():
 
 
 run_pretraining_function()
-train_clustering_network(num_epochs=100, t_contrastive=0.5,consider_links = True, n_neighbors=20)
+train_clustering_network(num_epochs=300, t_contrastive=0.5,consider_links = True, n_neighbors=20)
 
 
 
