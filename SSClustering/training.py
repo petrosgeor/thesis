@@ -169,8 +169,7 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
             embeddings = torch.cat(embeddings, dim=0)
             neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=n_neighbors)
     elif take_neighbors == 'probabilistic':
-        #neighbor_indices = deterministic_closest_indices(Ids=dataset.Ids, n_neighbors=50, n_correct=35)
-        neighbor_indices = probabilistic_closest_indices(Ids=dataset.Ids, n_neighbors=n_neighbors, n_correct_mean=8)
+        neighbor_indices = probabilistic_closest_indices(Ids=dataset.Ids, n_neighbors=n_neighbors, n_correct_mean=5)
     elif take_neighbors == 'deterministic':
         neighbor_indices = deterministic_closest_indices(Ids=dataset.Ids, n_neighbors=n_neighbors, n_correct=8)
 

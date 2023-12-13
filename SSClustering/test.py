@@ -6,7 +6,14 @@ from sklearn.manifold import MDS, LocallyLinearEmbedding
 from scipy.special import binom
 
 
-print(binom(4, 2))
+x = np.array([[1,2,3],
+              [10, 20, 30]])
+
+y = np.apply_along_axis(np.random.shuffle, 1, x)
+
+
+
+
 
 
 # mean = 35
@@ -42,9 +49,6 @@ print(binom(4, 2))
 # print(mds.dissimilarity_matrix_.shape)
 
 
-x = np.random.randn(60000, 128)
-lle = LocallyLinearEmbedding()
-lle.fit(x)
 
 
 
