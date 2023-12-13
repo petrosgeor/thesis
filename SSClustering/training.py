@@ -202,6 +202,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     kl_loss = losses.KLClusterDivergance()
 
     print('the mean of images with same neighbors is: ', np.mean(scan_dataloader.dataset.same_Ids_list))
+    print('the variance of images with same neighbors is ', np.var(scan_dataloader.dataset.same_Ids_list))
     print('the mean of neighborhood consistecy links is: ', np.mean(scan_dataloader.dataset.correct_links_list))
     clusternet.train()
     for epoch in range(0, num_epochs):
