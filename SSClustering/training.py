@@ -166,7 +166,6 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
             for i, (X_batch, Ids) in enumerate(cifar_dataloader):
                 X.append(X_batch)
                 labels.append(Ids)
-                labels.append
                 X_batch = X_batch.to(device)
                 embeddings_batch = net(id_aug(X_batch))
                 embeddings.append(embeddings_batch.cpu())
