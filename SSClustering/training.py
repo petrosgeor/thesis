@@ -204,7 +204,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     aug_clr = SimCLRaugment()
     scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='neuralnet', n_neighbors=n_neighbors)
     #return scan_dataloader
-    n_neighbors = scan_dataloader.dataset.n_neighbors
+    #n_neighbors = scan_dataloader.dataset.n_neighbors
     optimizer = optim.SGD(clusternet.parameters(), lr=10**(-2))
     ConsistencyLoss = losses.ClusterConsistencyLoss()
     kl_loss = losses.KLClusterDivergance()
