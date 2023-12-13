@@ -161,19 +161,29 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
         embeddings = []
         net.eval()
         with torch.no_grad():
-            for i, (X_batch, _) in enumerate(cifar_dataloader):
+            X = []
+            labels = []
+            for i, (X_batch, Ids) in enumerate(cifar_dataloader):
+                X.append(X_batch)
+                labels.append(Ids)
+                labels.append
                 X_batch = X_batch.to(device)
                 embeddings_batch = net(id_aug(X_batch))
                 embeddings.append(embeddings_batch.cpu())
             
             embeddings = torch.cat(embeddings, dim=0)
             neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=n_neighbors)
+            X = torch.cat(X, dim=0)
+            labels = torch.cat(labels, dim=0)
+            scan_dataset = SCANdatasetWithNeighbors(data=X, Ids=labels, neighbor_indices=neighbor_indices)
     elif take_neighbors == 'probabilistic':
         neighbor_indices = probabilistic_closest_indices(Ids=dataset.Ids, n_neighbors=n_neighbors, n_correct_mean=5)
+        scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
     elif take_neighbors == 'deterministic':
         neighbor_indices = deterministic_closest_indices(Ids=dataset.Ids, n_neighbors=n_neighbors, n_correct=8)
+        scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
 
-    scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
+    #scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
     scan_dataloader = DataLoader(scan_dataset, batch_size=1200, shuffle=True, num_workers=2)
     linked_dataloader = DataLoader(linked_dataset, batch_size=256, shuffle=True, num_workers=2)
     return scan_dataloader, linked_dataloader

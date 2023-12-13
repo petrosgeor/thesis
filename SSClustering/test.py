@@ -6,11 +6,10 @@ from sklearn.manifold import MDS, LocallyLinearEmbedding
 from scipy.special import binom
 
 
-x = np.array([1,2,3,4])
-y = np.random.permutation(x)
+x = torch.tensor([[1,2,3,4,-1], 
+                  [-1,-2,-3,-4,1]])
 
-
-
+print(torch.topk(x, k=3, dim=1)[1])
 
 
 
