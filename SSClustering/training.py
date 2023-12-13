@@ -166,7 +166,8 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
                 X.append(X_batch)
                 labels.append(Ids)
                 X_batch = X_batch.to(device)
-                embeddings_batch = net(id_aug(X_batch))
+                #embeddings_batch = net(id_aug(X_batch))
+                embeddings_batch = net.forward_r(id_aug(X_batch))
                 embeddings.append(embeddings_batch.cpu())
             
             embeddings = torch.cat(embeddings, dim=0)
