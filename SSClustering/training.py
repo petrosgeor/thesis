@@ -159,7 +159,6 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
         cifar_dataloader = DataLoader(dataset, batch_size=500, shuffle=False)######
         id_aug = Identity_Augmentation()
         embeddings = []
-        net.eval()
         with torch.no_grad():
             X = []
             labels = []
@@ -202,6 +201,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
     scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='neuralnet', n_neighbors=n_neighbors)
+    #return scan_dataloader
     n_neighbors = scan_dataloader.dataset.n_neighbors
     n_classes = (torch.unique(scan_dataloader.dataset.Ids)).numel()
     ####
@@ -315,19 +315,24 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 
-#run_pretraining_function()
+run_pretraining_function()
 train_clustering_network(num_epochs=100, t_contrastive=0.5,consider_links = True, n_neighbors=20)
+
+
+
 # scan_dataloader = train_clustering_network(num_epochs=2000, consider_links=True)
 # neighbor_indices = scan_dataloader.dataset.neighbor_indices
 # Ids = scan_dataloader.dataset.Ids
-# n = 0
+# correct = []
 # for i in range(0, Ids.shape[0]):
 #     current_id = Ids[i]
 #     x = torch.where(Ids[neighbor_indices[i,:]] == current_id)[0].numel()
-#     if x < 5:
-#         n += 1
-#     else:
-#         continue
+#     correct.append(x)
+
+
+
+
+
 
 
 
