@@ -323,7 +323,8 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 
-run_pretraining_function()
+#run_pretraining_function()
+train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links = True, n_neighbors=20)
 # scan_dataloader = train_clustering_network(num_epochs=2000, consider_links=True)
 # neighbor_indices = scan_dataloader.dataset.neighbor_indices
 # Ids = scan_dataloader.dataset.Ids
