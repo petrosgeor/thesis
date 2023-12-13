@@ -324,7 +324,7 @@ def run_pretraining_function():
 
 
 #run_pretraining_function()
-train_clustering_network(num_epochs=100, t_contrastive=0.5,consider_links = False, n_neighbors=20)
+train_clustering_network(num_epochs=100, t_contrastive=0.5,consider_links = True, n_neighbors=20)
 # scan_dataloader = train_clustering_network(num_epochs=2000, consider_links=True)
 # neighbor_indices = scan_dataloader.dataset.neighbor_indices
 # Ids = scan_dataloader.dataset.Ids
