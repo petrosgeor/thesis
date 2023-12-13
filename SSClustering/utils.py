@@ -185,9 +185,6 @@ def randomly_permute_tensor(x: torch.Tensor):
     rand_indices = torch.randperm(n)
     return x[rand_indices]
 
-
-def MDS_closest_indices(embedding: torch.Tensor, n_neighbors: int = 20) -> torch.Tensor:
-    embeddings_np = embedding.numpy()
     
 
 
