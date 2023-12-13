@@ -153,7 +153,7 @@ def VisualizedResNetBackBoneEmbeddings():
 
 def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neighbors=20) -> tuple:   # creates dataloaders for both the SCAN and LINKED datasets
     dataset = CIFAR10(proportion=1)
-    linked_dataset = LinkedDataset(dataset, num_links=20000)
+    linked_dataset = LinkedDataset(dataset, num_links=5000)
     assert (take_neighbors == 'neuralnet') | (take_neighbors == 'neuralnet') | (take_neighbors == 'probabilistic')
     if take_neighbors == 'neuralnet':
         cifar_dataloader = DataLoader(dataset, batch_size=500, shuffle=False)######
