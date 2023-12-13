@@ -266,6 +266,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
                     pass
             total_loss = loss1 + loss2 + 10*loss3
             total_loss.backward()
+            print(clusternet.cluster_projector[2].weight.grad)
             optimizer.step()
             optimizer.zero_grad()
 

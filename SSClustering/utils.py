@@ -246,7 +246,7 @@ def probabilistic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_co
     indices = np.vstack(indices)
     for i in range(0, n_samples):
         indices[i, :] = np.random.permutation(indices[i, :])
-    return torch.from_numpy(indices)
+    return torch.from_numpy(indices), dictionary
 
 
 
@@ -256,7 +256,9 @@ def probabilistic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_co
 
 
 # random_tensor = torch.randint(0, 10, size=(10000,))
-# indices = probabilistic_closest_indices(random_tensor)
-
+# indices, d = probabilistic_closest_indices(random_tensor)
+# row = indices[0, :]
+# print(random_tensor[0])
+# print(random_tensor[row])
 
 
