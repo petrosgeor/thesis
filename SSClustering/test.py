@@ -6,10 +6,9 @@ from sklearn.manifold import MDS, LocallyLinearEmbedding
 from scipy.special import binom
 
 
-x = np.array([[1,2,3],
-              [10, 20, 30]])
+x = np.array([1,2,3,4])
+y = np.random.permutation(x)
 
-y = np.apply_along_axis(np.random.shuffle, 1, x)
 
 
 

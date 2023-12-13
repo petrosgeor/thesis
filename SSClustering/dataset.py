@@ -222,8 +222,13 @@ class SCANdatasetWithNeighbors(Dataset):
 
 
 
-
-#dataset = CIFAR10(proportion=1)
+# aug = SimCLRaugment()
+# id_aug = Identity_Augmentation()
+# dataset = CIFAR10(proportion=1)
+# x = aug(dataset.data[200])
+# y = id_aug(dataset.data[200])
+# plot_image_from_tensor(y)
+# plot_image_from_tensor(x)
 # n = dataset.__len__()
 # numbers = random.sample(range(n), int(n/6))
 # subset1 = Subset(dataset, indices=numbers)

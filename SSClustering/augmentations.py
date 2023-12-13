@@ -45,7 +45,9 @@ class SimCLRaugment:
                                            v2.RandomApply([self.color_jitter], p=0.8),
                                            v2.RandomGrayscale(p=0.2),
                                            v2.ToImage(),
-                                           v2.ToDtype(torch.float32, scale=True)])
+                                           v2.ToDtype(torch.float32, scale=True)
+                                           ]
+                                           )
     
     def __call__(self, x):
         return self.data_transforms(x)
