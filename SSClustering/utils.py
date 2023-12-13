@@ -230,7 +230,7 @@ def probabilistic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_co
     
     for i in range(0, n_samples):
         current_id = Ids_np[i]
-        n_correct = int(np.clip(np.random.normal(n_correct_mean, 5, 1), a_min=0, a_max=n_neighbors))
+        n_correct = int(np.clip(np.random.normal(n_correct_mean, 6, 1), a_min=0, a_max=n_neighbors))
 
         n_false = n_neighbors - n_correct
 

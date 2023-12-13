@@ -154,9 +154,9 @@ def VisualizedResNetBackBoneEmbeddings():
 def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neighbors=20) -> tuple:   # creates dataloaders for both the SCAN and LINKED datasets
     dataset = CIFAR10(proportion=1)
     linked_dataset = LinkedDataset(dataset, num_links=5000)
-    assert (take_neighbors == 'neuralnet') | (take_neighbors == 'deterministic') | (take_neighbors == 'probabilistic')
+    assert (take_neighbors == 'neuralnet') | (take_neighbors == 'neuralnet') | (take_neighbors == 'probabilistic')
     if take_neighbors == 'neuralnet':
-        cifar_dataloader = DataLoader(dataset, batch_size=2000, shuffle=False)
+        cifar_dataloader = DataLoader(dataset, batch_size=500, shuffle=False)######
         id_aug = Identity_Augmentation()
         embeddings = []
         net.eval()
@@ -176,10 +176,10 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
             labels = torch.cat(labels, dim=0)
             scan_dataset = SCANdatasetWithNeighbors(data=X, Ids=labels, neighbor_indices=neighbor_indices)
     elif take_neighbors == 'probabilistic':
-        neighbor_indices = probabilistic_closest_indices(Ids=dataset.Ids, n_neighbors=n_neighbors, n_correct_mean=5)
+        neighbor_indices = probabilistic_closest_indices(Ids=dataset.Ids, n_neighbors=n_neighbors, n_correct_mean=8.45)
         scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
     elif take_neighbors == 'deterministic':
-        neighbor_indices = deterministic_closest_indices(Ids=dataset.Ids, n_neighbors=n_neighbors, n_correct=8)
+        neighbor_indices = deterministic_closest_indices(Ids=dataset.Ids, n_neighbors=n_neighbors, n_correct=8.45)
         scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
 
     #scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
@@ -201,7 +201,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     clusternet.to(device)
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
-    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='neuralnet', n_neighbors=n_neighbors)
+    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='probabilistic', n_neighbors=n_neighbors)
     n_neighbors = scan_dataloader.dataset.n_neighbors
     n_classes = (torch.unique(scan_dataloader.dataset.Ids)).numel()
     ####
@@ -322,7 +322,24 @@ def run_pretraining_function():
     else:
         return 'no pretraining will take place'
 
+
 run_pretraining_function()
-train_clustering_network(num_epochs=2000, consider_links=True)
+# scan_dataloader = train_clustering_network(num_epochs=2000, consider_links=True)
+# neighbor_indices = scan_dataloader.dataset.neighbor_indices
+# Ids = scan_dataloader.dataset.Ids
+# n = 0
+# for i in range(0, Ids.shape[0]):
+#     current_id = Ids[i]
+#     x = torch.where(Ids[neighbor_indices[i,:]] == current_id)[0].numel()
+#     if x < 5:
+#         n += 1
+#     else:
+#         continue
+
+
+
+
+
+
 
 
