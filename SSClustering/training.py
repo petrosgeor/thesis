@@ -182,7 +182,7 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
         scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
 
     #scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
-    scan_dataloader = DataLoader(scan_dataset, batch_size=512, shuffle=True, num_workers=2)
+    scan_dataloader = DataLoader(scan_dataset, batch_size=2220, shuffle=True, num_workers=2)
     linked_dataloader = DataLoader(linked_dataset, batch_size=512, shuffle=True, num_workers=2)
     return scan_dataloader, linked_dataloader
 
@@ -257,9 +257,8 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
             loss3 = kl_loss.forward(probs=probs)
             total_loss = loss1 + loss2 + 10*loss3
             total_loss.backward()
-            if (i+1)%5 == 0:
-                optimizer.step()
-                optimizer.zero_grad()
+            optimizer.step()
+            optimizer.zero_grad()
 
         if (epoch + 1)%10 == 0:
             true_labels = []
@@ -320,7 +319,9 @@ train_clustering_network(num_epochs=100, t_contrastive=0.5,consider_links = True
 
 
 
-# scan_dataloader = train_clustering_network(num_epochs=2000, consider_links=True)
+# scan_dataloader = train_clustering_network(num_epochs=2000, consider_links=True, n_neighbors=50)
+# a = scan_dataloader.dataset.correct_links_list
+# print(np.mean(a))
 # neighbor_indices = scan_dataloader.dataset.neighbor_indices
 # Ids = scan_dataloader.dataset.Ids
 # correct = []
