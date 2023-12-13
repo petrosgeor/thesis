@@ -183,7 +183,7 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
 
     #scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
     scan_dataloader = DataLoader(scan_dataset, batch_size=1500, shuffle=True, num_workers=2)
-    linked_dataloader = DataLoader(linked_dataset, batch_size=512, shuffle=True, num_workers=2)
+    linked_dataloader = DataLoader(linked_dataset, batch_size=256, shuffle=True, num_workers=2)
     return scan_dataloader, linked_dataloader
 
 
