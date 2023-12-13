@@ -304,7 +304,7 @@ def run_pretraining_function():
         dataset = CIFAR10()
         linked_dataset = LinkedDataset(dataset, num_links=5000)
 
-        dataloader1 = DataLoader(dataset, batch_size=2200, shuffle=True)
+        dataloader1 = DataLoader(dataset, batch_size=512, shuffle=True)
         dataloader2 = DataLoader(linked_dataset, batch_size=100)
         if consider_links == 'no':
             net = contrastive_training(dataloader1, dataloader2, num_epochs=500, consider_links=False, t_contrastive=0.7)
@@ -314,6 +314,6 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 run_pretraining_function()
-train_clustering_network(num_epochs=2000, consider_links=True)
+#train_clustering_network(num_epochs=2000, consider_links=True)
 
 
