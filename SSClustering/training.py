@@ -193,7 +193,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     clusternet.to(device)
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
-    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, deterministic_neighbors=False, n_neighbors=n_neighbors)
+    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='neuralnet', n_neighbors=n_neighbors)
     n_neighbors = scan_dataloader.dataset.n_neighbors
     n_classes = (torch.unique(scan_dataloader.dataset.Ids)).numel()
     ####
