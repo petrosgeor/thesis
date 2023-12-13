@@ -173,9 +173,9 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
             neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=n_neighbors)
             X = torch.cat(X, dim=0)
             labels = torch.cat(labels, dim=0)
-            #scan_dataset = SCANdatasetWithNeighbors(data=X, Ids=labels, neighbor_indices=neighbor_indices)
-            scan_dataset = ClearedSCANDataset(data=X, Ids=labels, neighbor_indices=neighbor_indices, 
-                                              picked_indices=linked_dataset.picked_indices,A_matrix=linked_dataset.A_matrix)
+            scan_dataset = SCANdatasetWithNeighbors(data=X, Ids=labels, neighbor_indices=neighbor_indices)
+            #scan_dataset = ClearedSCANDataset(data=X, Ids=labels, neighbor_indices=neighbor_indices, 
+                                              #picked_indices=linked_dataset.picked_indices,A_matrix=linked_dataset.A_matrix)
     elif take_neighbors == 'probabilistic':
         neighbor_indices = probabilistic_closest_indices(Ids=dataset.Ids, n_neighbors=n_neighbors, n_correct_mean=8.45)
         scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
@@ -202,7 +202,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     clusternet.to(device)
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
-    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='neuralnet', n_neighbors=n_neighbors)
+    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='probabilistic', n_neighbors=n_neighbors)
     #return scan_dataloader
     #n_neighbors = scan_dataloader.dataset.n_neighbors
     optimizer = optim.SGD(clusternet.parameters(), lr=10**(-2))
