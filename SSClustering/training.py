@@ -315,10 +315,9 @@ neighbors = scan_dataloader.dataset.neighbor_indices
 class_correct = []
 for i in range(0, 10):
     current_indices = torch.where(Ids == i)[0]
-    print(current_indices.shape)
     i_class_current = []
     for j in current_indices:
-        i_class_current.append(torch.where(neighbors[j.item(),:] == i)[0].numel())
+        i_class_current.append(Ids[torch.where(neighbors[j.item(),:] == i)[0]].numel())
     class_correct.append(np.mean(i_class_current))
 
 
