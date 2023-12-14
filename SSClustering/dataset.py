@@ -9,9 +9,9 @@ from augmentations import *
 import matplotlib.pyplot as plt
 from scipy.special import binom
 
-torch.manual_seed(42)
-random.seed(42)
-np.random.seed(42)
+# torch.manual_seed(42)
+# random.seed(42)
+# np.random.seed(42)
 
 def plot_image_from_tensor(tensor):
     numpy_image = (tensor.permute(1,2,0).numpy()).astype(np.int32)
@@ -288,9 +288,11 @@ class ClearedSCANDataset(Dataset):
         return neighbor_indices_cleaned
 
 
+# dataset = CIFAR10()
+# linked_dataset = LinkedDataset(dataset)
 
 
-
+# image, related_image, relation = linked_dataset.__getitem__(500)
 
 
 

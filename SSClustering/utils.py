@@ -24,13 +24,6 @@ def find_environment() -> str:
     return path
 
 
-
-
-
-
-
-
-
 class SoftNNLossNeg(nn.Module):     # Use if an image has only negatives in the A_matrix
     def __init__(self, temperature: float, w: float = 2) -> None:
         super(SoftNNLossNeg, self).__init__()
