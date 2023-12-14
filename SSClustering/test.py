@@ -6,10 +6,11 @@ from sklearn.manifold import MDS, LocallyLinearEmbedding
 from scipy.special import binom
 
 
-x = torch.tensor([[1,2,3,4,-1], 
-                  [-1,-2,-3,-4,1]])
+torch.manual_seed(42)
 
-print(torch.topk(x, k=3, dim=1)[1])
+def give_random():
+    x = torch.randint(0, 10, size=(1,))
+    return x
 
 
 
