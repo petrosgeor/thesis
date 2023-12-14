@@ -196,8 +196,8 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     clusternet.to(device)
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
-    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='neuralnet', n_neighbors=n_neighbors)
-    return scan_dataloader
+    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='probabilistic', n_neighbors=n_neighbors)
+    #return scan_dataloader
     optimizer = optim.SGD(clusternet.parameters(), lr=10**(-2))
     ConsistencyLoss = losses.ClusterConsistencyLoss()
     kl_loss = losses.KLClusterDivergance()
@@ -306,8 +306,11 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 
-# run_pretraining_function()
-# train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = False, n_neighbors=20)
+run_pretraining_function()
+train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = True, n_neighbors=20)
+
+
+
 
 # scan_dataloader = train_clustering_network(consider_links=True, n_neighbors=20)
 # Ids = scan_dataloader.dataset.Ids
@@ -324,16 +327,16 @@ def run_pretraining_function():
 # print(class_correct)
 
 
-scan_dataloader = train_clustering_network(num_epochs=2000, consider_links=True, n_neighbors=50)
-a = scan_dataloader.dataset.correct_links_list
-print(np.mean(a))
-neighbor_indices = scan_dataloader.dataset.neighbor_indices
-Ids = scan_dataloader.dataset.Ids
-correct = []
-for i in range(0, Ids.shape[0]):
-    current_id = Ids[i]
-    x = torch.where(Ids[neighbor_indices[i,:]] == current_id)[0].numel()
-    correct.append(x)
+# scan_dataloader = train_clustering_network(num_epochs=2000, consider_links=True, n_neighbors=50)
+# a = scan_dataloader.dataset.correct_links_list
+# print(np.mean(a))
+# neighbor_indices = scan_dataloader.dataset.neighbor_indices
+# Ids = scan_dataloader.dataset.Ids
+# correct = []
+# for i in range(0, Ids.shape[0]):
+#     current_id = Ids[i]
+#     x = torch.where(Ids[neighbor_indices[i,:]] == current_id)[0].numel()
+#     correct.append(x)
 
 
 

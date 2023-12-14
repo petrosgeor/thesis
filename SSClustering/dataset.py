@@ -60,7 +60,7 @@ def create_A_matrix(labels):
 
     assert (torch.any(A_matrix != 0, dim=1)).all().item(), 'not all rows contain atleast one value which is not 0'
     assert (torch.any(A_matrix != 0, dim=0)).all().item(), 'not all columns contain atleast one value which is not 0'
-    A_matrix = fill_A_matrix(A_matrix)
+    #A_matrix = fill_A_matrix(A_matrix)
     return A_matrix
 
 
