@@ -44,9 +44,6 @@ class ClusterDataset(Dataset):
         self.indices = self.find_nearest_embeddings()
 
     def find_nearest_embeddings(self):
-        # nbrs = NearestNeighbors(n_neighbors=self.n_neighbors).fit(self.embeddings)
-        # _, indices = nbrs.kneighbors(self.embeddings)
-        # return indices
         distances = torch.matmul(self.embeddings, self.embeddings.T)
         indices = torch.topk(distances, k=self.n_neighbors, dim=1)[1]
         return indices
@@ -89,12 +86,10 @@ def train_cluster_head(embeddings: np.ndarray, labels: np.ndarray, n_neighbors: 
     dataset = ClusterDataset(embeddings=embeddings, labels=labels, n_neighbors=n_neighbors) 
     dataloader = DataLoader(dataset, batch_size=2000, shuffle=True)
     num_classes = len(np.unique(labels))
-    #print('1')
     ClusterNet = ClusterHead(n_features_in=dataset.n_features).to(device)
     ClusterNet.float()
     constistency_criterion = ClusterConsistencyLoss()
     optimizer = optim.Adam(ClusterNet.parameters(), lr=10**(-4), weight_decay=10**(-4))
-    #entropy_criterion = ClusterEntropyLoss()
     kl_criterion = KLClusterDivergance()
     for epoch in range(0, 50):
         for i, (embeddings, neighbor_embeddings, _) in enumerate(dataloader):

@@ -160,11 +160,7 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
         id_aug = Identity_Augmentation()
         embeddings = []
         with torch.no_grad():
-            X = []
-            labels = []
             for i, (X_batch, Ids) in enumerate(cifar_dataloader):
-                X.append(X_batch)
-                labels.append(Ids)
                 X_batch = X_batch.to(device)
                 #embeddings_batch = net(id_aug(X_batch))
                 embeddings_batch = net.forward_r(id_aug(X_batch))
@@ -172,9 +168,7 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
             
             embeddings = torch.cat(embeddings, dim=0)
             neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=n_neighbors)
-            X = torch.cat(X, dim=0)
-            labels = torch.cat(labels, dim=0)
-            scan_dataset = SCANdatasetWithNeighbors(data=X, Ids=labels, neighbor_indices=neighbor_indices)
+            scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
             #scan_dataset = ClearedSCANDataset(data=X, Ids=labels, neighbor_indices=neighbor_indices, 
                                               #picked_indices=linked_dataset.picked_indices,A_matrix=linked_dataset.A_matrix)
     elif take_neighbors == 'probabilistic':
@@ -203,8 +197,8 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     clusternet.to(device)
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
-    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='probabilistic', n_neighbors=n_neighbors)
-    #return scan_dataloader
+    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='neuralnet', n_neighbors=n_neighbors)
+    return scan_dataloader
     optimizer = optim.SGD(clusternet.parameters(), lr=10**(-2))
     ConsistencyLoss = losses.ClusterConsistencyLoss()
     kl_loss = losses.KLClusterDivergance()
@@ -313,8 +307,20 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 
-run_pretraining_function()
-train_clustering_network(num_epochs=300, t_contrastive=0.5,consider_links = True, n_neighbors=20)
+# run_pretraining_function()
+# train_clustering_network(num_epochs=300, t_contrastive=0.5,consider_links = True, n_neighbors=20)
+
+scan_dataloader = train_clustering_network(consider_links=True, n_neighbors=20)
+Ids = scan_dataloader.dataset.Ids
+neighbors = scan_dataloader.dataset.neighbor_indices
+class_correct = []
+for i in range(0, 10):
+    current_indices = torch.where(Ids == i)[0]
+    i_class_current = []
+    for j in current_indices:
+        i_class_current.append(torch.where(neighbors[j.item(),:] == i)[0].numel())
+    class_correct.append(np.mean(i_class_current))
+
 
 
 
