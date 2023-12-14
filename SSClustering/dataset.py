@@ -124,7 +124,7 @@ class LinkedDataset(Dataset):
     def __init__(self, cifardataset: CIFAR10, num_links: int = 1000):
         self.data, self.A_matrix, self.labels_subset, self.picked_indices = random_links2label(cifardataset.data, cifardataset.Ids, num_links=num_links)
         self.linked_indices = self.find_linked_indices()    # this list contains all the related images. e.g at [0] we have all the indices of A_matrix which are not 0
-        self.related_images, self.relations, self.knowledge_list = self.organize_images()
+        #self.related_images, self.relations, self.knowledge_list = self.organize_images()
         # find linked indices just as in SCAN
 
     def __getitem__(self, item):
@@ -240,6 +240,17 @@ class SCANdatasetWithNeighbors(Dataset):
                 correct_links += binom(Ids_count[j].item(), 2)
             correct_links_list.append(correct_links/total_links)
         return correct_links_list
+
+
+
+
+
+
+
+
+
+
+
 
 
 
