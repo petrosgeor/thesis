@@ -16,8 +16,7 @@ device = 'cuda'
 
 # Set the CUDA_VISIBLE_DEVICES environment variable to the desired GPU ID
 gpu_id = input("Enter the GPU ID to be used (e.g., 0, 1, 2, ...): ")
-run_pretraining = input("do you want to run the pretraining step? ")
-assert (run_pretraining == 'yes') | (run_pretraining == 'no'), 'the answer must be yes or no'
+# 
 
 os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
 
@@ -183,8 +182,10 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
     return scan_dataloader, linked_dataloader
 
 
-def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bool = False, n_neighbors=20):
-    pretrained = input('which PRETRAINED model should i consider, the one with links or without? type links or no_links: ')
+def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bool = False, n_neighbors=20, testing=False, take_neighbors='neuralnet'):
+    #pretrained = input('which PRETRAINED model should i consider, the one with links or without? type links or no_links: ')
+    pretrained = 'no_links'
+    assert (take_neighbors == 'neuralnet') | (take_neighbors == 'probabilistic'), 'take_neighbors must be neuralnet or probabilistic'
     assert (pretrained == 'links') | (pretrained == 'no_links'), 'please type links or no_links'
     resnet, hidden_dim = get_resnet('resnet18')
     clusternet = Network(resnet=resnet, hidden_dim=hidden_dim, feature_dim=128, class_num=10)
@@ -196,8 +197,9 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     clusternet.to(device)
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
-    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='neuralnet', n_neighbors=n_neighbors)
-    return scan_dataloader
+    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors=take_neighbors, n_neighbors=n_neighbors)
+    if testing == True:
+        return scan_dataloader
     optimizer = optim.SGD(clusternet.parameters(), lr=10**(-2))
     ConsistencyLoss = losses.ClusterConsistencyLoss()
     kl_loss = losses.KLClusterDivergance()
@@ -290,6 +292,8 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
 
 
 def run_pretraining_function():
+    run_pretraining = input("do you want to run the pretraining step? ")
+    assert (run_pretraining == 'yes') | (run_pretraining == 'no'), 'the answer must be yes or no'
     if run_pretraining == 'yes':
         consider_links = input('do you want to consider any links?')
         assert (consider_links == 'yes') | (consider_links == 'no'), 'the answer must be yes or no'
@@ -306,25 +310,23 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 
-# run_pretraining_function()
-# train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = False, n_neighbors=20)
+#run_pretraining_function()
 
 
-
-
-scan_dataloader = train_clustering_network(consider_links=True, n_neighbors=20)
+scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = False, n_neighbors=20,
+                                           testing=True, take_neighbors='neuralnet')
 Ids = scan_dataloader.dataset.Ids
-# neighbors = scan_dataloader.dataset.neighbor_indices
-# class_correct = []
-# for i in range(0, 10):
-#     current_indices = torch.where(Ids == i)[0]
-#     i_class_current = []
-#     for j in current_indices:
-#         current_neighbor_indices = neighbors[j.item(), :]
-#         i_class_current.append(torch.where(Ids[current_neighbor_indices] == i)[0].numel())
-#     class_correct.append(np.mean(i_class_current))
+neighbors = scan_dataloader.dataset.neighbor_indices
+class_correct = []
+for i in range(0, 10):
+    current_indices = torch.where(Ids == i)[0]
+    i_class_current = []
+    for j in current_indices:
+        current_neighbor_indices = neighbors[j.item(), :]
+        i_class_current.append(torch.where(Ids[current_neighbor_indices] == i)[0].numel())
+    class_correct.append(np.mean(i_class_current))
 
-# print(class_correct)
+print(class_correct)
 
 
 # scan_dataloader = train_clustering_network(num_epochs=2000, consider_links=True, n_neighbors=50)
