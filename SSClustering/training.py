@@ -306,8 +306,8 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 
-run_pretraining_function()
-train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = False, n_neighbors=20)
+# run_pretraining_function()
+# train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = False, n_neighbors=20)
 
 
 
