@@ -162,7 +162,6 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
         with torch.no_grad():
             for i, (X_batch, Ids) in enumerate(cifar_dataloader):
                 X_batch = X_batch.to(device)
-                #embeddings_batch = net(id_aug(X_batch))
                 embeddings_batch = net.forward_r(id_aug(X_batch))
                 embeddings.append(embeddings_batch.cpu())
             
@@ -197,8 +196,8 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     clusternet.to(device)
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
-    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='neuralnet', n_neighbors=n_neighbors)
-    return scan_dataloader
+    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='probabilistic', n_neighbors=n_neighbors)
+    #return scan_dataloader
     optimizer = optim.SGD(clusternet.parameters(), lr=10**(-2))
     ConsistencyLoss = losses.ClusterConsistencyLoss()
     kl_loss = losses.KLClusterDivergance()
@@ -307,20 +306,20 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 
-# run_pretraining_function()
-# train_clustering_network(num_epochs=300, t_contrastive=0.5,consider_links = True, n_neighbors=20)
+run_pretraining_function()
+train_clustering_network(num_epochs=300, t_contrastive=0.5,consider_links = True, n_neighbors=20)
 
-scan_dataloader = train_clustering_network(consider_links=True, n_neighbors=20)
-Ids = scan_dataloader.dataset.Ids
-neighbors = scan_dataloader.dataset.neighbor_indices
-class_correct = []
-for i in range(0, 10):
-    current_indices = torch.where(Ids == i)[0]
-    print(current_indices.shape)
-    i_class_current = []
-    for j in current_indices:
-        i_class_current.append(torch.where(neighbors[j.item(),:] == i)[0].numel())
-    class_correct.append(np.mean(i_class_current))
+# scan_dataloader = train_clustering_network(consider_links=True, n_neighbors=20)
+# Ids = scan_dataloader.dataset.Ids
+# neighbors = scan_dataloader.dataset.neighbor_indices
+# class_correct = []
+# for i in range(0, 10):
+#     current_indices = torch.where(Ids == i)[0]
+#     print(current_indices.shape)
+#     i_class_current = []
+#     for j in current_indices:
+#         i_class_current.append(torch.where(neighbors[j.item(),:] == i)[0].numel())
+#     class_correct.append(np.mean(i_class_current))
 
 
 
