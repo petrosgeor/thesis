@@ -309,31 +309,31 @@ def run_pretraining_function():
 # run_pretraining_function()
 # train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = False, n_neighbors=20)
 
-scan_dataloader = train_clustering_network(consider_links=True, n_neighbors=20)
-Ids = scan_dataloader.dataset.Ids
-neighbors = scan_dataloader.dataset.neighbor_indices
-class_correct = []
-for i in range(0, 10):
-    current_indices = torch.where(Ids == i)[0]
-    i_class_current = []
-    for j in current_indices:
-        current_neighbor_indices = neighbors[j.item(), :]
-        i_class_current.append(torch.where(Ids[current_neighbor_indices] == i)[0].numel())
-    class_correct.append(np.mean(i_class_current))
-
-print(class_correct)
-
-
-# scan_dataloader = train_clustering_network(num_epochs=2000, consider_links=True, n_neighbors=50)
-# a = scan_dataloader.dataset.correct_links_list
-# print(np.mean(a))
-# neighbor_indices = scan_dataloader.dataset.neighbor_indices
+# scan_dataloader = train_clustering_network(consider_links=True, n_neighbors=20)
 # Ids = scan_dataloader.dataset.Ids
-# correct = []
-# for i in range(0, Ids.shape[0]):
-#     current_id = Ids[i]
-#     x = torch.where(Ids[neighbor_indices[i,:]] == current_id)[0].numel()
-#     correct.append(x)
+# neighbors = scan_dataloader.dataset.neighbor_indices
+# class_correct = []
+# for i in range(0, 10):
+#     current_indices = torch.where(Ids == i)[0]
+#     i_class_current = []
+#     for j in current_indices:
+#         current_neighbor_indices = neighbors[j.item(), :]
+#         i_class_current.append(torch.where(Ids[current_neighbor_indices] == i)[0].numel())
+#     class_correct.append(np.mean(i_class_current))
+
+# print(class_correct)
+
+
+scan_dataloader = train_clustering_network(num_epochs=2000, consider_links=True, n_neighbors=50)
+a = scan_dataloader.dataset.correct_links_list
+print(np.mean(a))
+neighbor_indices = scan_dataloader.dataset.neighbor_indices
+Ids = scan_dataloader.dataset.Ids
+correct = []
+for i in range(0, Ids.shape[0]):
+    current_id = Ids[i]
+    x = torch.where(Ids[neighbor_indices[i,:]] == current_id)[0].numel()
+    correct.append(x)
 
 
 
