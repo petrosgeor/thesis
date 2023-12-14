@@ -242,18 +242,6 @@ class SCANdatasetWithNeighbors(Dataset):
         return correct_links_list
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 class ClearedSCANDataset(Dataset):
     def __init__(self, data: torch.Tensor, Ids: torch.Tensor, neighbor_indices: torch.Tensor, 
                  picked_indices: torch.Tensor, A_matrix: torch.Tensor):
