@@ -196,8 +196,8 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
     clusternet.to(device)
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
-    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='probabilistic', n_neighbors=n_neighbors)
-    #return scan_dataloader
+    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='neuralnet', n_neighbors=n_neighbors)
+    return scan_dataloader
     optimizer = optim.SGD(clusternet.parameters(), lr=10**(-2))
     ConsistencyLoss = losses.ClusterConsistencyLoss()
     kl_loss = losses.KLClusterDivergance()
@@ -312,8 +312,8 @@ train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = Fal
 
 
 
-# scan_dataloader = train_clustering_network(consider_links=True, n_neighbors=20)
-# Ids = scan_dataloader.dataset.Ids
+scan_dataloader = train_clustering_network(consider_links=True, n_neighbors=20)
+Ids = scan_dataloader.dataset.Ids
 # neighbors = scan_dataloader.dataset.neighbor_indices
 # class_correct = []
 # for i in range(0, 10):
