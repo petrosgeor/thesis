@@ -155,7 +155,7 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
     linked_dataset = LinkedDataset(dataset, num_links=5000)
     assert (take_neighbors == 'neuralnet') | (take_neighbors == 'neuralnet') | (take_neighbors == 'probabilistic')
     if take_neighbors == 'neuralnet':
-        cifar_dataloader = DataLoader(dataset, batch_size=500, shuffle=False)######
+        cifar_dataloader = DataLoader(dataset, batch_size=500, shuffle=False)   ######
         id_aug = Identity_Augmentation()
         embeddings = []
         with torch.no_grad():
@@ -315,22 +315,32 @@ def run_pretraining_function():
 
 scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = False, n_neighbors=20,
                                            testing=True, take_neighbors='neuralnet')
-Ids = scan_dataloader.dataset.Ids
-neighbors = scan_dataloader.dataset.neighbor_indices
-class_correct = []
-for i in range(0, 10):
-    current_indices = torch.where(Ids == i)[0]
-    i_class_current = []
-    for j in current_indices:
-        current_neighbor_indices = neighbors[j.item(), :]
-        i_class_current.append(torch.where(Ids[current_neighbor_indices] == i)[0].numel())
-    class_correct.append(np.mean(i_class_current))
+# Ids = scan_dataloader.dataset.Ids
+# neighbors = scan_dataloader.dataset.neighbor_indices
+# class_correct = []
+# for i in range(0, 10):
+#     current_indices = torch.where(Ids == i)[0]
+#     i_class_current = []
+#     for j in current_indices:
+#         current_neighbor_indices = neighbors[j.item(), :]
+#         i_class_current.append(torch.where(Ids[current_neighbor_indices] == i)[0].numel())
+#     class_correct.append(np.mean(i_class_current))
 
-print(class_correct)
+# print(class_correct)
+
+# same_Ids_list = scan_dataloader.dataset.same_Ids_list
+# plt.figure(figsize=(8, 6))  # Set the figure size (optional)
+# plt.hist(same_Ids_list, bins=20, color='skyblue', edgecolor='black')  # Create a histogram with 20 bins
+# plt.title('Histogram of 20 Distinct Values')  # Set the title of the histogram
+# plt.xlabel('Values')  # Set the label for the x-axis
+# plt.ylabel('Frequency')  # Set the label for the y-axis
+# plt.grid(axis='y', alpha=0.5)  # Add gridlines for better visualization
+
+# plt.show()
 
 
-# scan_dataloader = train_clustering_network(num_epochs=2000, consider_links=True, n_neighbors=50)
-# a = scan_dataloader.dataset.correct_links_list
+
+#a = scan_dataloader.dataset.correct_links_list
 # print(np.mean(a))
 # neighbor_indices = scan_dataloader.dataset.neighbor_indices
 # Ids = scan_dataloader.dataset.Ids
