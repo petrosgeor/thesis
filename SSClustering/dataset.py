@@ -194,6 +194,12 @@ class LinkedDataset(Dataset):
 
 
 
+
+
+
+
+
+
 class SCANdatasetWithNeighbors(Dataset):
     def __init__(self, data: torch.Tensor, Ids: torch.Tensor, neighbor_indices: torch.Tensor):
         self.data = data
