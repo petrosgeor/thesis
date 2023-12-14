@@ -321,7 +321,7 @@ for i in range(0, 10):
         i_class_current.append(torch.where(Ids[current_neighbor_indices] == i)[0].numel())
     class_correct.append(np.mean(i_class_current))
 
-
+print(class_correct)
 
 
 # scan_dataloader = train_clustering_network(num_epochs=2000, consider_links=True, n_neighbors=50)
