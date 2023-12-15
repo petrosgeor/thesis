@@ -4,3 +4,4 @@ CIFAR10/
 NeuralNets/
 .idea/
 __pycache__/
+tests/
