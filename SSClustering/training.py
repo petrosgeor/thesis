@@ -12,6 +12,10 @@ from evaluate import *
 import os
 from losses import losses
 from tests import test2
+from visualization import pretrained_vis
+
+
+
 device = 'cuda'
 
 
@@ -151,16 +155,19 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
         id_aug = test2.val_augmentation()
         cifar_dataloader = DataLoader(dataset, batch_size=128, shuffle=False)
         embeddings = []
+        labels = []
         with torch.no_grad():
             for i, (X_batch, Ids) in enumerate(cifar_dataloader):
                 X_batch = X_batch.to(device)
                 embeddings_batch = net.forward(id_aug(X_batch), forward_pass='backbone')
                 embeddings.append(embeddings_batch.cpu())
-
+                labels.append(Ids)
             embeddings = torch.cat(embeddings, dim=0)
+            labels = torch.cat(labels, dim=0)
+
             neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=n_neighbors)
             scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
-
+            pretrained_vis.VisualizeWithTSNE(resnet_embeddings=embeddings.numpy(), labels=labels.numpy())
     elif take_neighbors == 'probabilistic':
         neighbor_indices = probabilistic_closest_indices(Ids=dataset.Ids, n_neighbors=n_neighbors, n_correct_mean=9)
         scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
