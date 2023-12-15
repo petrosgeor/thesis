@@ -177,7 +177,7 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
         with torch.no_grad():
             for i, (X_batch, Ids) in enumerate(cifar_dataloader):
                 X_batch = X_batch.to(device)
-                embeddings_batch = net.forward(id_aug(X_batch), forward_pass='backbone')
+                embeddings_batch = net.forward(id_aug(X_batch), forward_pass='backbone')[0]
                 embeddings.append(embeddings_batch.cpu())
 
             embeddings = torch.cat(embeddings, dim=0)
@@ -210,6 +210,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
         contrastivemodel = test2.ContrastiveModel(backbone=backbone)
         file_path = 'NeuralNets/simclr_cifar10.pth'
         checkpoint = torch.load(file_path)
+        print('111111111111111111111111111111111111111111')
         contrastivemodel.load_state_dict(checkpoint)
         clusternet = test2.ClusteringModel(backbone={'backbone': contrastivemodel.backbone, 'dim': contrastivemodel.backbone_dim}, nclusters=10)
 
