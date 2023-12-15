@@ -153,7 +153,7 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
                                               #picked_indices=linked_dataset.picked_indices,A_matrix=linked_dataset.A_matrix)
     elif take_neighbors == 'paiper':
         id_aug = test2.val_augmentation()
-        cifar_dataloader = DataLoader(dataset, batch_size=128, shuffle=False)
+        cifar_dataloader = DataLoader(dataset, batch_size=500, shuffle=False)
         embeddings = []
         labels = []
         with torch.no_grad():
@@ -176,7 +176,7 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
         scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
 
     #scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
-    scan_dataloader = DataLoader(scan_dataset, batch_size=1500, shuffle=True, num_workers=2)
+    scan_dataloader = DataLoader(scan_dataset, batch_size=1024, shuffle=True, num_workers=2)
     linked_dataloader = DataLoader(linked_dataset, batch_size=256, shuffle=True, num_workers=2)
     return scan_dataloader, linked_dataloader
 
