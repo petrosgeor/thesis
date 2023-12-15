@@ -167,7 +167,7 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
 
             neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=n_neighbors)
             scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
-            pretrained_vis.VisualizeWithTSNE(resnet_embeddings=embeddings.numpy(), labels=labels.numpy())
+            #pretrained_vis.VisualizeWithTSNE(resnet_embeddings=embeddings.numpy(), labels=labels.numpy())
     elif take_neighbors == 'probabilistic':
         neighbor_indices = probabilistic_closest_indices(Ids=dataset.Ids, n_neighbors=n_neighbors, n_correct_mean=9)
         scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
