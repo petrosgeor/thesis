@@ -234,7 +234,7 @@ def initializeClusterModel(n_heads: int=1, dataset: str = 'cifar10', n_clusters:
     assert (dataset == 'cifar10'), 'no implementation yet for the other datasets'
     backbone = resnet18()
     con_model = ContrastiveModel(backbone=backbone)
-    file_path = 'NeuralNets\simclr_cifar10.pth'
+    file_path = 'NeuralNets/simclr_cifar10.pth'
     checkpoint = torch.load(file_path)
 
     con_model.load_state_dict(checkpoint)
