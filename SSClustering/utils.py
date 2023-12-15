@@ -6,7 +6,8 @@ from sklearn import metrics
 import matplotlib.pyplot as plt
 from torch.nn import functional as F
 from sklearn.manifold import TSNE, MDS
-from models import *
+#from models import *
+from models2 import *
 
 device = 'cuda'
 
@@ -229,8 +230,17 @@ def probabilistic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_co
 
 
 
+def initializeClusterModel(n_heads: int=1, dataset: str = 'cifar10', n_clusters: int = 10):
+    assert (dataset == 'cifar10'), 'no implementation yet for the other datasets'
+    backbone = resnet18()
+    con_model = ContrastiveModel(backbone=backbone)
+    file_path = 'NeuralNets\simclr_cifar10.pth'
+    checkpoint = torch.load(file_path)
 
+    con_model.load_state_dict(checkpoint)
 
+    clustermodel = ClusteringModel(backbone={'backbone': con_model.backbone, 'dim': con_model.backbone_dim}, nclusters=n_clusters)
+    return clustermodel
 
 
 # random_tensor = torch.randint(0, 10, size=(10000,))

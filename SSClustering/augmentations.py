@@ -10,7 +10,8 @@ class Identity_Augmentation:
             [
                 v2.Resize((32, 32), interpolation=Image.BICUBIC, antialias=True),
                 v2.ToImage(),
-                v2.ToDtype(torch.float32, scale=True)
+                v2.ToDtype(torch.float32, scale=True),
+                v2.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010]),
             ]
         )
     def __call__(self, x):
@@ -45,9 +46,10 @@ class SimCLRaugment:
                                            v2.RandomApply([self.color_jitter], p=0.8),
                                            v2.RandomGrayscale(p=0.2),
                                            v2.ToImage(),
-                                           v2.ToDtype(torch.float32, scale=True)
+                                           v2.ToDtype(torch.float32, scale=True),
+                                           v2.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010]),
                                            ]
-                                           )
+                                        )
     
     def __call__(self, x):
         return self.data_transforms(x)

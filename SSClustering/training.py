@@ -227,9 +227,10 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
                 except StopIteration:
                     dataloader_iterator = iter(linked_dataloader)
                     image_l, related_images, relations = next(dataloader_iterator)
-            n_images_u = images_u.shape[0]
 
             ####    SCAN LOSS   ####
+            loss1 = 0
+
             images_u = images_u.to(device)
             images_u_id = id_aug(images_u)  # identity augmentation
             images_u_clr = aug_clr(images_u)
@@ -300,6 +301,102 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
             x = torch.unique(predictions, return_inverse=False, return_counts=True)
 
 
+
+def train_clustering_network2(num_epochs=2, t_contrastive=0.5, consider_links: bool = False, n_neighbors=20, testing=False):
+    clusternet = initializeClusterModel()
+    clusternet.to(device)
+
+    id_aug = Identity_Augmentation()
+    aug_clr = SimCLRaugment()
+    scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='paiper', n_neighbors=n_neighbors)
+    if testing == True:
+        return scan_dataloader
+    optimizer = optim.SGD(clusternet.parameters(), lr=10**(-2))
+    ConsistencyLoss = losses.ClusterConsistencyLoss()
+    kl_loss = losses.KLClusterDivergance()
+    clusternet.train()
+
+    for epoch in range(0, num_epochs):
+        if consider_links == True:
+            dataloader_iterator = iter(linked_dataloader)
+        for i, (images_u, _, neighbor_images) in enumerate(scan_dataloader):
+            if consider_links == True:
+                try:
+                    image_l, related_images, relations = next(dataloader_iterator)
+                except StopIteration:
+                    dataloader_iterator = iter(linked_dataloader)
+                    image_l, related_images, relations = next(dataloader_iterator)
+
+            ####    SCAN LOSS   ####
+            loss1 = 0
+
+            images_u = images_u.to(device)
+            images_u_id = id_aug(images_u)  # identity augmentation
+            images_u_clr = aug_clr(images_u)
+            neighbor_images = id_aug(neighbor_images.to(device))
+            probs = clusternet.forward(images_u_id)[0]
+            probs_clr = clusternet.forward(images_u_clr)[0]
+            probs_neighbors = clusternet.forward(neighbor_images)[0]
+            loss1 = ConsistencyLoss.forward(probs1=probs, probs2=probs_neighbors, relations=None) + ConsistencyLoss.forward(probs1=probs, probs2=probs_clr)
+
+            loss2 = 0
+            if consider_links == True:
+                image_l = image_l.to(device)
+                image_l_id = id_aug(image_l)
+                image_l_clr = aug_clr(image_l)
+                related_images = related_images.to(device)
+                related_images_id = id_aug(related_images)
+                related_images_clr = aug_clr(related_images)
+                relations = relations.to(device)
+                p_id = clusternet.forward_c(image_l_id)
+                p_linked_id = clusternet.forward_c(related_images_id)
+                p_clr = clusternet.forward_c(image_l_clr)
+                p_linked_clr = clusternet.forward_c(related_images_clr)
+
+                loss2 = ConsistencyLoss(probs1=p_id, probs2=p_linked_id, relations=relations) + ConsistencyLoss(p_clr, p_linked_clr, relations)
+
+            loss3 = 0
+            loss3 = kl_loss.forward(probs=probs)
+            total_loss = loss1 + 10**(-2)*loss2 + 10*loss3
+            total_loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+        if (epoch + 1)%10 == 0:
+            true_labels = []
+            predictions = []
+            true_labels_conf = []
+            predictions_conf = []
+            with torch.no_grad():
+                for i, (images_batch, labels_batch, _) in enumerate(scan_dataloader):
+                    images_batch = id_aug(images_batch.to(device))
+                    batch_probs = clusternet.forward(images_batch)[0]
+                    indices_conf = torch.where(batch_probs >= 0.95)
+                    
+                    true_labels_conf.append(labels_batch[indices_conf[0].cpu()])
+                    predictions_conf.append(indices_conf[1].cpu())
+
+                    batch_predictions = torch.argmax(batch_probs, dim=1)
+                    predictions.append(batch_predictions.cpu())
+                    true_labels.append(labels_batch)
+                
+                true_labels_conf = torch.cat(true_labels_conf, dim=0)
+                predictions_conf = torch.cat(predictions_conf, dim=0)
+                true_labels = torch.cat(true_labels, dim=0)
+                predictions = torch.cat(predictions, dim=0)
+                nmi, ari, acc = cluster_metric(label=true_labels.numpy(), pred=predictions.numpy())
+                print('------------------- Epoch: ', epoch,' ---------------------')
+                # Print the evaluation metrics
+                print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
+                print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
+                print(f"Accuracy (ACC): {acc:.2f}%")
+                print('confident examples \n')
+                nmi, ari, acc = cluster_metric(label=true_labels_conf.numpy(), pred=predictions_conf.numpy())
+                print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
+                print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
+                print(f"Accuracy (ACC): {acc:.2f}%")
+
+
+
 def run_pretraining_function():
     run_pretraining = input("do you want to run the pretraining step? ")
     assert (run_pretraining == 'yes') | (run_pretraining == 'no'), 'the answer must be yes or no'
@@ -318,12 +415,11 @@ def run_pretraining_function():
     else:
         return 'no pretraining will take place'
 
+train_clustering_network2(num_epochs=300, consider_links=False, n_neighbors=20, testing=False)
 
-#run_pretraining_function()
 
-
-scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = True, n_neighbors=20,
-                                           testing=True, take_neighbors='paiper')
+# scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = True, n_neighbors=20,
+#                                            testing=True, take_neighbors='paiper')
 # Ids = scan_dataloader.dataset.Ids
 # neighbors = scan_dataloader.dataset.neighbor_indices
 # class_correct = []
