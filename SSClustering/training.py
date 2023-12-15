@@ -125,30 +125,7 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
         torch.save(net.state_dict(), 'NeuralNets/ResNetBackboneLinks')
     return net
         
-def VisualizedResNetBackBoneEmbeddings():
-    resnet, hidden_dim = get_resnet('resnet34')
-    net = Network(resnet=resnet, hidden_dim=hidden_dim, feature_dim=128, class_num=10)
-    net.load_state_dict(torch.load('NeuralNets/ResNetBackbone.pth'))
-    dataset = CIFAR10()
-    dataloader = DataLoader(dataset, batch_size=1000, shuffle=False)
-    embeddings = []
-    labels = []
-    net.float()
-    net.to(device)
-    aug = Identity_Augmentation()
-    with torch.no_grad():
-        for i, (X_batch, labels_batch) in enumerate(dataloader):
-            X_batch = X_batch.to(device)
-            X_batch = aug(X_batch)
-            batch_embeddings = net.forward_r(X_batch)
-            
-            embeddings.append(batch_embeddings.cpu())
-            labels.append(labels_batch)
-        
-        embeddings = torch.cat(embeddings, dim=0)
-        labels = torch.cat(labels, dim=0)
 
-    VisualizeWithTSNE(resnet_embeddings=embeddings.numpy(), labels=labels.numpy())
 
 
 def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neighbors=20) -> tuple:   # creates dataloaders for both the SCAN and LINKED datasets
