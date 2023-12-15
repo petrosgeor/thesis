@@ -176,7 +176,7 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
         scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
 
     #scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
-    scan_dataloader = DataLoader(scan_dataset, batch_size=1024, shuffle=True, num_workers=2)
+    scan_dataloader = DataLoader(scan_dataset, batch_size=512, shuffle=True, num_workers=2)
     linked_dataloader = DataLoader(linked_dataset, batch_size=256, shuffle=True, num_workers=2)
     return scan_dataloader, linked_dataloader
 
@@ -329,7 +329,7 @@ def train_clustering_network2(num_epochs=2, t_contrastive=0.5, consider_links: b
 
             ####    SCAN LOSS   ####
             loss1 = 0
-
+            print(epoch)
             images_u = images_u.to(device)
             images_u_id = id_aug(images_u)  # identity augmentation
             images_u_clr = aug_clr(images_u)
