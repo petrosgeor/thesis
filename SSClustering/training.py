@@ -172,6 +172,17 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
                                               #picked_indices=linked_dataset.picked_indices,A_matrix=linked_dataset.A_matrix)
     elif take_neighbors == 'paiper':
         id_aug = test2.val_augmentation()
+        cifar_dataloader = DataLoader(dataset, batch_size=500, shuffle=False)
+        embeddings = []
+        with torch.no_grad():
+            for i, (X_batch, Ids) in enumerate(cifar_dataloader):
+                X_batch = X_batch.to(device)
+                embeddings_batch = net.forward(id_aug(X_batch), forward_pass='backbone')
+                embeddings.append(embeddings_batch.cpu())
+
+            embeddings = torch.cat(embeddings, dim=0)
+            neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=n_neighbors)
+            scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
 
     elif take_neighbors == 'probabilistic':
         neighbor_indices = probabilistic_closest_indices(Ids=dataset.Ids, n_neighbors=n_neighbors, n_correct_mean=9)
@@ -327,7 +338,7 @@ def run_pretraining_function():
 
 
 scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = True, n_neighbors=20,
-                                           testing=True, take_neighbors='neuralnet')
+                                           testing=True, take_neighbors='paiper')
 Ids = scan_dataloader.dataset.Ids
 neighbors = scan_dataloader.dataset.neighbor_indices
 class_correct = []
