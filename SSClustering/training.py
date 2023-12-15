@@ -211,14 +211,14 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
         file_path = 'NeuralNets/simclr_cifar10.pth'
         checkpoint = torch.load(file_path)
         contrastivemodel.load_state_dict(checkpoint)
-        print('111111111111111111111111111111111111111111')
         clusternet = test2.ClusteringModel(backbone={'backbone': contrastivemodel.backbone, 'dim': contrastivemodel.backbone_dim}, nclusters=10)
 
-    if pretrained == 'no_links':
-        clusternet.load_state_dict(torch.load('NeuralNets/ResNetBackbone.pth'))
-    elif pretrained == 'links':
-        clusternet.load_state_dict(torch.load('NeuralNets/ResNetBackboneLinks'))
-    
+    if take_neighbors != 'paiper':
+        if pretrained == 'no_links':
+            clusternet.load_state_dict(torch.load('NeuralNets/ResNetBackbone.pth'))
+        elif pretrained == 'links':
+            clusternet.load_state_dict(torch.load('NeuralNets/ResNetBackboneLinks'))
+        
     clusternet.to(device)
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
