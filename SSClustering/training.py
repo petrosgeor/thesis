@@ -329,7 +329,6 @@ def train_clustering_network2(num_epochs=2, t_contrastive=0.5, consider_links: b
 
             ####    SCAN LOSS   ####
             loss1 = 0
-            print(epoch)
             images_u = images_u.to(device)
             images_u_id = id_aug(images_u)  # identity augmentation
             images_u_clr = aug_clr(images_u)
