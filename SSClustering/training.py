@@ -353,15 +353,15 @@ scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, co
 
 # print(class_correct)
 
-same_Ids_list = scan_dataloader.dataset.same_Ids_list
-plt.figure(figsize=(8, 6))  # Set the figure size (optional)
-plt.hist(same_Ids_list, bins=20, color='skyblue', edgecolor='black')  # Create a histogram with 20 bins
-plt.title('Histogram of 20 Distinct Values')  # Set the title of the histogram
-plt.xlabel('Values')  # Set the label for the x-axis
-plt.ylabel('Frequency')  # Set the label for the y-axis
-plt.grid(axis='y', alpha=0.5)  # Add gridlines for better visualization
+# same_Ids_list = scan_dataloader.dataset.same_Ids_list
+# plt.figure(figsize=(8, 6))  # Set the figure size (optional)
+# plt.hist(same_Ids_list, bins=20, color='skyblue', edgecolor='black')  # Create a histogram with 20 bins
+# plt.title('Histogram of 20 Distinct Values')  # Set the title of the histogram
+# plt.xlabel('Values')  # Set the label for the x-axis
+# plt.ylabel('Frequency')  # Set the label for the y-axis
+# plt.grid(axis='y', alpha=0.5)  # Add gridlines for better visualization
 
-plt.savefig('NeuralNets/plots/histogram.png')
+# plt.savefig('NeuralNets/plots/histogram.png')
 #plt.show()
 
 
