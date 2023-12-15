@@ -192,8 +192,8 @@ class val_augmentation:
             [
                 v2.Resize((224, 224), interpolation=Image.BICUBIC, antialias=True),
                 v2.ToImage(),
-                v2.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010]),
                 v2.ToDtype(torch.float32, scale=False)
+                v2.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010]),
             ]
         )
 
