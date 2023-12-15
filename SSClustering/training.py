@@ -313,7 +313,7 @@ def run_pretraining_function():
 #run_pretraining_function()
 
 
-scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = False, n_neighbors=20,
+scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = True, n_neighbors=20,
                                            testing=False, take_neighbors='probabilistic')
 # Ids = scan_dataloader.dataset.Ids
 # neighbors = scan_dataloader.dataset.neighbor_indices
