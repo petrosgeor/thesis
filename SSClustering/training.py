@@ -11,6 +11,7 @@ from clustering import *
 from evaluate import *
 import os
 from losses import losses
+from tests import test2
 device = 'cuda'
 
 
@@ -153,7 +154,7 @@ def VisualizedResNetBackBoneEmbeddings():
 def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neighbors=20) -> tuple:   # creates dataloaders for both the SCAN and LINKED datasets
     dataset = CIFAR10(proportion=1)
     linked_dataset = LinkedDataset(dataset, num_links=5000)
-    assert (take_neighbors == 'neuralnet') | (take_neighbors == 'neuralnet') | (take_neighbors == 'probabilistic')
+    assert (take_neighbors == 'neuralnet') | (take_neighbors == 'neuralnet') | (take_neighbors == 'probabilistic') | (take_neighbors == 'paiper')
     if take_neighbors == 'neuralnet':
         cifar_dataloader = DataLoader(dataset, batch_size=500, shuffle=False)   ######
         id_aug = Identity_Augmentation()
@@ -169,6 +170,9 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
             scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
             #scan_dataset = ClearedSCANDataset(data=X, Ids=labels, neighbor_indices=neighbor_indices, 
                                               #picked_indices=linked_dataset.picked_indices,A_matrix=linked_dataset.A_matrix)
+    elif take_neighbors == 'paiper':
+        id_aug = test2.val_augmentation()
+
     elif take_neighbors == 'probabilistic':
         neighbor_indices = probabilistic_closest_indices(Ids=dataset.Ids, n_neighbors=n_neighbors, n_correct_mean=9)
         scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
@@ -185,10 +189,19 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
 def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bool = False, n_neighbors=20, testing=False, take_neighbors='neuralnet'):
     #pretrained = input('which PRETRAINED model should i consider, the one with links or without? type links or no_links: ')
     pretrained = 'no_links'
-    assert (take_neighbors == 'neuralnet') | (take_neighbors == 'probabilistic'), 'take_neighbors must be neuralnet or probabilistic'
+    assert (take_neighbors == 'neuralnet') | (take_neighbors == 'probabilistic') | (take_neighbors == 'paiper'), 'take_neighbors must be neuralnet or probabilistic'
     assert (pretrained == 'links') | (pretrained == 'no_links'), 'please type links or no_links'
-    resnet, hidden_dim = get_resnet('resnet18')
-    clusternet = Network(resnet=resnet, hidden_dim=hidden_dim, feature_dim=128, class_num=10)
+    if take_neighbors != 'paiper':
+        resnet, hidden_dim = get_resnet('resnet18')
+        clusternet = Network(resnet=resnet, hidden_dim=hidden_dim, feature_dim=128, class_num=10)
+    elif take_neighbors == 'paiper':
+        backbone = test2.resnet18()
+        contrastivemodel = test2.ContrastiveModel(backbone=backbone)
+        file_path = 'NeuralNets/simclr_cifar10.pth'
+        checkpoint = torch.load(file_path)
+        contrastivemodel.load_state_dict(checkpoint)
+        clusternet = test2.ClusteringModel(backbone={'backbone': contrastivemodel.backbone, 'dim': contrastivemodel.backbone_dim}, nclusters=10)
+
     if pretrained == 'no_links':
         clusternet.load_state_dict(torch.load('NeuralNets/ResNetBackbone.pth'))
     elif pretrained == 'links':
