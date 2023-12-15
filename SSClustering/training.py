@@ -177,7 +177,7 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
         with torch.no_grad():
             for i, (X_batch, Ids) in enumerate(cifar_dataloader):
                 X_batch = X_batch.to(device)
-                embeddings_batch = net.forward(id_aug(X_batch), forward_pass='backbone')[0]
+                embeddings_batch = net.forward(id_aug(X_batch), forward_pass='backbone')
                 embeddings.append(embeddings_batch.cpu())
 
             embeddings = torch.cat(embeddings, dim=0)
