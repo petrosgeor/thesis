@@ -190,7 +190,7 @@ class val_augmentation:
     def __init__(self):
         self.val_aug = v2.Compose(
             [
-                v2.Resize((224, 224), interpolation=Image.BICUBIC, antialias=True),
+                v2.Resize((32, 32), interpolation=Image.BICUBIC, antialias=True),
                 v2.ToImage(),
                 v2.ToDtype(torch.float32, scale=False),
                 v2.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010]),

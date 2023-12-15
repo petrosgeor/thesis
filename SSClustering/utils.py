@@ -167,12 +167,12 @@ def find_indices_of_closest_embeddings(embedings: torch.Tensor, n_neighbors: int
     import faiss
 
     if (distance == 'cosine'):
-        #D = torch.matmul(embedings, embedings.T)
-        #indices = torch.topk(D, k=n_neighbors, dim=1)[1]
-        embedings = embedings.numpy()
-        index = faiss.IndexFlatIP(embedings.shape[1])
-        index.add(embedings)
-        _, indices = index.search(embedings, n_neighbors)
+        D = torch.matmul(embedings, embedings.T)
+        indices = torch.topk(D, k=n_neighbors, dim=1)[1]
+        # embedings = embedings.numpy()
+        # index = faiss.IndexFlatIP(embedings.shape[1])
+        # index.add(embedings)
+        # _, indices = index.search(embedings, n_neighbors)
     elif (distance == 'euclidean'):
         D = torch.cdist(embedings, embedings)
         indices = torch.topk(D, k=n_neighbors, dim=1, largest=False)[1]
