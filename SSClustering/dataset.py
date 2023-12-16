@@ -285,6 +285,7 @@ class UnifiedDataset(Dataset):
         all_weights = []
 
         for i in range(0, self.data.shape[0]):
+            print(i)
             neighbors = self.neighbor_indices[i, :].tolist()
             weights = self.neighbor_weights[i, :].tolist()
             if self.num_links != 0:
