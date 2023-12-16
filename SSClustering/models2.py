@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torchvision.transforms import v2
 from PIL import Image
 
-
+'from https://github.com/wvangansbeke/Unsupervised-Classification/blob/master/models/resnet_cifar.py'
 
 class ContrastiveModel(nn.Module):
     def __init__(self, backbone, head='mlp', features_dim=128):

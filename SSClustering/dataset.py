@@ -245,17 +245,16 @@ class SCANdatasetWithNeighbors(Dataset):
 
 class UnifiedDataset(Dataset):
     def __init__(self, data: torch.Tensor, Ids: torch.Tensor, neighbor_indices: torch.Tensor,
-                 neighbors_distances: torch.Tensor, num_links: int, weighted_neighbors: bool=False):
+                 neighbors_distances: torch.Tensor=None, num_links: int=5000):
         self.data = data
         self.Ids = Ids
         self.num_links = num_links
-        self.weighted_neighbors = weighted_neighbors
         self.neighbor_indices = neighbor_indices
         self.neighbors_distances = neighbors_distances
         if neighbors_distances == None:
             self.neighbor_weights = F.softmax(self.neighbors_distances, dim=1)
         elif neighbors_distances is not None:
-            self.neighbor_weights = torch.ones(neighbor_indices.size())
+            self.neighbor_weights = torch.ones(neighbor_indices.size(), dtype=torch.float)
         
         self.all_neighbors_indices, self.all_weights = self.consider_links()
 
@@ -269,7 +268,12 @@ class UnifiedDataset(Dataset):
         random_index_index = torch.randint(0, n_neighbors, (1,)).item()
         random_neighbor_index = image_neighbors_indices[random_index_index]
         random_weight = image_neighbors_weights[random_index_index]
-        
+        random_neighbor = self.data[random_neighbor_index]
+        return image, random_neighbor, random_weight
+    
+    def __len__(self):
+        return self.Ids.numel()
+
 
 
     def consider_links(self):
