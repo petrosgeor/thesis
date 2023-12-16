@@ -75,6 +75,19 @@ def random_links2label(data:torch.Tensor, labels: torch.Tensor, num_links: int):
     A_matrix = create_A_matrix(labels=labels_subset)
     return X_subset, A_matrix, labels_subset, indices
 
+
+def create_big_A_matrix(labels: torch.Tensor, num_links: int):
+    n_samples = labels.numel()
+    A_matrix = torch.zeros((n_samples, n_samples))
+    indices = torch.arange(0, n_samples, step=1).tolist()
+
+    random_pairs = random.sample(indices, k=2*num_links)
+    indices_pairs = [torch.tensor([random_pairs[i], random_pairs[i+1]]) for i in range(0, len(random_pairs), 2)]
+    indices_pairs = torch.stack(indices_pairs, dim=1)
+    
+
+
+
 '''labels = torch.tensor([1,1,2,3,1])
 data = torch.randn((len(labels), 100))
 print(random_links2label(data, labels, num_links=len(labels)))
@@ -298,17 +311,15 @@ class UnifiedDataset(Dataset):
                         if j in d1:
                             if A_matrix[d1[i], d1[j]] == -1:
                                 weights[x] = -1.
-
-            all_neighbors.append(torch.tensor(neighbors_copy)) 
-            all_weights.append(torch.tensor(weights))
-        print(len(all_neighbors), len(all_weights))
+                    new_n = torch.where(A_matrix[d1[i], :] != 0)[0]
+                    new_weights = A_matrix[d1[i], new_n]
+                    new_n = new_n.tolist()
+                    new_neighbors = [d2[key] for key in new_n]
+            neighbors_copy = torch.cat(torch.tensor(neighbors_copy), torch.tensor(new_neighbors))
+            weights = torch.cat(torch.tensor(weights), torch.tensor(new_weights))
+            all_neighbors.append(neighbors_copy)
+            all_weights.append(weights)
         return all_neighbors, all_weights
-
-            ############################################
-            ##########################################
-      
-
-
 
 
 

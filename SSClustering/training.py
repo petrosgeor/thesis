@@ -490,7 +490,7 @@ def run_pretraining_function():
     else:
         return 'no pretraining will take place'
 
-train_clustering_network3(num_epochs=60, n_neighbors=20, consider_distnaces=False, num_links=0)
+train_clustering_network3(num_epochs=60, n_neighbors=20, consider_distnaces=True, num_links=0)
 
 
 # scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = True, n_neighbors=20,
