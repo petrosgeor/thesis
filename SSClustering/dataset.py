@@ -262,21 +262,24 @@ class UnifiedDataset(Dataset):
         d1 = {}
         for i in range(0, picked_indices.shape[0]):
             d1[picked_indices[i].item()] = i
-        all_indices = []
+        all_neighbors = []
+        all_weights = []
 
         for i in range(0, self.data.shape[0]):
             neighbors = self.neighbor_indices[i, :].tolist()
-            distances = self.neighbor_weights[i, :].tolist()
+            weights = self.neighbor_weights[i, :].tolist()
             if i in d1:
                 for j in neighbors:
                     if j in d1:
                         if A_matrix[d1[i], d1[j]] == -1:
                             neighbors.append(j)
-                            distances.append(-1.)
+                            weights.append(-1.)
                         elif A_matrix[d1[i], d1[j]] == 1:
                             neighbors.append(j)
-                            distances.append(1.)
-                        
+                            weights.append(1.)
+            all_neighbors.append(torch.tensor(neighbors, dtype=torch.int32)) 
+            weights.append(torch.tensor(weights))
+            
 
 
 

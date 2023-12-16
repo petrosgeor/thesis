@@ -314,7 +314,7 @@ def train_clustering_network2(num_epochs=2, t_contrastive=0.5, consider_links: b
     optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4), weight_decay=10**(-4))
     ConsistencyLoss = losses.ClusterConsistencyLoss()
     kl_loss = losses.KLClusterDivergance()
-    clusternet.train()
+    #clusternet.train()
 
     for epoch in range(0, num_epochs):
         if consider_links == True:
