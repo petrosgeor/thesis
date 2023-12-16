@@ -283,8 +283,7 @@ class UnifiedDataset(Dataset):
             d1[picked_indices[i].item()] = i
         all_neighbors = []
         all_weights = []
-        print('the shape of data is: ', self.data.size())
-        print('the shape of Ids is: ', self.Ids.size())
+        print(self.Ids.numel())
         print(self.neighbor_indices.size())
 
         for i in range(0, self.Ids.numel()):

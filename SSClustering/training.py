@@ -301,7 +301,7 @@ def create_unified_dataset(net, n_neighbors=20, return_distances: bool = True, n
     id_aug = Identity_Augmentation()
     embeddings = []
     with torch.no_grad():
-        for i, (X_batch, Ids) in enumerate(cifar_dataloader):
+        for i, (X_batch, _) in enumerate(cifar_dataloader):
             X_batch = X_batch.to(device)
             embeddings_batch = net.forward(id_aug(X_batch), forward_pass='backbone')
             embeddings.append(embeddings_batch.cpu())
