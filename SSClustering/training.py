@@ -311,7 +311,7 @@ def train_clustering_network2(num_epochs=2, t_contrastive=0.5, consider_links: b
     scan_dataloader, linked_dataloader = create_SCAN_dl_LINKED_dl(net=clusternet, take_neighbors='paiper', n_neighbors=n_neighbors)
     if testing == True:
         return scan_dataloader
-    optimizer = optim.SGD(clusternet.parameters(), lr=10**(-2))
+    optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4), weight_decay=10**(-4))
     ConsistencyLoss = losses.ClusterConsistencyLoss()
     kl_loss = losses.KLClusterDivergance()
     clusternet.train()
