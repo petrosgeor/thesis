@@ -78,12 +78,17 @@ def random_links2label(data:torch.Tensor, labels: torch.Tensor, num_links: int):
 
 def create_big_A_matrix(labels: torch.Tensor, num_links: int):
     n_samples = labels.numel()
-    A_matrix = torch.zeros((n_samples, n_samples))
     indices = torch.arange(0, n_samples, step=1).tolist()
 
     random_pairs = random.sample(indices, k=2*num_links)
     indices_pairs = [torch.tensor([random_pairs[i], random_pairs[i+1]]) for i in range(0, len(random_pairs), 2)]
-    indices_pairs = torch.stack(indices_pairs, dim=1)
+    indices_pairs = torch.stack(indices_pairs, dim=0)
+
+    indices_pairs = torch.cat((indices_pairs, indices_pairs[:, [1,0]]), dim=0)
+    relations = torch.eq(labels[indices_pairs[:, 0]], labels[indices_pairs[:, 1]])
+    relations = relations.type(torch.float) * 2 - 1
+    A_matrix = torch.sparse.FloatTensor(indices_pairs.T, relations, torch.Size([60000, 60000]))
+    return A_matrix
 
 
 

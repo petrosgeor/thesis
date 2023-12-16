@@ -1,23 +1,21 @@
 import torch
 import numpy as np
-import faiss
+import random
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+num_links = 5000
 
-x = np.random.randn(1000, 100)
-x_gpu = torch.tensor(x).to(device)
+labels = torch.randint(0, 10, size=(60000,))
+n_samples = labels.numel()
+indices = torch.arange(0, n_samples, step=1).tolist()
 
-# x = np.array([[1,2],
-#              [10,20],
-#              [-1,-2,],
-#              [100,200]])
+random_pairs = random.sample(indices, k=2*num_links)
+indices_pairs = [torch.tensor([random_pairs[i], random_pairs[i+1]]) for i in range(0, len(random_pairs), 2)]
+indices_pairs = torch.stack(indices_pairs, dim=0)
 
+indices_pairs = torch.cat((indices_pairs, indices_pairs[:, [1,0]]), dim=0)
 
-index = faiss.IndexFlatIP(x_gpu.shape[1])
+relations = torch.eq(labels[indices_pairs[:,0]], labels[indices_pairs[:, 1]])
+relations = relations.type(torch.float) * 2 - 1
 
-index = faiss.index_cpu_to_all_gpus(index)
-index.add(x_gpu)
-distances, indices = index.search(x, 2)
-
-
+A_matrix = torch.sparse.FloatTensor(indices_pairs.T, relations, torch.Size([60000,60000]))
