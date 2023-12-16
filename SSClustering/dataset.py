@@ -304,6 +304,7 @@ class UnifiedDataset(Dataset):
             all_neighbors.append(torch.tensor(neighbors_copy, dtype=torch.int32)) 
             all_weights.append(torch.tensor(weights))
         print('done')
+        print(len(all_neighbors), len(all_weights))
         return all_neighbors, all_weights
 
 
