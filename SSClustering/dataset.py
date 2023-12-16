@@ -278,6 +278,8 @@ class UnifiedDataset(Dataset):
 
     def consider_links(self):
         _, A_matrix, _, picked_indices = random_links2label(self.data, self.Ids, self.num_links)
+        print('the size of A is: ', A_matrix.size())
+        print('the size of selected indices is: ', picked_indices.size())
         d1 = {}
         for i in range(0, picked_indices.shape[0]):
             d1[picked_indices[i].item()] = i
@@ -303,7 +305,7 @@ class UnifiedDataset(Dataset):
                             else: continue
                         else: continue
                 else: continue
-            all_neighbors.append(torch.tensor(neighbors_copy, dtype=torch.int32)) 
+            all_neighbors.append(torch.tensor(neighbors_copy)) 
             all_weights.append(torch.tensor(weights))
         print(len(all_neighbors), len(all_weights))
         return all_neighbors, all_weights
