@@ -256,6 +256,21 @@ class UnifiedDataset(Dataset):
             self.neighbor_weights = F.softmax(self.neighbors_distances, dim=1)
         elif neighbors_distances is not None:
             self.neighbor_weights = torch.ones(neighbor_indices.size())
+        
+        self.all_neighbors_indices, self.all_weights = self.consider_links()
+
+
+    def __getitem__(self, item):
+        image = self.data[item]
+        image_neighbors_indices = self.all_neighbors_indices[item]
+        image_neighbors_weights = self.all_weights[item]
+
+        n_neighbors = image_neighbors_indices.numel()
+        random_index_index = torch.randint(0, n_neighbors, (1,)).item()
+        random_neighbor_index = image_neighbors_indices[random_index_index]
+        random_weight = image_neighbors_weights[random_index_index]
+        
+
 
     def consider_links(self):
         _, A_matrix, _, picked_indices = random_links2label(self.data, self.Ids, self.num_links)
@@ -278,8 +293,9 @@ class UnifiedDataset(Dataset):
                             neighbors.append(j)
                             weights.append(1.)
             all_neighbors.append(torch.tensor(neighbors, dtype=torch.int32)) 
-            weights.append(torch.tensor(weights))
-            
+            all_weights.append(torch.tensor(weights))
+        return all_neighbors, all_weights
+
 
 
 
