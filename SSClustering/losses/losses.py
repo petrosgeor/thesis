@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import torch.nn.functional as F
 
 device = 'cuda'
-
+EPS=1e-8
 
 class InfoNCELoss(nn.Module):
     def __init__(self, temperature: float) -> None:
@@ -69,26 +70,14 @@ class ClusterConsistencyLoss(nn.Module):
 
     def forward(self, probs1: torch.Tensor, probs2: torch.Tensor, relations: torch.Tensor = None) -> torch.Tensor:
         if relations == None:
-            inner_products = (probs1 * probs2).sum(dim=1)/self.temperature + self.small_number
+            #inner_products = (probs1 * probs2).sum(dim=1)/self.temperature + self.small_number
+            inner_products = (probs1 * probs2).sum(dim=1)
             return -torch.mean(inner_products.log())
         elif relations is not None:
-            inner_products = (probs1 * probs2).sum(dim=1)/self.temperature + self.small_number
+            #inner_products = (probs1 * probs2).sum(dim=1)/self.temperature + self.small_number
+            inner_products = (probs1 * probs2).sum(dim=1)
             inner_products_log = inner_products.log()
             return -torch.mean(relations * inner_products_log)
-
-
-
-
-class ClusterEntropyLoss(nn.Module):
-    def __init__(self, n_classes=10):
-        super(ClusterEntropyLoss, self).__init__()
-        self.n_classes = torch.tensor([n_classes])
-        self.target_entropy = (self.n_classes).log()
-    def forward(self, probs: torch.Tensor):
-        priors = torch.mean(probs, dim=0)
-        entropy = -(priors * priors.log()).sum()
-        diff = (entropy - self.target_entropy)**2
-        return diff
 
 
 class KLClusterDivergance(nn.Module):
@@ -101,5 +90,63 @@ class KLClusterDivergance(nn.Module):
         return torch.sum(p * (p/self.target_dist).log())
 
 
+
+
+class Entropy(nn.Module):
+    def __init__(self, small_number: float):
+        super(Entropy, self).__init__()
+        self.small_number = small_number
+    
+    def forward(self, x, input_as_probabilities):
+        if input_as_probabilities:
+            x_ = torch.clamp(x, min=self.small_number)
+            b = x_ * torch.log(x_)
+        
+        else:
+            b = F.softmax(x, dim=1) * F.log_softmax(x, dim=1)
+
+        if len(b.size()) == 2:
+            return -b.sum(dim=1).mean()
+        elif len(b.size()) == 1:
+            return -b.sum()
+        else:
+            raise ValueError('Input tensor is %d-Dimensional' %(len(b.size())))
+
+
+class SCANLoss(nn.Module):
+    def __init__(self, entropy_weight = 2.0):
+        super(SCANLoss, self).__init__()
+        self.softmax = nn.Softmax(dim=1)
+        self.bce = nn.BCELoss()
+        self.entropy_weight = entropy_weight
+        self.entropy = Entropy(small_number=EPS)
+
+    def forward(self, anchors, neighbors):
+        b, n = anchors.size()
+        anchors_prob = self.softmax(anchors)
+        positives_prob = self.softmax(neighbors)
+
+        similarity = torch.bmm(anchors_prob.view(b, 1, n), positives_prob.view(b, n, 1)).squeeze()
+        ones = torch.ones_like(similarity)
+        consistency_loss = self.bce(similarity, ones)
+
+        entropy_loss = self.entropy(torch.mean(anchors_prob, dim=0), input_as_probabilities=True)
+
+        total_loss = consistency_loss - self.entropy_weight * entropy_loss
+
+        return total_loss, consistency_loss, entropy_loss
+    
+
+# z1 = torch.randn(1000, 10)
+# z2 = torch.randn(1000, 10)
+# loss1 = SCANLoss()
+# loss2 = ClusterConsistencyLoss()
+
+# _, t1, _ = loss1(z1, z2)
+
+# x1 = F.softmax(z1, dim=1)
+# x2 = F.softmax(z2, dim=1)
+
+# t2 = loss2(x1, x2)
 
 
