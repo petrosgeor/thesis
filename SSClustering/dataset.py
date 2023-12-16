@@ -285,7 +285,6 @@ class UnifiedDataset(Dataset):
         all_weights = []
 
         for i in range(0, self.data.shape[0]):
-            print(i)
             neighbors = self.neighbor_indices[i, :].tolist()
             weights = self.neighbor_weights[i, :].tolist()
             if self.num_links != 0:
@@ -300,6 +299,7 @@ class UnifiedDataset(Dataset):
                                 weights.append(1.)
             all_neighbors.append(torch.tensor(neighbors, dtype=torch.int32)) 
             all_weights.append(torch.tensor(weights))
+        print('done')
         return all_neighbors, all_weights
 
 
