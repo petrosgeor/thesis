@@ -302,14 +302,15 @@ class UnifiedDataset(Dataset):
                             elif A_matrix[d1[i], d1[j]] == 1:
                                 neighbors_copy.append(j)
                                 weights.append(1.)
-                            else: continue
-                        else: continue
-                else: continue
+
             all_neighbors.append(torch.tensor(neighbors_copy)) 
             all_weights.append(torch.tensor(weights))
         print(len(all_neighbors), len(all_weights))
         return all_neighbors, all_weights
 
+            ############################################
+            ##########################################
+      
 
 
 
