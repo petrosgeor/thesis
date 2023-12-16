@@ -283,6 +283,9 @@ class UnifiedDataset(Dataset):
             d1[picked_indices[i].item()] = i
         all_neighbors = []
         all_weights = []
+        print('the shape of data is: ', self.data.size())
+        print('the shape of Ids is: ', self.Ids.size())
+        print(self.neighbor_indices.size())
 
         for i in range(0, self.data.shape[0]):
             neighbors = self.neighbor_indices[i, :].tolist()
@@ -303,7 +306,6 @@ class UnifiedDataset(Dataset):
                 else: continue
             all_neighbors.append(torch.tensor(neighbors_copy, dtype=torch.int32)) 
             all_weights.append(torch.tensor(weights))
-        print('done')
         print(len(all_neighbors), len(all_weights))
         return all_neighbors, all_weights
 
