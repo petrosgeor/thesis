@@ -1,10 +1,11 @@
-"https://github.com/Yunfan-Li/Twin-Contrastive-Learning/blob/main/evaluate.py"
+
 from sklearn import metrics
 from munkres import Munkres
 import numpy as np
 import torch
 from scipy.optimize import linear_sum_assignment
 
+'code from "https://github.com/Yunfan-Li/Twin-Contrastive-Learning/blob/main/evaluate.py"'
 
 def reorder_preds(predictions, targets):
     predictions = torch.from_numpy(predictions).cuda()
