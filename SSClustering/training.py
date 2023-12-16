@@ -425,6 +425,7 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
             images_u_id = id_aug(images_u)  # identity augmentation
             images_u_clr = aug_clr(images_u)
             neighbor_images = id_aug(neighbor_images.to(device))
+            weights = weights.to(device)
             probs = clusternet.forward(images_u_id)[0]
             probs_clr = clusternet.forward(images_u_clr)[0]
             probs_neighbors = clusternet.forward(neighbor_images)[0]
