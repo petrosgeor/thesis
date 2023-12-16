@@ -317,7 +317,7 @@ class UnifiedDataset(Dataset):
                     new_neighbors = [d2[key] for key in new_n]
                 neighbors_copy = torch.cat(torch.tensor(neighbors_copy), torch.tensor(new_neighbors))
                 weights = torch.cat(torch.tensor(weights), torch.tensor(new_weights))
-            all_neighbors.append(neighbors_copy)
+            all_neighbors.append(torch.tensor(neighbors_copy))
             all_weights.append(torch.tensor(weights))
         return all_neighbors, all_weights
 
