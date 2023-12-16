@@ -408,7 +408,7 @@ def train_clustering_network2(num_epochs=2, t_contrastive=0.5, consider_links: b
 
 
 def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_distnaces:bool=True, num_links:int=5000):
-    clusternet = initializeClusterModel()
+    clusternet = initializeClusterModel(freeze_backbone=False)
     clusternet.to(device)
 
     id_aug = Identity_Augmentation()
@@ -429,11 +429,11 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
             probs = clusternet.forward(images_u_id)[0]
             probs_clr = clusternet.forward(images_u_clr)[0]
             probs_neighbors = clusternet.forward(neighbor_images)[0]
-            loss1 = ConsistencyLoss.forward(probs1=probs, probs2=probs_neighbors, weights=weights) + ConsistencyLoss.forward(probs1=probs, probs2=probs_clr, weights=weights)
+            loss1 = ConsistencyLoss.forward(probs1=probs, probs2=probs_neighbors, weights=weights) + ConsistencyLoss.forward(probs1=probs, probs2=probs_clr, weights=None)
 
             loss2 = kl_loss.forward(probs=probs)
 
-            total_loss = loss1 + 2*loss2
+            total_loss = loss1 + 10*loss2
             total_loss.backward()
             optimizer.step()
             optimizer.zero_grad()

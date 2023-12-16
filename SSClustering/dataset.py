@@ -283,10 +283,9 @@ class UnifiedDataset(Dataset):
         d1 = {}
         for i in range(0, picked_indices.shape[0]):
             d1[picked_indices[i].item()] = i
+        d2 = {v: k for k, v in d1.items()}  # reverse dictionary. Maps elements of the matrix to the original indices
         all_neighbors = []
         all_weights = []
-        print(self.Ids.numel())
-        print(self.neighbor_indices.size())
 
         for i in range(0, self.Ids.numel()):
             neighbors = self.neighbor_indices[i, :].tolist()
@@ -294,14 +293,11 @@ class UnifiedDataset(Dataset):
             weights = self.neighbor_weights[i, :].tolist()
             if self.num_links != 0:
                 if i in d1:
-                    for j in neighbors:
+                    for x, j in enumerate(neighbors):
+                        #NEIGHBORS CORRECTION
                         if j in d1:
                             if A_matrix[d1[i], d1[j]] == -1:
-                                neighbors_copy.append(j)
-                                weights.append(-1.)
-                            elif A_matrix[d1[i], d1[j]] == 1:
-                                neighbors_copy.append(j)
-                                weights.append(1.)
+                                weights[x] = -1.
 
             all_neighbors.append(torch.tensor(neighbors_copy)) 
             all_weights.append(torch.tensor(weights))
