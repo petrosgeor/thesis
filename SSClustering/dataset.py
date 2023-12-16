@@ -8,6 +8,7 @@ from models import *
 from augmentations import *
 import matplotlib.pyplot as plt
 from scipy.special import binom
+import torch.nn.functional as F
 
 # torch.manual_seed(42)
 # random.seed(42)
@@ -194,12 +195,6 @@ class LinkedDataset(Dataset):
 
 
 
-
-
-
-
-
-
 class SCANdatasetWithNeighbors(Dataset):
     def __init__(self, data: torch.Tensor, Ids: torch.Tensor, neighbor_indices: torch.Tensor):
         self.data = data
@@ -246,6 +241,50 @@ class SCANdatasetWithNeighbors(Dataset):
                 correct_links += binom(Ids_count[j].item(), 2)
             correct_links_list.append(correct_links/total_links)
         return correct_links_list
+
+
+class UnifiedDataset(Dataset):
+    def __init__(self, data: torch.Tensor, Ids: torch.Tensor, neighbor_indices: torch.Tensor,
+                 neighbors_distances: torch.Tensor, num_links: int, weighted_neighbors: bool=False):
+        self.data = data
+        self.Ids = Ids
+        self.num_links = num_links
+        self.weighted_neighbors = weighted_neighbors
+        self.neighbor_indices = neighbor_indices
+        self.neighbors_distances = neighbors_distances
+        if neighbors_distances == None:
+            self.neighbor_weights = F.softmax(self.neighbors_distances, dim=1)
+        elif neighbors_distances is not None:
+            self.neighbor_weights = torch.ones(neighbor_indices.size())
+
+    def consider_links(self):
+        _, A_matrix, _, picked_indices = random_links2label(self.data, self.Ids, self.num_links)
+        d1 = {}
+        for i in range(0, picked_indices.shape[0]):
+            d1[picked_indices[i].item()] = i
+        all_indices = []
+
+        for i in range(0, self.data.shape[0]):
+            neighbors = self.neighbor_indices[i, :].tolist()
+            distances = self.neighbor_weights[i, :].tolist()
+            if i in d1:
+                for j in neighbors:
+                    if j in d1:
+                        if A_matrix[d1[i], d1[j]] == -1:
+                            neighbors.append(j)
+                            distances.append(-1.)
+                        elif A_matrix[d1[i], d1[j]] == 1:
+                            neighbors.append(j)
+                            distances.append(1.)
+                        
+
+
+
+
+
+
+
+
 
 
 class ClearedSCANDataset(Dataset):

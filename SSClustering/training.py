@@ -303,7 +303,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
 
 
 def train_clustering_network2(num_epochs=2, t_contrastive=0.5, consider_links: bool = False, n_neighbors=20, testing=False):
-    clusternet = initializeClusterModel()
+    clusternet = initializeClusterModel(freeze_backbone=True)
     clusternet.to(device)
 
     id_aug = Identity_Augmentation()

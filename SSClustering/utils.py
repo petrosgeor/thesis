@@ -230,7 +230,7 @@ def probabilistic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_co
 
 
 
-def initializeClusterModel(n_heads: int=1, dataset: str = 'cifar10', n_clusters: int = 10):
+def initializeClusterModel(n_heads: int=1, dataset: str = 'cifar10', n_clusters: int = 10, freeze_backbone=False):
     assert (dataset == 'cifar10'), 'no implementation yet for the other datasets'
     backbone = resnet18()
     con_model = ContrastiveModel(backbone=backbone)
@@ -240,6 +240,9 @@ def initializeClusterModel(n_heads: int=1, dataset: str = 'cifar10', n_clusters:
     con_model.load_state_dict(checkpoint)
 
     clustermodel = ClusteringModel(backbone={'backbone': con_model.backbone, 'dim': con_model.backbone_dim}, nclusters=n_clusters)
+    if freeze_backbone:
+        for param in clustermodel.backbone.parameters():
+            param.requires_grad = False
     return clustermodel
 
 
