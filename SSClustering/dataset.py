@@ -251,9 +251,9 @@ class UnifiedDataset(Dataset):
         self.num_links = num_links
         self.neighbor_indices = neighbor_indices
         self.neighbors_distances = neighbors_distances
-        if neighbors_distances == None:
+        if neighbors_distances != None:
             self.neighbor_weights = F.softmax(self.neighbors_distances, dim=1)
-        elif neighbors_distances is not None:
+        elif neighbors_distances == None:
             self.neighbor_weights = torch.ones(neighbor_indices.size(), dtype=torch.float)
         
         self.all_neighbors_indices, self.all_weights = self.consider_links()
@@ -269,7 +269,7 @@ class UnifiedDataset(Dataset):
         random_neighbor_index = image_neighbors_indices[random_index_index]
         random_weight = image_neighbors_weights[random_index_index]
         random_neighbor = self.data[random_neighbor_index]
-        return image, random_neighbor, random_weight
+        return image, random_neighbor, random_weight, self.Ids[item]
     
     def __len__(self):
         return self.Ids.numel()
@@ -287,15 +287,16 @@ class UnifiedDataset(Dataset):
         for i in range(0, self.data.shape[0]):
             neighbors = self.neighbor_indices[i, :].tolist()
             weights = self.neighbor_weights[i, :].tolist()
-            if i in d1:
-                for j in neighbors:
-                    if j in d1:
-                        if A_matrix[d1[i], d1[j]] == -1:
-                            neighbors.append(j)
-                            weights.append(-1.)
-                        elif A_matrix[d1[i], d1[j]] == 1:
-                            neighbors.append(j)
-                            weights.append(1.)
+            if self.num_links != 0:
+                if i in d1:
+                    for j in neighbors:
+                        if j in d1:
+                            if A_matrix[d1[i], d1[j]] == -1:
+                                neighbors.append(j)
+                                weights.append(-1.)
+                            elif A_matrix[d1[i], d1[j]] == 1:
+                                neighbors.append(j)
+                                weights.append(1.)
             all_neighbors.append(torch.tensor(neighbors, dtype=torch.int32)) 
             all_weights.append(torch.tensor(weights))
         return all_neighbors, all_weights

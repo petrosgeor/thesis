@@ -25,9 +25,6 @@ gpu_id = input("Enter the GPU ID to be used (e.g., 0, 1, 2, ...): ")
 
 os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
 
-def give_random_images(image_embeddings, number):
-    pass
-
 
 def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contrastive=0.5, consider_links: bool = False):
     resnet, hidden_dim = get_resnet('resnet18')
@@ -130,14 +127,12 @@ def contrastive_training(unsup_dataloader, sup_dataloader, num_epochs=2, t_contr
     return net
         
 
-
-
 def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neighbors=20) -> tuple:   # creates dataloaders for both the SCAN and LINKED datasets
     dataset = CIFAR10(proportion=1)
     linked_dataset = LinkedDataset(dataset, num_links=5000)
     assert (take_neighbors == 'neuralnet') | (take_neighbors == 'neuralnet') | (take_neighbors == 'probabilistic') | (take_neighbors == 'paiper')
     if take_neighbors == 'neuralnet':
-        cifar_dataloader = DataLoader(dataset, batch_size=500, shuffle=False)   ######
+        cifar_dataloader = DataLoader(dataset, batch_size=500, shuffle=False)  
         id_aug = Identity_Augmentation()
         embeddings = []
         with torch.no_grad():
@@ -149,8 +144,7 @@ def create_SCAN_dl_LINKED_dl(net: Network, take_neighbors = 'neuralnet', n_neigh
             embeddings = torch.cat(embeddings, dim=0)
             neighbor_indices = find_indices_of_closest_embeddings(embeddings, distance='cosine', n_neighbors=n_neighbors)
             scan_dataset = SCANdatasetWithNeighbors(data=dataset.data, Ids=dataset.Ids, neighbor_indices=neighbor_indices)
-            #scan_dataset = ClearedSCANDataset(data=X, Ids=labels, neighbor_indices=neighbor_indices, 
-                                              #picked_indices=linked_dataset.picked_indices,A_matrix=linked_dataset.A_matrix)
+
     elif take_neighbors == 'paiper':
         id_aug = test2.val_augmentation()
         cifar_dataloader = DataLoader(dataset, batch_size=500, shuffle=False)
@@ -301,6 +295,24 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
             x = torch.unique(predictions, return_inverse=False, return_counts=True)
 
 
+def create_unified_dataset(net, n_neighbors=20, return_distances: bool = True, num_links: int=5000) -> tuple:
+    dataset = CIFAR10(proportion=1)
+    cifar_dataloader = DataLoader(dataset, batch_size=500, shuffle=False)
+    id_aug = Identity_Augmentation()
+    embeddings = []
+    with torch.no_grad():
+        for i, (X_batch, Ids) in enumerate(cifar_dataloader):
+            X_batch = X_batch.to(device)
+            embeddings_batch = net.forward(id_aug(X_batch), forward_pass='backbone')
+            embeddings.append(embeddings_batch.cpu())
+        embeddings = torch.cat(embeddings, dim=0)
+        distances, indices = find_indices_of_closest_embeddings(embeddings, n_neighbors=n_neighbors, return_distances=return_distances)
+        unified_dataset = UnifiedDataset(data=dataset.data, Ids=dataset.Ids, neighbor_indices=indices,
+                                         neighbors_distances=distances, num_links=num_links)
+        
+        dataloader = DataLoader(dataset=unified_dataset, batch_size=500, shuffle=True)
+        return dataloader
+
 
 def train_clustering_network2(num_epochs=2, t_contrastive=0.5, consider_links: bool = False, n_neighbors=20, testing=False):
     clusternet = initializeClusterModel(freeze_backbone=False)
@@ -395,6 +407,69 @@ def train_clustering_network2(num_epochs=2, t_contrastive=0.5, consider_links: b
                 print(f"Accuracy (ACC): {acc:.2f}%")
 
 
+def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_distnaces:bool=True, num_links:int=5000):
+    clusternet = initializeClusterModel()
+    clusternet.to(device)
+
+    id_aug = Identity_Augmentation()
+    aug_clr = SimCLRaugment()
+    dataloader = create_unified_dataset(net=clusternet, n_neighbors=n_neighbors, return_distances=consider_distnaces, num_links=num_links)
+
+    optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4), weight_decay=10**(-4))
+    ConsistencyLoss = losses.ClusterConsistencyLoss()
+    kl_loss = losses.KLClusterDivergance()
+
+    for epoch in range(0, num_epochs):
+        for i, (images_u, neighbor_images, weights, _) in enumerate(dataloader):
+            images_u = images_u.to(device)
+            images_u_id = id_aug(images_u)  # identity augmentation
+            images_u_clr = aug_clr(images_u)
+            neighbor_images = id_aug(neighbor_images.to(device))
+            probs = clusternet.forward(images_u_id)[0]
+            probs_clr = clusternet.forward(images_u_clr)[0]
+            probs_neighbors = clusternet.forward(neighbor_images)[0]
+            loss1 = ConsistencyLoss.forward(probs1=probs, probs2=probs_neighbors, weights=weights) + ConsistencyLoss.forward(probs1=probs, probs2=probs_clr, weights=weights)
+
+            loss2 = kl_loss.forward(probs=probs)
+
+            total_loss = loss1 + 2*loss2
+            total_loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+        if (epoch + 1)%10 == 0:
+            true_labels = []
+            predictions = []
+            true_labels_conf = []
+            predictions_conf = []
+            with torch.no_grad():
+                for i, (images_batch, _, _, labels_batch) in enumerate(dataloader):
+                    images_batch = id_aug(images_batch.to(device))
+                    batch_probs = clusternet.forward(images_batch)[0]
+                    indices_conf = torch.where(batch_probs >= 0.95)
+                    
+                    true_labels_conf.append(labels_batch[indices_conf[0].cpu()])
+                    predictions_conf.append(indices_conf[1].cpu())
+
+                    batch_predictions = torch.argmax(batch_probs, dim=1)
+                    predictions.append(batch_predictions.cpu())
+                    true_labels.append(labels_batch)
+                
+                true_labels_conf = torch.cat(true_labels_conf, dim=0)
+                predictions_conf = torch.cat(predictions_conf, dim=0)
+                true_labels = torch.cat(true_labels, dim=0)
+                predictions = torch.cat(predictions, dim=0)
+                nmi, ari, acc = cluster_metric(label=true_labels.numpy(), pred=predictions.numpy())
+                print('------------------- Epoch: ', epoch,' ---------------------')
+                # Print the evaluation metrics
+                print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
+                print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
+                print(f"Accuracy (ACC): {acc:.2f}%")
+                print('confident examples \n')
+                nmi, ari, acc = cluster_metric(label=true_labels_conf.numpy(), pred=predictions_conf.numpy())
+                print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
+                print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
+                print(f"Accuracy (ACC): {acc:.2f}%")
+
 
 def run_pretraining_function():
     run_pretraining = input("do you want to run the pretraining step? ")
@@ -414,7 +489,7 @@ def run_pretraining_function():
     else:
         return 'no pretraining will take place'
 
-train_clustering_network2(num_epochs=300, consider_links=False, n_neighbors=20, testing=False)
+train_clustering_network3(num_epochs=60, n_neighbors=20, consider_distnaces=False, num_links=5000)
 
 
 # scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = True, n_neighbors=20,

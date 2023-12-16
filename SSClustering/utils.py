@@ -144,23 +144,18 @@ class SoftNNLossEuclidean(nn.Module):
 
 
 
-def find_indices_of_closest_embeddings(embedings: torch.Tensor, n_neighbors: int = 20, distance: str = 'cosine') -> torch.Tensor:
-    assert (distance == 'cosine') | (distance == 'euclidean'), 'the distance must be cosine or euclidean'
-    import faiss
-
-    if (distance == 'cosine'):
-        D = torch.matmul(embedings, embedings.T)
-        indices = torch.topk(D, k=n_neighbors, dim=1)[1]
-        # embedings = embedings.numpy()
-        # index = faiss.IndexFlatIP(embedings.shape[1])
-        # index.add(embedings)
-        #_, indices = index.search(embedings, n_neighbors)
-    elif (distance == 'euclidean'):
-        D = torch.cdist(embedings, embedings)
-        indices = torch.topk(D, k=n_neighbors, dim=1, largest=False)[1]
-        if isinstance(indices, np.ndarray):
-            return torch.from_numpy(indices)
-    return indices
+def find_indices_of_closest_embeddings(embedings: torch.Tensor, n_neighbors: int = 20, return_distances=False) -> torch.Tensor:
+    #import faiss
+    D = torch.matmul(embedings, embedings.T)
+    distances, indices = torch.topk(D, k=n_neighbors, dim=1)
+    # embedings = embedings.numpy()
+    # index = faiss.IndexFlatIP(embedings.shape[1])
+    # index.add(embedings)
+    #_, indices = index.search(embedings, n_neighbors)
+    if return_distances == False:
+        return None, indices
+    elif return_distances == True:
+        return distances, indices
 
 def randomly_permute_tensor(x: torch.Tensor):
     n = x.size(0)

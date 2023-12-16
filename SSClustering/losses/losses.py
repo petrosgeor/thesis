@@ -68,16 +68,16 @@ class ClusterConsistencyLoss(nn.Module):
         self.small_number = 1e-6
         self.temperature = temperature
 
-    def forward(self, probs1: torch.Tensor, probs2: torch.Tensor, relations: torch.Tensor = None) -> torch.Tensor:
-        if relations == None:
+    def forward(self, probs1: torch.Tensor, probs2: torch.Tensor, weights: torch.Tensor = None) -> torch.Tensor:
+        if weights == None:
             #inner_products = (probs1 * probs2).sum(dim=1)/self.temperature + self.small_number
             inner_products = (probs1 * probs2).sum(dim=1)
             return -torch.mean(inner_products.log())
-        elif relations is not None:
+        elif weights is not None:
             #inner_products = (probs1 * probs2).sum(dim=1)/self.temperature + self.small_number
             inner_products = (probs1 * probs2).sum(dim=1)
             inner_products_log = inner_products.log()
-            return -torch.mean(relations * inner_products_log)
+            return -torch.mean(weights * inner_products_log)
 
 
 class KLClusterDivergance(nn.Module):
