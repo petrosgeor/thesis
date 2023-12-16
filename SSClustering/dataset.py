@@ -287,7 +287,7 @@ class UnifiedDataset(Dataset):
         print('the shape of Ids is: ', self.Ids.size())
         print(self.neighbor_indices.size())
 
-        for i in range(0, self.data.shape[0]):
+        for i in range(0, self.Ids.numel()):
             neighbors = self.neighbor_indices[i, :].tolist()
             neighbors_copy = neighbors.copy()
             weights = self.neighbor_weights[i, :].tolist()
