@@ -84,7 +84,7 @@ def create_big_A_matrix(labels: torch.Tensor, num_links: int):
     random_pairs = random.sample(indices, k=2*num_links)
     indices_pairs = [torch.tensor([random_pairs[i], random_pairs[i+1]]) for i in range(0, len(random_pairs), 2)]
     indices_pairs = torch.stack(indices_pairs, dim=1)
-    
+
 
 
 
@@ -315,10 +315,10 @@ class UnifiedDataset(Dataset):
                     new_weights = A_matrix[d1[i], new_n]
                     new_n = new_n.tolist()
                     new_neighbors = [d2[key] for key in new_n]
-            neighbors_copy = torch.cat(torch.tensor(neighbors_copy), torch.tensor(new_neighbors))
-            weights = torch.cat(torch.tensor(weights), torch.tensor(new_weights))
+                neighbors_copy = torch.cat(torch.tensor(neighbors_copy), torch.tensor(new_neighbors))
+                weights = torch.cat(torch.tensor(weights), torch.tensor(new_weights))
             all_neighbors.append(neighbors_copy)
-            all_weights.append(weights)
+            all_weights.append(torch.tensor(weights))
         return all_neighbors, all_weights
 
 
