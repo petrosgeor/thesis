@@ -340,12 +340,11 @@ class UnifiedDataset(Dataset):
             c = torch.stack((x, neighbors), dim=1)
             for j in range(0, c.shape[0]):
                 v = torch.eq(c[j,:], linked_indices).all(dim=1)
-                are_all_false = torch.eq(v == False).item()
+                are_all_false = torch.all(v == False).item()
                 if are_all_false == False:
                     w = torch.masked_select(values, v)
                     if w.item() == -1:
                         weights[j] = -1
-                        
             all_neighbors.append(neighbors)
             all_weights.append(weights)
         return all_neighbors, all_weights
