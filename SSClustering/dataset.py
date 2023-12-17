@@ -80,7 +80,8 @@ def create_big_A_matrix(labels: torch.Tensor, num_links: int):
     n_samples = labels.numel()
     indices = torch.arange(0, n_samples, step=1).tolist()
 
-    random_pairs = random.sample(indices, k=2*num_links)
+    random_pairs = [random.choice(indices) for _ in range(2 * num_links)]
+    #random_pairs = random.sample(indices, k=2*num_links)
     indices_pairs = [torch.tensor([random_pairs[i], random_pairs[i+1]]) for i in range(0, len(random_pairs), 2)]
     indices_pairs = torch.stack(indices_pairs, dim=0)
 
