@@ -274,7 +274,7 @@ class UnifiedDataset(Dataset):
         elif neighbors_distances == None:
             self.neighbor_weights = torch.ones(neighbor_indices.size(), dtype=torch.float)
         
-        self.all_neighbors_indices, self.all_weights = self.consider_links2()
+        self.all_neighbors_indices, self.all_weights = self.consider_links()
 
 
     def __getitem__(self, item):
@@ -293,39 +293,7 @@ class UnifiedDataset(Dataset):
         return self.Ids.numel()
 
 
-
     def consider_links(self):
-        _, A_matrix, _, picked_indices = random_links2label(self.data, self.Ids, self.num_links)
-        d1 = {}
-        for i in range(0, picked_indices.shape[0]):
-            d1[picked_indices[i].item()] = i
-        d2 = {v: k for k, v in d1.items()}  # reverse dictionary. Maps elements of the matrix to the original indices
-        all_neighbors = []
-        all_weights = []
-
-        for i in range(0, self.Ids.numel()):
-            neighbors = self.neighbor_indices[i, :].tolist()
-            neighbors_copy = neighbors.copy()
-            weights = self.neighbor_weights[i, :].tolist()
-            if self.num_links != 0:
-                if i in d1:
-                    for x, j in enumerate(neighbors):
-                        #NEIGHBORS CORRECTION
-                        if j in d1:
-                            if A_matrix[d1[i], d1[j]] == -1:
-                                weights[x] = -1.
-                    new_n = torch.where(A_matrix[d1[i], :] != 0)[0]
-                    new_weights = A_matrix[d1[i], new_n]
-                    new_n = new_n.tolist()
-                    new_neighbors = [d2[key] for key in new_n]
-                neighbors_copy = torch.cat(torch.tensor(neighbors_copy), torch.tensor(new_neighbors))
-                weights = torch.cat(torch.tensor(weights), torch.tensor(new_weights))
-            all_neighbors.append(torch.tensor(neighbors_copy))
-            all_weights.append(torch.tensor(weights))
-        return all_neighbors, all_weights
-
-
-    def consider_links2(self):
         A_matrix = create_big_A_matrix(self.Ids, num_links=self.num_links) # THIS IS A SPARSE TENSOR
         linked_indices = A_matrix._indices().T
         values = A_matrix._values()
@@ -334,7 +302,6 @@ class UnifiedDataset(Dataset):
 
         n_samples = self.Ids.numel()
         for i in range(0, n_samples):
-            print(i)
             neighbors = self.neighbor_indices[i,:]
             weights = self.neighbor_weights[i,:]
             ii = torch.where(linked_indices[0, :] == i)[0]
@@ -351,66 +318,6 @@ class UnifiedDataset(Dataset):
             all_neighbors.append(neighbors)
             all_weights.append(weights)
         return all_neighbors, all_weights
-
-
-            
-
-
-
-
-
-
-
-class ClearedSCANDataset(Dataset):
-    def __init__(self, data: torch.Tensor, Ids: torch.Tensor, neighbor_indices: torch.Tensor, 
-                 picked_indices: torch.Tensor, A_matrix: torch.Tensor):
-        '''
-        original_indices: the indices selected to get link. We will clean the neighbor_indices by using them
-        '''
-        self.data = data
-        self.Ids = Ids
-        self.picked_indices = picked_indices
-        self.neighbor_indices_cleaned = self.clean_neighbors(A_matrix, neighbor_indices)
-    
-
-    def __getitem__(self, item):
-        image = self.data[item]
-        image_neighbor_indices = self.neighbor_indices_cleaned[item]
-        n_neighbors = image_neighbor_indices.numel()
-        random_index_index = torch.randint(0, n_neighbors, (1,)).item()
-        random_column = image_neighbor_indices[random_index_index]
-
-        neighbor_image = self.data[random_column]
-        return image, self.Ids[item], neighbor_image
-    
-    def __len__(self):
-        return self.Ids.shape[0]
-
-
-    def clean_neighbors(self, A_matrix, neighbor_indices):
-        d1 = {}
-        for i in range(0, self.picked_indices.shape[0]):
-            d1[self.picked_indices[i].item()] = i
-        #d2 = {v: k for k, v in d1.items()}
-
-        neighbor_indices_cleaned = []
-        for i in range(0, self.data.shape[0]):
-            neighbors = neighbor_indices[i, :].tolist()
-            if i in d1:
-                for j in neighbors:
-                    if j in d1:
-                        if A_matrix[d1[i],d1[j]] == -1:
-                            neighbors.remove(j)
-
-            neighbor_indices_cleaned.append(torch.tensor(neighbors))
-        return neighbor_indices_cleaned
-
-
-# dataset = CIFAR10()
-# linked_dataset = LinkedDataset(dataset)
-
-
-# image, related_image, relation = linked_dataset.__getitem__(500)
 
 
 
