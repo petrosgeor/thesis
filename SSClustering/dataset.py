@@ -347,7 +347,7 @@ class UnifiedDataset(Dataset):
                     if torch.isin(z, neighbors).item():
                         weights[torch.where(neighbors == z)[0]] = v[j]
                     else:
-                        neighbors = torch.cat((neighbors, z), dim=0)
+                        neighbors = torch.cat((neighbors, z.unsqueeze(0)), dim=0)
                         weights = torch.cat((weights, v[j]), dim=0)
                 
             all_neighbors.append(neighbors)
