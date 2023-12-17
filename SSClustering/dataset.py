@@ -274,7 +274,7 @@ class UnifiedDataset(Dataset):
         elif neighbors_distances == None:
             self.neighbor_weights = torch.ones(neighbor_indices.size(), dtype=torch.float)
         
-        self.all_neighbors_indices, self.all_weights = self.consider_links()
+        self.all_neighbors_indices, self.all_weights = self.consider_links2()
 
 
     def __getitem__(self, item):
@@ -296,8 +296,6 @@ class UnifiedDataset(Dataset):
 
     def consider_links(self):
         _, A_matrix, _, picked_indices = random_links2label(self.data, self.Ids, self.num_links)
-        print('the size of A is: ', A_matrix.size())
-        print('the size of selected indices is: ', picked_indices.size())
         d1 = {}
         for i in range(0, picked_indices.shape[0]):
             d1[picked_indices[i].item()] = i
@@ -342,7 +340,16 @@ class UnifiedDataset(Dataset):
             c = torch.stack((x, neighbors), dim=1)
             for j in range(0, c.shape[0]):
                 v = torch.eq(c[j,:], linked_indices).all(dim=1)
-                
+                are_all_false = torch.eq(v == False).item()
+                if are_all_false == False:
+                    w = torch.masked_select(values, v)
+                    if w.item() == -1:
+                        weights[j] = -1
+                        
+            all_neighbors.append(neighbors)
+            all_weights.append(weights)
+        return all_neighbors, all_weights
+
 
 
 
