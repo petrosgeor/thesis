@@ -338,7 +338,11 @@ class UnifiedDataset(Dataset):
         for i in range(0, n_samples):
             neighbors = self.neighbor_indices[i,:]
             weights = self.neighbor_weights[i,:]
-
+            x = torch.full_like(neighbors, fill_value=i)
+            c = torch.stack((x, neighbors), dim=1)
+            for j in range(0, c.shape[0]):
+                v = torch.eq(c[j,:], linked_indices).all(dim=1)
+                
 
 
 
