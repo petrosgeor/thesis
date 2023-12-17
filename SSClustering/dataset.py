@@ -339,6 +339,7 @@ class UnifiedDataset(Dataset):
             
             elif only_correct == True:
                 num_corrections = 0
+                num_additions = 0
                 for i in range(0, n_samples):
                     neighbors = self.neighbor_indices[i,:]
                     weights = self.neighbor_weights[i,:]
@@ -353,11 +354,13 @@ class UnifiedDataset(Dataset):
                                 neighbors = torch.cat([neighbors[0:t], neighbors[t+1:]])
                                 weights = torch.cat([weights[0:t], weights[t+1:]])
                             elif (torch.isin(z, neighbors)).item() == False and (v[j] == 1).item():
+                                num_additions += 1
                                 neighbors = torch.cat([neighbors, z.unsqueeze(0)], dim=0)
                                 weights = torch.cat([weights, v[j].unsqueeze(0)], dim=0)
                     all_neighbors.append(neighbors)
                     all_weights.append(weights)
                 print('THE NUMBER OF CORRECTIONS IS: ', num_corrections)
+                print('THE NUMBER OF ADDITIONS IS: ', num_additions)
                 return all_neighbors, all_weights
             
         elif self.num_links == 0:
