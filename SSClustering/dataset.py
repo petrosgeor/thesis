@@ -337,18 +337,23 @@ class UnifiedDataset(Dataset):
             print(i)
             neighbors = self.neighbor_indices[i,:]
             weights = self.neighbor_weights[i,:]
-            x = torch.full_like(neighbors, fill_value=i)
-            c = torch.stack((x, neighbors), dim=1)
-            for j in range(0, c.shape[0]):
-                v = torch.eq(c[j,:], linked_indices).all(dim=1)
-                are_all_false = torch.all(v == False).item()
-                if are_all_false == False:
-                    w = torch.masked_select(values, v)
-                    if w.item() == -1:
-                        weights[j] = -1
+            ii = torch.where(linked_indices[0, :] == i)[0]
+            if ii.numel() != 0:
+                linked_neighbors = linked_indices[ii, 1]
+                v = values[ii]
+                for j, z in enumerate(linked_neighbors):
+                    if torch.isin(z, neighbors).item():
+                        weights[torch.where(neighbors == z)[0]] = v[j]
+                    else:
+                        neighbors = torch.cat((neighbors, z), dim=0)
+                        weights = torch.cat((weights, v[j]), dim=0)
+                
             all_neighbors.append(neighbors)
             all_weights.append(weights)
         return all_neighbors, all_weights
+
+
+            
 
 
 
