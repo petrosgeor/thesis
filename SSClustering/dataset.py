@@ -317,7 +317,9 @@ class UnifiedDataset(Dataset):
         if self.num_links != 0:
             A_matrix = create_big_A_matrix(self.Ids, num_links=self.num_links) # THIS IS A SPARSE TENSOR
             linked_indices = A_matrix._indices().T
+            print(linked_indices.shape)
             values = A_matrix._values()
+            print(values.shape)
             if only_correct == False:
                 for i in range(0, n_samples):
                     neighbors = self.neighbor_indices[i,:]
