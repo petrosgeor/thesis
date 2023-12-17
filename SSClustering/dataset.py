@@ -310,14 +310,14 @@ class UnifiedDataset(Dataset):
 
 
     def consider_links(self):
-        A_matrix = create_big_A_matrix(self.Ids, num_links=self.num_links) # THIS IS A SPARSE TENSOR
-        linked_indices = A_matrix._indices().T
-        values = A_matrix._values()
         all_neighbors = []
         all_weights = []
 
         n_samples = self.Ids.numel()
         if self.num_links != 0:
+            A_matrix = create_big_A_matrix(self.Ids, num_links=self.num_links) # THIS IS A SPARSE TENSOR
+            linked_indices = A_matrix._indices().T
+            values = A_matrix._values()
             for i in range(0, n_samples):
                 neighbors = self.neighbor_indices[i,:]
                 weights = self.neighbor_weights[i,:]
