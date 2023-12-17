@@ -346,11 +346,10 @@ class UnifiedDataset(Dataset):
                     neighbors = self.neighbor_indices[i,:]
                     weights = self.neighbor_weights[i,:]
                     ii = torch.where(linked_indices[0, :] == i)[0]
+                    print(ii)
                     if ii.numel() != 0:
                         linked_neighbors = linked_indices[ii, 1]
                         v = values[ii]
-                        print(linked_neighbors)
-                        print(v)
                         for j, z in enumerate(linked_neighbors):
                             if torch.isin(z, neighbors).item() and (v[j] == -1).item():
                                 num_corrections += 1
