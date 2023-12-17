@@ -433,7 +433,7 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
 
             loss2 = kl_loss.forward(probs=probs)
 
-            total_loss = loss1 + 6*loss2
+            total_loss = loss1 + 10*loss2
             total_loss.backward()
             optimizer.step()
             optimizer.zero_grad()
