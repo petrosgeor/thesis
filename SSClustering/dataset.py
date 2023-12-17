@@ -10,9 +10,9 @@ import matplotlib.pyplot as plt
 from scipy.special import binom
 import torch.nn.functional as F
 
-# torch.manual_seed(42)
-# random.seed(42)
-# np.random.seed(42)
+torch.manual_seed(42)
+random.seed(42)
+np.random.seed(42)
 
 def plot_image_from_tensor(tensor):
     numpy_image = (tensor.permute(1,2,0).numpy()).astype(np.int32)
@@ -276,7 +276,7 @@ class UnifiedDataset(Dataset):
         elif neighbors_distances == None:
             self.neighbor_weights = torch.ones(neighbor_indices.size(), dtype=torch.float)
         
-        self.all_neighbors_indices, self.all_weights = self.consider_links(only_correct=True)
+        self.all_neighbors_indices, self.all_weights = self.consider_links(only_correct=False)
         self.check_neighbors_function()
         print('DONE WITH PREPROCESSING')
 
@@ -315,6 +315,7 @@ class UnifiedDataset(Dataset):
 
         n_samples = self.Ids.numel()
         if self.num_links != 0:
+            num_additions = 0
             A_matrix = create_big_A_matrix(self.Ids, num_links=self.num_links) # THIS IS A SPARSE TENSOR
             linked_indices = A_matrix._indices().T
             values = A_matrix._values()
@@ -322,7 +323,7 @@ class UnifiedDataset(Dataset):
                 for i in range(0, n_samples):
                     neighbors = self.neighbor_indices[i,:]
                     weights = self.neighbor_weights[i,:]
-                    ii = torch.where(linked_indices[0, :] == i)[0]
+                    ii = torch.where(linked_indices[:, 0] == i)[0]
                     if ii.numel() != 0:
                         linked_neighbors = linked_indices[ii, 1]
                         v = values[ii]
@@ -332,9 +333,10 @@ class UnifiedDataset(Dataset):
                             else:
                                 neighbors = torch.cat((neighbors, z.unsqueeze(0)), dim=0)
                                 weights = torch.cat((weights, v[j].unsqueeze(0)), dim=0)
-                    
+                                num_additions += 1
                     all_neighbors.append(neighbors)
                     all_weights.append(weights)
+                print('THE NUMBER OF ADDITIONS IS: ', num_additions)
                 return all_neighbors, all_weights
             
             elif only_correct == True:
