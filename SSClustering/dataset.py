@@ -343,6 +343,7 @@ class UnifiedDataset(Dataset):
                 v = values[ii]
                 for j, z in enumerate(linked_neighbors):
                     print(linked_neighbors.shape)
+                    print(z)
                     if torch.isin(z, neighbors).item():
                         weights[torch.where(neighbors == z)[0]] = v[j]
                     else:
