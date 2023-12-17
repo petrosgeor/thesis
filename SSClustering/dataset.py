@@ -301,6 +301,8 @@ class UnifiedDataset(Dataset):
             neighbor_labels = self.Ids[neighbor_indices]
             weights = self.all_weights[i, :]
             x = torch.where(weights == -1)[0]
+            if x.numel() == 0:
+                continue
             assert torch.all(neighbor_labels[x] != label).item(), 'there is a problem with the code'
 
 
