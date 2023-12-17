@@ -334,6 +334,7 @@ class UnifiedDataset(Dataset):
 
         n_samples = self.Ids.numel()
         for i in range(0, n_samples):
+            print(i)
             neighbors = self.neighbor_indices[i,:]
             weights = self.neighbor_weights[i,:]
             x = torch.full_like(neighbors, fill_value=i)
