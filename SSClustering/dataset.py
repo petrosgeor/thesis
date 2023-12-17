@@ -161,7 +161,7 @@ class LinkedDataset(Dataset):
     
     def __len__(self):
         return self.data.shape[0]
-
+        
 
     def find_linked_indices(self):
         n_samples = self.A_matrix.shape[0]
@@ -275,7 +275,7 @@ class UnifiedDataset(Dataset):
             self.neighbor_weights = torch.ones(neighbor_indices.size(), dtype=torch.float)
         
         self.all_neighbors_indices, self.all_weights = self.consider_links()
-
+        self.check_neighbors_function()
 
     def __getitem__(self, item):
         image = self.data[item]
@@ -291,6 +291,17 @@ class UnifiedDataset(Dataset):
     
     def __len__(self):
         return self.Ids.numel()
+
+
+    def check_neighbors_function(self):
+        n_samples = self.all_neighbors_indices.shape[0]
+        for i in range(0, n_samples):
+            label = self.Ids[i]
+            neighbor_indices = self.all_neighbors_indices[i, :]
+            neighbor_labels = self.Ids[neighbor_indices]
+            weights = self.all_weights[i, :]
+            x = torch.where(weights == -1)[0]
+            assert torch.all(neighbor_labels[x] != label).item(), 'there is a problem with the code'
 
 
     def consider_links(self):
