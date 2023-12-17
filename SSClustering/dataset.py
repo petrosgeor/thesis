@@ -334,7 +334,7 @@ class UnifiedDataset(Dataset):
 
         n_samples = self.Ids.numel()
         for i in range(0, n_samples):
-            print(i)
+            #print(i)
             neighbors = self.neighbor_indices[i,:]
             weights = self.neighbor_weights[i,:]
             ii = torch.where(linked_indices[0, :] == i)[0]
@@ -342,6 +342,7 @@ class UnifiedDataset(Dataset):
                 linked_neighbors = linked_indices[ii, 1]
                 v = values[ii]
                 for j, z in enumerate(linked_neighbors):
+                    print(linked_neighbors.shape)
                     if torch.isin(z, neighbors).item():
                         weights[torch.where(neighbors == z)[0]] = v[j]
                     else:
