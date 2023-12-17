@@ -332,9 +332,13 @@ class UnifiedDataset(Dataset):
                             neighbors = torch.cat((neighbors, z.unsqueeze(0)), dim=0)
                             weights = torch.cat((weights, v[j].unsqueeze(0)), dim=0)
                 
-        all_neighbors.append(neighbors)
-        all_weights.append(weights)
-        return all_neighbors, all_weights
+            all_neighbors.append(neighbors)
+            all_weights.append(weights)
+            return all_neighbors, all_weights
+        elif self.num_links == 0:
+            all_neighbors = [row for row in self.neighbor_indices]
+            all_weights = [row for row in self.neighbor_weights]
+            return all_neighbors, all_weights
     @staticmethod
     def max_tensor_length(tensor_list: list) -> int:
         max_length = 0
