@@ -93,10 +93,10 @@ def create_big_A_matrix(labels: torch.Tensor, num_links: int):
 
 
 
-# labels = torch.tensor([1,2,1,1,10,3])
-# A = create_big_A_matrix(labels=labels, num_links=10)
-# indices = A._indices().T
-# values = A._values()
+labels = torch.tensor([1,2,1,1,10,3])
+A = create_big_A_matrix(labels=labels, num_links=10)
+indices = A._indices().T
+values = A._values()
 
 
 
@@ -316,6 +316,7 @@ class UnifiedDataset(Dataset):
         n_samples = self.Ids.numel()
         if self.num_links != 0:
             num_additions = 0
+            num_corrections = 0
             A_matrix = create_big_A_matrix(self.Ids, num_links=self.num_links) # THIS IS A SPARSE TENSOR
             linked_indices = A_matrix._indices().T
             values = A_matrix._values()
@@ -330,6 +331,7 @@ class UnifiedDataset(Dataset):
                         for j, z in enumerate(linked_neighbors):
                             if torch.isin(z, neighbors).item():
                                 weights[torch.where(neighbors == z)[0]] = v[j]
+                                num_corrections += 1
                             else:
                                 neighbors = torch.cat((neighbors, z.unsqueeze(0)), dim=0)
                                 weights = torch.cat((weights, v[j].unsqueeze(0)), dim=0)
@@ -337,6 +339,7 @@ class UnifiedDataset(Dataset):
                     all_neighbors.append(neighbors)
                     all_weights.append(weights)
                 print('THE NUMBER OF ADDITIONS IS: ', num_additions)
+                print('THE NUMBER OF CORRECTIONS IS: ', num_corrections)
                 return all_neighbors, all_weights
             
             elif only_correct == True:
