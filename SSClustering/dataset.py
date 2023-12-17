@@ -348,7 +348,7 @@ class UnifiedDataset(Dataset):
                     neighbors = self.neighbor_indices[i,:]
                     weights = self.neighbor_weights[i,:]
                     ii = torch.where(linked_indices[0, :] == i)[0]
-                    print(ii)
+                   # print(ii)
                     if ii.numel() != 0:
                         linked_neighbors = linked_indices[ii, 1]
                         v = values[ii]
