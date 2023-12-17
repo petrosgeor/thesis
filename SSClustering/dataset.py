@@ -97,8 +97,9 @@ labels = torch.tensor([1,2,1,1,10,3])
 A = create_big_A_matrix(labels=labels, num_links=10)
 indices = A._indices().T
 values = A._values()
-
-
+ii = torch.where(indices[:, 0] == 0)[0]
+linked_neighbors = indices[ii, 1]
+v = values[ii]
 
 class CIFAR10(Dataset):
     def __init__(self, proportion = 1) -> None:
