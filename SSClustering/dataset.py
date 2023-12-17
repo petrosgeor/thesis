@@ -297,9 +297,9 @@ class UnifiedDataset(Dataset):
         n_samples = self.Ids.numel()
         for i in range(0, n_samples):
             label = self.Ids[i]
-            neighbor_indices = self.all_neighbors_indices[i, :]
+            neighbor_indices = self.all_neighbors_indices[i]
             neighbor_labels = self.Ids[neighbor_indices]
-            weights = self.all_weights[i, :]
+            weights = self.all_weights[i]
             x = torch.where(weights == -1)[0]
             if x.numel() == 0:
                 continue
