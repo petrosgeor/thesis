@@ -318,10 +318,7 @@ class UnifiedDataset(Dataset):
             A_matrix = create_big_A_matrix(self.Ids, num_links=self.num_links) # THIS IS A SPARSE TENSOR
             linked_indices = A_matrix._indices().T
             values = A_matrix._values()
-            print(torch.max(linked_indices))
-            print(torch.min(linked_indices))
-            print(torch.max(values))
-            print(torch.min(values))
+            print(linked_indices)
             if only_correct == False:
                 for i in range(0, n_samples):
                     neighbors = self.neighbor_indices[i,:]
