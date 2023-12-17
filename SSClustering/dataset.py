@@ -276,7 +276,7 @@ class UnifiedDataset(Dataset):
         elif neighbors_distances == None:
             self.neighbor_weights = torch.ones(neighbor_indices.size(), dtype=torch.float)
         
-        self.all_neighbors_indices, self.all_weights = self.consider_links()
+        self.all_neighbors_indices, self.all_weights = self.consider_links(only_correct=True)
         self.check_neighbors_function()
         print('DONE WITH PREPROCESSING')
 
@@ -309,7 +309,7 @@ class UnifiedDataset(Dataset):
             assert torch.all(neighbor_labels[x] != label).item(), 'there is a problem with the code'
 
 
-    def consider_links(self):
+    def consider_links(self, only_correct: bool = False):
         all_neighbors = []
         all_weights = []
 
@@ -318,23 +318,45 @@ class UnifiedDataset(Dataset):
             A_matrix = create_big_A_matrix(self.Ids, num_links=self.num_links) # THIS IS A SPARSE TENSOR
             linked_indices = A_matrix._indices().T
             values = A_matrix._values()
-            for i in range(0, n_samples):
-                neighbors = self.neighbor_indices[i,:]
-                weights = self.neighbor_weights[i,:]
-                ii = torch.where(linked_indices[0, :] == i)[0]
-                if ii.numel() != 0:
-                    linked_neighbors = linked_indices[ii, 1]
-                    v = values[ii]
-                    for j, z in enumerate(linked_neighbors):
-                        if torch.isin(z, neighbors).item():
-                            weights[torch.where(neighbors == z)[0]] = v[j]
-                        else:
-                            neighbors = torch.cat((neighbors, z.unsqueeze(0)), dim=0)
-                            weights = torch.cat((weights, v[j].unsqueeze(0)), dim=0)
-                
-            all_neighbors.append(neighbors)
-            all_weights.append(weights)
-            return all_neighbors, all_weights
+            if only_correct == False:
+                for i in range(0, n_samples):
+                    neighbors = self.neighbor_indices[i,:]
+                    weights = self.neighbor_weights[i,:]
+                    ii = torch.where(linked_indices[0, :] == i)[0]
+                    if ii.numel() != 0:
+                        linked_neighbors = linked_indices[ii, 1]
+                        v = values[ii]
+                        for j, z in enumerate(linked_neighbors):
+                            if torch.isin(z, neighbors).item():
+                                weights[torch.where(neighbors == z)[0]] = v[j]
+                            else:
+                                neighbors = torch.cat((neighbors, z.unsqueeze(0)), dim=0)
+                                weights = torch.cat((weights, v[j].unsqueeze(0)), dim=0)
+                    
+                    all_neighbors.append(neighbors)
+                    all_weights.append(weights)
+                return all_neighbors, all_weights
+            
+            elif only_correct == True:
+                for i in range(0, n_samples):
+                    neighbors = self.neighbor_indices[i,:]
+                    weights = self.neighbor_weights[i,:]
+                    ii = torch.where(linked_indices[0, :] == i)[0]
+                    if ii.numel() != 0:
+                        linked_neighbors = linked_indices[ii, 1]
+                        v = values[ii]
+                        for j, z in enumerate(linked_neighbors):
+                            if torch.isin(z, neighbors).item() and (v[j] == -1).item():
+                                t = torch.where(neighbors == z)[0]
+                                neighbors = torch.cat([neighbors[0:t], neighbors[t+1:]])
+                                weights = torch.cat([weights[0:t], weights[t+1:]])
+                            elif (torch.isin(z, neighbors)).item() == False and (v[j] == 1).item():
+                                neighbors = torch.cat([neighbors, z.unsqueeze(0)], dim=0)
+                                weights = torch.cat([weights, v[j].unsqueeze(0)], dim=0)
+                    all_neighbors.append(neighbors)
+                    all_weights.append(weights)
+                return all_neighbors, all_weights
+            
         elif self.num_links == 0:
             all_neighbors = [row for row in self.neighbor_indices]
             all_weights = [row for row in self.neighbor_weights]
