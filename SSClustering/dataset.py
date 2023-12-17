@@ -347,6 +347,8 @@ class UnifiedDataset(Dataset):
                     if ii.numel() != 0:
                         linked_neighbors = linked_indices[ii, 1]
                         v = values[ii]
+                        print(linked_neighbors)
+                        print(v)
                         for j, z in enumerate(linked_neighbors):
                             if torch.isin(z, neighbors).item() and (v[j] == -1).item():
                                 num_corrections += 1
