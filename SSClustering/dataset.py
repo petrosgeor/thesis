@@ -276,6 +276,7 @@ class UnifiedDataset(Dataset):
         
         self.all_neighbors_indices, self.all_weights = self.consider_links()
         self.check_neighbors_function()
+        print('DONE WITH PREPROCESSING')
 
     def __getitem__(self, item):
         image = self.data[item]
