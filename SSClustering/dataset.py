@@ -294,7 +294,7 @@ class UnifiedDataset(Dataset):
 
 
     def check_neighbors_function(self):
-        n_samples = self.all_neighbors_indices.shape[0]
+        n_samples = self.Ids.numel()
         for i in range(0, n_samples):
             label = self.Ids[i]
             neighbor_indices = self.all_neighbors_indices[i, :]
