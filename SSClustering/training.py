@@ -470,6 +470,7 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
                 print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
                 print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
                 print(f"Accuracy (ACC): {acc:.2f}%")
+            print(torch.unique(predictions, return_counts=True)[1])
 
 
 def run_pretraining_function():
@@ -490,7 +491,7 @@ def run_pretraining_function():
     else:
         return 'no pretraining will take place'
 
-train_clustering_network3(num_epochs=101, n_neighbors=20, consider_distnaces=False, num_links=50000)
+train_clustering_network3(num_epochs=101, n_neighbors=20, consider_distnaces=False, num_links=0)
 
 
 # scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = True, n_neighbors=20,

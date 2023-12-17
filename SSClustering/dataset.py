@@ -88,16 +88,17 @@ def create_big_A_matrix(labels: torch.Tensor, num_links: int):
     indices_pairs = torch.cat((indices_pairs, indices_pairs[:, [1,0]]), dim=0)
     relations = torch.eq(labels[indices_pairs[:, 0]], labels[indices_pairs[:, 1]])
     relations = relations.type(torch.float) * 2 - 1
-    A_matrix = torch.sparse.FloatTensor(indices_pairs.T, relations, torch.Size([60000, 60000]))
+    A_matrix = torch.sparse.FloatTensor(indices_pairs.T, relations, torch.Size([n_samples, n_samples]))
     return A_matrix
 
 
 
+# labels = torch.tensor([1,2,1,1,10,3])
+# A = create_big_A_matrix(labels=labels, num_links=10)
+# indices = A._indices().T
+# values = A._values()
 
-'''labels = torch.tensor([1,1,2,3,1])
-data = torch.randn((len(labels), 100))
-print(random_links2label(data, labels, num_links=len(labels)))
-'''
+
 
 class CIFAR10(Dataset):
     def __init__(self, proportion = 1) -> None:
@@ -333,7 +334,25 @@ class UnifiedDataset(Dataset):
             all_neighbors.append(neighbors)
             all_weights.append(weights)
         return all_neighbors, all_weights
+    @staticmethod
+    def max_tensor_length(tensor_list: list) -> int:
+        max_length = 0
 
+
+        for tensor in tensor_list:
+            if len(tensor) > max_length:
+                max_length = len(max_length)
+        
+        return max_length
+    
+    @staticmethod
+    def minimum_tensor_length(tensor_list: list) -> int:
+        min_length = 10000000
+
+        for tensor in tensor_list:
+            if len(tensor) < min_length:
+                min_length = len(tensor)
+        return min_length
 
 
 
