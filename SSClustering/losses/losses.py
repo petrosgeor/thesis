@@ -88,7 +88,7 @@ class ClusterConsistencyLoss(nn.Module):
                 inner_n = (probs1[n,:] * probs2[n,:]).sum(dim=1)
                 inner_n_log = (inner_n).log()
                 inner_n_log[inner_n_log < self.threshold] = 0
-                loss_n = weights[n] * inner_n_log
+                loss_n = 0.2*weights[n] * inner_n_log
                 loss_p = torch.cat([loss_p, loss_n], dim=0)
             return -torch.mean(loss_p)
 
