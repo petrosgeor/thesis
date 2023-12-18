@@ -500,13 +500,9 @@ def run_pretraining_function():
     else:
         return 'no pretraining will take place'
 
-# train_clustering_network3(num_epochs=51, n_neighbors=20, consider_distnaces=False, num_links=20000, dataset_name='cifar100')
-# print('------------------------------------------------------------------------')
-# print('------------------------------------------------------------------------')
-train_clustering_network3(num_epochs=101, n_neighbors=20, consider_distnaces=False, num_links=5000, dataset_name='cifar100')
-# print('------------------------------------------------------------------------')
-# print('------------------------------------------------------------------------')
+
 train_clustering_network3(num_epochs=101, n_neighbors=20, consider_distnaces=False, num_links=20000, dataset_name='cifar100')
+
 # scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = True, n_neighbors=20,
 #                                            testing=True, take_neighbors='paiper')
 # Ids = scan_dataloader.dataset.Ids
