@@ -183,7 +183,7 @@ class CIFAR100(Dataset):
         numbers = random.sample(range(n_samples), n_samples_keep)
         return data[numbers], labels[numbers]
 
-dataset = CIFAR100(proportion=1/6)
+#dataset = CIFAR100(proportion=1/6)
 
 
 
@@ -395,7 +395,6 @@ class UnifiedDataset(Dataset):
                 num_corrections = 0
                 num_additions = 0
                 for i in range(0, n_samples):
-                    print(i)
                     neighbors = self.neighbor_indices[i,:]
                     weights = self.neighbor_weights[i,:]
                     ii = torch.where(linked_indices[:, 0] == i)[0]
