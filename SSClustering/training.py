@@ -297,9 +297,9 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
 
 def create_unified_dataset(net, n_neighbors=20, return_distances: bool = True, num_links: int=5000, dataset_name='cifar10') -> tuple:
     if dataset_name == 'cifar10':
-        dataset = CIFAR10(proportion=1/6)
+        dataset = CIFAR10(proportion=1)
     elif dataset_name == 'cifar100':
-        dataset = CIFAR100(proportion=1/6)
+        dataset = CIFAR100(proportion=1)
 
     cifar_dataloader = DataLoader(dataset, batch_size=300, shuffle=False)
     id_aug = Identity_Augmentation()
@@ -446,7 +446,7 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
             total_loss.backward()
             optimizer.step()
             optimizer.zero_grad()
-        if (epoch + 1)%50 == 0:
+        if (epoch + 1)%10 == 0:
             true_labels = []
             predictions = []
             true_labels_conf = []
@@ -502,10 +502,10 @@ def run_pretraining_function():
 # train_clustering_network3(num_epochs=51, n_neighbors=20, consider_distnaces=False, num_links=20000, dataset_name='cifar100')
 # print('------------------------------------------------------------------------')
 # print('------------------------------------------------------------------------')
-train_clustering_network3(num_epochs=201, n_neighbors=20, consider_distnaces=False, num_links=5000, dataset_name='cifar100')
+train_clustering_network3(num_epochs=101, n_neighbors=20, consider_distnaces=False, num_links=5000, dataset_name='cifar100')
 # print('------------------------------------------------------------------------')
 # print('------------------------------------------------------------------------')
-train_clustering_network3(num_epochs=201, n_neighbors=20, consider_distnaces=False, num_links=20000, dataset_name='cifar100')
+train_clustering_network3(num_epochs=101, n_neighbors=20, consider_distnaces=False, num_links=20000, dataset_name='cifar100')
 # scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = True, n_neighbors=20,
 #                                            testing=True, take_neighbors='paiper')
 # Ids = scan_dataloader.dataset.Ids
