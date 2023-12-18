@@ -474,12 +474,13 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
                 print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
                 print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
                 print(f"Accuracy (ACC): {acc:.2f}%")
-                #print('confident examples \n')
-                # nmi, ari, acc = cluster_metric(label=true_labels_conf.numpy(), pred=predictions_conf.numpy())
-                # print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
-                # print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
-                # print(f"Accuracy (ACC): {acc:.2f}%")
-
+                print('\n')
+                print('confident examples')
+                nmi, ari, acc = cluster_metric(label=true_labels_conf.numpy(), pred=predictions_conf.numpy())
+                print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
+                print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
+                print(f"Accuracy (ACC): {acc:.2f}%")
+                print(torch.unique(predictions_conf, return_counts=True)[1])
 
 def run_pretraining_function():
     run_pretraining = input("do you want to run the pretraining step? ")
