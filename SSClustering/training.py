@@ -437,7 +437,7 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
             total_loss.backward()
             optimizer.step()
             optimizer.zero_grad()
-        if (epoch + 1)%50 == 0:
+        if (epoch + 1)%10 == 0:
             true_labels = []
             predictions = []
             true_labels_conf = []
@@ -490,10 +490,10 @@ def run_pretraining_function():
     else:
         return 'no pretraining will take place'
 
-train_clustering_network3(num_epochs=201, n_neighbors=20, consider_distnaces=False, num_links=20000)
+train_clustering_network3(num_epochs=51, n_neighbors=20, consider_distnaces=False, num_links=20000)
 print('------------------------------------------------------------------------')
 print('------------------------------------------------------------------------')
-train_clustering_network3(num_epochs=201, n_neighbors=20, consider_distnaces=False, num_links=50000)
+train_clustering_network3(num_epochs=51, n_neighbors=20, consider_distnaces=False, num_links=50000)
 
 # scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = True, n_neighbors=20,
 #                                            testing=True, take_neighbors='paiper')
