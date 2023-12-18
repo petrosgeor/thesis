@@ -424,7 +424,7 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
     aug_clr = SimCLRaugment()
     dataloader = create_unified_dataset(net=clusternet, n_neighbors=n_neighbors, return_distances=consider_distnaces, num_links=num_links, dataset_name=dataset_name)
 
-    optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4), weight_decay=10**(-4))
+    optimizer = optim.Adam(clusternet.parameters(), lr=10**(-3), weight_decay=10**(-4))
     ConsistencyLoss = losses.ClusterConsistencyLoss(threshold = -3)
     kl_loss = losses.KLClusterDivergance(num_clusters=num_clusters)
 

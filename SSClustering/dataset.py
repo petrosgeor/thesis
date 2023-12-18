@@ -325,7 +325,7 @@ class UnifiedDataset(Dataset):
         elif neighbors_distances == None:
             self.neighbor_weights = torch.ones(neighbor_indices.size(), dtype=torch.float)
         
-        self.all_neighbors_indices, self.all_weights = self.consider_links(only_correct=False)
+        self.all_neighbors_indices, self.all_weights = self.consider_links(only_correct=True)
         self.check_neighbors_function()
         print('DONE WITH PREPROCESSING')
 
