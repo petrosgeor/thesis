@@ -62,36 +62,6 @@ class InfoNCELossEuclidean(nn.Module):
 
 
 
-# class ClusterConsistencyLoss(nn.Module):
-#     def __init__(self, temperature = 0.2, threshold = -5):
-#         super(ClusterConsistencyLoss, self).__init__()
-#         self.small_number = 1e-6
-#         self.temperature = temperature
-#         self.threshold = threshold
-
-#     def forward(self, probs1: torch.Tensor, probs2: torch.Tensor, weights: torch.Tensor = None) -> torch.Tensor:
-#         if weights == None:
-#             #inner_products = (probs1 * probs2).sum(dim=1)/self.temperature + self.small_number
-#             inner_products = (probs1 * probs2).sum(dim=1)
-#             return -torch.mean(inner_products.log())
-#         elif weights is not None:
-#             p = torch.where(weights > 0)[0]
-#             n = torch.where(weights < 0)[0]
-#             # inner_products = (probs1 * probs2).sum(dim=1)
-#             # inner_products_log = inner_products.log()
-#             # return -torch.mean(weights * inner_products_log)
-#             inner_p = (probs1[p,:] * probs2[p,:]).sum(dim=1)
-#             inner_p_log = inner_p.log()
-#             loss_p = weights[p] * inner_p_log
-
-#             if n.numel() != 0:
-#                 inner_n = (probs1[n,:] * probs2[n,:]).sum(dim=1)
-#                 inner_n_log = (inner_n).log()
-#                 inner_n_log[inner_n_log < self.threshold] = 0
-#                 loss_n = 0.2*weights[n] * inner_n_log
-#                 loss_p = torch.cat([loss_p, loss_n], dim=0)
-#             return -torch.mean(loss_p)
-
 class ClusterConsistencyLoss(nn.Module):
     def __init__(self, temperature = 0.2, threshold = -5):
         super(ClusterConsistencyLoss, self).__init__()
@@ -107,15 +77,45 @@ class ClusterConsistencyLoss(nn.Module):
         elif weights is not None:
             p = torch.where(weights > 0)[0]
             n = torch.where(weights < 0)[0]
+            # inner_products = (probs1 * probs2).sum(dim=1)
+            # inner_products_log = inner_products.log()
+            # return -torch.mean(weights * inner_products_log)
             inner_p = (probs1[p,:] * probs2[p,:]).sum(dim=1)
             inner_p_log = inner_p.log()
             loss_p = weights[p] * inner_p_log
-            loss1 = -torch.mean(loss_p)
-            loss2 = 0
+
             if n.numel() != 0:
-                max_differences = torch.abs(probs1.max(dim=1)[0] - probs2.max(dim=1)[0])
-                loss2 = -torch.mean(5 * max_differences)
-            return loss1 + loss2
+                inner_n = (probs1[n,:] * probs2[n,:]).sum(dim=1)
+                inner_n_log = (inner_n).log()
+                inner_n_log[inner_n_log < self.threshold] = 0
+                loss_n = 0.2*weights[n] * inner_n_log
+                loss_p = torch.cat([loss_p, loss_n], dim=0)
+            return -torch.mean(loss_p)
+
+# class ClusterConsistencyLoss(nn.Module):
+#     def __init__(self, temperature = 0.2, threshold = -5):
+#         super(ClusterConsistencyLoss, self).__init__()
+#         self.small_number = 1e-6
+#         self.temperature = temperature
+#         self.threshold = threshold
+
+#     def forward(self, probs1: torch.Tensor, probs2: torch.Tensor, weights: torch.Tensor = None) -> torch.Tensor:
+#         if weights == None:
+#             #inner_products = (probs1 * probs2).sum(dim=1)/self.temperature + self.small_number
+#             inner_products = (probs1 * probs2).sum(dim=1)
+#             return -torch.mean(inner_products.log())
+#         elif weights is not None:
+#             p = torch.where(weights > 0)[0]
+#             n = torch.where(weights < 0)[0]
+#             inner_p = (probs1[p,:] * probs2[p,:]).sum(dim=1)
+#             inner_p_log = inner_p.log()
+#             loss_p = weights[p] * inner_p_log
+#             loss1 = -torch.mean(loss_p)
+#             loss2 = 0
+#             if n.numel() != 0:
+#                 max_differences = torch.abs(probs1.max(dim=1)[0] - probs2.max(dim=1)[0])
+#                 loss2 = -torch.mean(5 * max_differences)
+#             return loss1 + loss2
 
 class KLClusterDivergance(nn.Module):
     def __init__(self, num_clusters):
