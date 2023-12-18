@@ -96,9 +96,9 @@ class ClusterConsistencyLoss(nn.Module):
 
 
 class KLClusterDivergance(nn.Module):
-    def __init__(self):
+    def __init__(self, num_clusters):
         super(KLClusterDivergance, self).__init__()
-        self.target_dist = torch.full((10, ), fill_value=1/10).to(device)
+        self.target_dist = torch.full((num_clusters, ), fill_value=1/num_clusters).to(device)
     
     def forward(self, probs: torch.Tensor):
         p = torch.mean(probs, dim=0)

@@ -295,8 +295,12 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
             x = torch.unique(predictions, return_inverse=False, return_counts=True)
 
 
-def create_unified_dataset(net, n_neighbors=20, return_distances: bool = True, num_links: int=5000) -> tuple:
-    dataset = CIFAR10(proportion=1/6)
+def create_unified_dataset(net, n_neighbors=20, return_distances: bool = True, num_links: int=5000, dataset_name='cifar10') -> tuple:
+    if dataset_name == 'cifar10':
+        dataset = CIFAR10(proportion=1/6)
+    elif dataset_name == 'cifar100':
+        dataset = CIFAR100(proportion=1/6)
+
     cifar_dataloader = DataLoader(dataset, batch_size=300, shuffle=False)
     id_aug = Identity_Augmentation()
     embeddings = []
@@ -407,17 +411,22 @@ def train_clustering_network2(num_epochs=2, t_contrastive=0.5, consider_links: b
                 print(f"Accuracy (ACC): {acc:.2f}%")
 
 
-def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_distnaces:bool=True, num_links:int=5000):
-    clusternet = initializeClusterModel(freeze_backbone=False)
+def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_distnaces:bool=True, num_links:int=5000, dataset_name='cifar10'):
+    assert (dataset_name == 'cifar10') | (dataset_name == 'cifar100')
+    clusternet = initializeClusterModel(freeze_backbone=False, dataset_name=dataset_name)
+    if dataset_name == 'cifar10':
+        num_clusters = 10
+    elif dataset_name == 'cifar100':
+        num_clusters = 20
     clusternet.to(device)
 
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
-    dataloader = create_unified_dataset(net=clusternet, n_neighbors=n_neighbors, return_distances=consider_distnaces, num_links=num_links)
+    dataloader = create_unified_dataset(net=clusternet, n_neighbors=n_neighbors, return_distances=consider_distnaces, num_links=num_links, dataset_name=dataset_name)
 
     optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4), weight_decay=10**(-4))
     ConsistencyLoss = losses.ClusterConsistencyLoss(threshold = -3)
-    kl_loss = losses.KLClusterDivergance()
+    kl_loss = losses.KLClusterDivergance(num_clusters=num_clusters)
 
     for epoch in range(0, num_epochs):
         for i, (images_u, neighbor_images, weights, _) in enumerate(dataloader):
@@ -490,10 +499,10 @@ def run_pretraining_function():
     else:
         return 'no pretraining will take place'
 
-train_clustering_network3(num_epochs=51, n_neighbors=20, consider_distnaces=False, num_links=20000)
+train_clustering_network3(num_epochs=51, n_neighbors=20, consider_distnaces=False, num_links=20000, dataset_name='cifar100')
 print('------------------------------------------------------------------------')
 print('------------------------------------------------------------------------')
-train_clustering_network3(num_epochs=51, n_neighbors=20, consider_distnaces=False, num_links=50000)
+train_clustering_network3(num_epochs=51, n_neighbors=20, consider_distnaces=False, num_links=50000, dataset_name='cifar100')
 
 # scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = True, n_neighbors=20,
 #                                            testing=True, take_neighbors='paiper')

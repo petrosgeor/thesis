@@ -225,21 +225,32 @@ def probabilistic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_co
 
 
 
-def initializeClusterModel(n_heads: int=1, dataset: str = 'cifar10', n_clusters: int = 10, freeze_backbone=False):
-    assert (dataset == 'cifar10'), 'no implementation yet for the other datasets'
+def initializeClusterModel(n_heads: int=1, dataset_name: str = 'cifar10', freeze_backbone=False):
+    assert (dataset_name == 'cifar10') | (dataset_name == 'cifar100'), 'no implementation yet for the other datasets'
     backbone = resnet18()
     con_model = ContrastiveModel(backbone=backbone)
-    file_path = 'NeuralNets/simclr_cifar10.pth'
-    checkpoint = torch.load(file_path)
+    file_path_10 = 'NeuralNets/simclr_cifar10.pth'
+    file_path_100 = 'NeuralNets/simclr_cifar20.pth'
+    if dataset_name == 'cifar10':
+        n_clusters = 10
+        checkpoint = torch.load(file_path_10)
 
-    con_model.load_state_dict(checkpoint)
+        con_model.load_state_dict(checkpoint)
 
-    clustermodel = ClusteringModel(backbone={'backbone': con_model.backbone, 'dim': con_model.backbone_dim}, nclusters=n_clusters)
-    if freeze_backbone:
-        for param in clustermodel.backbone.parameters():
-            param.requires_grad = False
-    return clustermodel
-
+        clustermodel = ClusteringModel(backbone={'backbone': con_model.backbone, 'dim': con_model.backbone_dim}, nclusters=n_clusters)
+        if freeze_backbone:
+            for param in clustermodel.backbone.parameters():
+                param.requires_grad = False
+        return clustermodel
+    elif dataset_name == 'cifar100':
+        n_clusters = 20
+        checkpoint = torch.load(file_path_100)
+        con_model.load_state_dict(checkpoint)
+        clustermodel = ClusteringModel(backbone={'backbone': con_model.backbone, 'dim': con_model.backbone_dim}, nclusters=n_clusters)
+        if freeze_backbone:
+            for param in clustermodel.backbone.parameters():
+                param.requires_grad = False
+        return clustermodel
 
 # random_tensor = torch.randint(0, 10, size=(10000,))
 # indices, d = probabilistic_closest_indices(random_tensor)

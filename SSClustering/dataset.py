@@ -93,13 +93,13 @@ def create_big_A_matrix(labels: torch.Tensor, num_links: int):
 
 
 
-labels = torch.tensor([1,2,1,1,10,3])
-A = create_big_A_matrix(labels=labels, num_links=10)
-indices = A._indices().T
-values = A._values()
-ii = torch.where(indices[:, 0] == 0)[0]
-linked_neighbors = indices[ii, 1]
-v = values[ii]
+# labels = torch.tensor([1,2,1,1,10,3])
+# A = create_big_A_matrix(labels=labels, num_links=10)
+# indices = A._indices().T
+# values = A._values()
+# ii = torch.where(indices[:, 0] == 0)[0]
+# linked_neighbors = indices[ii, 1]
+# v = values[ii]
 
 class CIFAR10(Dataset):
     def __init__(self, proportion = 1) -> None:
@@ -136,34 +136,55 @@ class CIFAR10(Dataset):
         numbers = random.sample(range(n_samples), n_samples_keep)
         return data[numbers], labels[numbers]
 
+
+
+
+
 class CIFAR100(Dataset):
     def __init__(self, proportion = 1) -> None:
-        self.proportion = property
+        self.proportion = proportion
         self.data, self.Ids = self.load_data()
-    
+
+    def __getitem__(self, item):
+        return self.data[item,:], self.Ids[item]
+    def __len__(self):
+        return len(self.Ids)
+
     def load_data(self):
         data_train_dict = self.unpickle('CIFAR100/train')
         data_test_dict = self.unpickle('CIFAR100/test')
         meta_dict = self.unpickle('CIFAR100/meta')
 
-        data_train = data_train_dict['data']
+        data_train = data_train_dict[b'data']
         train_Ids = np.array(data_train_dict[b'coarse_labels'])
-        data_test = data_test_dict['data']
-        test_Ids = np.array([data_test_dict[b'coarse_labels']])
+        data_test = data_test_dict[b'data']
+        test_Ids = np.array(data_test_dict[b'coarse_labels'])
 
         classes_names = [label.decode('utf-8') for label in meta_dict[b'coarse_label_names']]
 
         data = np.vstack((data_train, data_test))
         data = data.reshape(len(data), 3, 32, 32).transpose(0,2,3,1)
-
+        data = torch.from_numpy(data)
         Ids = np.hstack((train_Ids, test_Ids))
-        return 
+        Ids = torch.from_numpy(Ids)
+        data, Ids = self.keep_part_of_dataset(data, Ids, self.proportion)
+        return data, Ids
 
     @staticmethod
     def unpickle(file):
         with open(file, 'rb') as fo:
             dict = pickle.load(fo, encoding='bytes')
         return dict
+    @staticmethod
+    def keep_part_of_dataset(data: torch.Tensor, labels: torch.Tensor, proportion: int=1):
+        assert (proportion <= 1) and (proportion > 0), 'proportion must be set to a number between 0 and 1'
+        n_samples = labels.numel()
+        n_samples_keep = int(n_samples * proportion)
+        numbers = random.sample(range(n_samples), n_samples_keep)
+        return data[numbers], labels[numbers]
+
+dataset = CIFAR100(proportion=1/6)
+
 
 
 class LinkedDataset(Dataset):
