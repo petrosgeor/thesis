@@ -296,7 +296,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
 
 
 def create_unified_dataset(net, n_neighbors=20, return_distances: bool = True, num_links: int=5000) -> tuple:
-    dataset = CIFAR10(proportion=1)
+    dataset = CIFAR10(proportion=1/6)
     cifar_dataloader = DataLoader(dataset, batch_size=300, shuffle=False)
     id_aug = Identity_Augmentation()
     embeddings = []
