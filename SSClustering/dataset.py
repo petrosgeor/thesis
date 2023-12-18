@@ -163,7 +163,7 @@ class CIFAR100(Dataset):
         classes_names = [label.decode('utf-8') for label in meta_dict[b'coarse_label_names']]
 
         data = np.vstack((data_train, data_test))
-        data = data.reshape(len(data), 3, 32, 32).transpose(0,2,3,1)
+        data = data.reshape(len(data), 3, 32, 32)
         data = torch.from_numpy(data)
         Ids = np.hstack((train_Ids, test_Ids))
         Ids = torch.from_numpy(Ids)

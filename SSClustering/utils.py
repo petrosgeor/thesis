@@ -252,10 +252,8 @@ def initializeClusterModel(n_heads: int=1, dataset_name: str = 'cifar10', freeze
                 param.requires_grad = False
         return clustermodel
 
-# random_tensor = torch.randint(0, 10, size=(10000,))
-# indices, d = probabilistic_closest_indices(random_tensor)
-# row = indices[0, :]
-# print(random_tensor[0])
-# print(random_tensor[row])
+# net = initializeClusterModel(dataset_name='cifar100')
+# x = torch.randn((10, 3, 32, 32))
+# print(net(x)[0].shape)
 
 
