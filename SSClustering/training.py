@@ -446,7 +446,7 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
             total_loss.backward()
             optimizer.step()
             optimizer.zero_grad()
-        if (epoch + 1)%10 == 0:
+        if (epoch + 1)%50 == 0:
             true_labels = []
             predictions = []
             true_labels_conf = []
@@ -474,7 +474,7 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
                 print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
                 print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
                 print(f"Accuracy (ACC): {acc:.2f}%")
-                print('confident examples \n')
+                #print('confident examples \n')
                 # nmi, ari, acc = cluster_metric(label=true_labels_conf.numpy(), pred=predictions_conf.numpy())
                 # print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
                 # print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
@@ -502,8 +502,10 @@ def run_pretraining_function():
 # train_clustering_network3(num_epochs=51, n_neighbors=20, consider_distnaces=False, num_links=20000, dataset_name='cifar100')
 # print('------------------------------------------------------------------------')
 # print('------------------------------------------------------------------------')
-train_clustering_network3(num_epochs=121, n_neighbors=20, consider_distnaces=False, num_links=10000, dataset_name='cifar100')
-
+train_clustering_network3(num_epochs=201, n_neighbors=20, consider_distnaces=False, num_links=5000, dataset_name='cifar100')
+# print('------------------------------------------------------------------------')
+# print('------------------------------------------------------------------------')
+train_clustering_network3(num_epochs=201, n_neighbors=20, consider_distnaces=False, num_links=20000, dataset_name='cifar100')
 # scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = True, n_neighbors=20,
 #                                            testing=True, take_neighbors='paiper')
 # Ids = scan_dataloader.dataset.Ids
