@@ -136,7 +136,34 @@ class CIFAR10(Dataset):
         numbers = random.sample(range(n_samples), n_samples_keep)
         return data[numbers], labels[numbers]
 
+class CIFAR100(Dataset):
+    def __init__(self, proportion = 1) -> None:
+        self.proportion = property
+        self.data, self.Ids = self.load_data()
+    
+    def load_data(self):
+        data_train_dict = self.unpickle('CIFAR100/train')
+        data_test_dict = self.unpickle('CIFAR100/test')
+        meta_dict = self.unpickle('CIFAR100/meta')
 
+        data_train = data_train_dict['data']
+        train_Ids = np.array(data_train_dict[b'coarse_labels'])
+        data_test = data_test_dict['data']
+        test_Ids = np.array([data_test_dict[b'coarse_labels']])
+
+        classes_names = [label.decode('utf-8') for label in meta_dict[b'coarse_label_names']]
+
+        data = np.vstack((data_train, data_test))
+        data = data.reshape(len(data), 3, 32, 32).transpose(0,2,3,1)
+
+        Ids = np.hstack((train_Ids, test_Ids))
+        return 
+
+    @staticmethod
+    def unpickle(file):
+        with open(file, 'rb') as fo:
+            dict = pickle.load(fo, encoding='bytes')
+        return dict
 
 
 class LinkedDataset(Dataset):
@@ -277,7 +304,7 @@ class UnifiedDataset(Dataset):
         elif neighbors_distances == None:
             self.neighbor_weights = torch.ones(neighbor_indices.size(), dtype=torch.float)
         
-        self.all_neighbors_indices, self.all_weights = self.consider_links(only_correct=False)
+        self.all_neighbors_indices, self.all_weights = self.consider_links(only_correct=True)
         self.check_neighbors_function()
         print('DONE WITH PREPROCESSING')
 
