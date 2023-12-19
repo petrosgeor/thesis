@@ -318,8 +318,8 @@ def create_unified_dataset(net, n_neighbors=20, return_distances: bool = True, n
         return dataloader
 
 
-def train_clustering_network2(num_epochs=2, t_contrastive=0.5, consider_links: bool = False, n_neighbors=20, testing=False):
-    clusternet = initializeClusterModel(freeze_backbone=False)
+def train_clustering_network2(num_epochs=2, consider_links: bool = False, n_neighbors=20, testing=False, dataset_name='cifar10'):
+    clusternet = initializeClusterModel(dataset_name=dataset_name, freeze_backbone=False)
     clusternet.to(device)
 
     id_aug = Identity_Augmentation()
@@ -422,7 +422,6 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
 
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
-    weak_aug = Weak_Augmentation()
     dataloader = create_unified_dataset(net=clusternet, n_neighbors=n_neighbors, return_distances=consider_distnaces, num_links=num_links, dataset_name=dataset_name)
 
     optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4), weight_decay=10**(-4))
@@ -433,9 +432,9 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
         for i, (images_u, neighbor_images, weights, _) in enumerate(dataloader):
             images_u = images_u.to(device)
             neighbor_images = neighbor_images.to(device)
-            images_u_id = weak_aug(images_u)  # identity augmentation
+            images_u_id = id_aug(images_u)  # identity augmentation
             images_u_clr = aug_clr(images_u)
-            neighbor_images_id = weak_aug(neighbor_images)
+            neighbor_images_id = id_aug(neighbor_images)
             neighbor_images_clr = aug_clr(neighbor_images)
             weights = weights.to(device)
             probs = clusternet.forward(images_u_id)[0]
