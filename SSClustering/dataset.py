@@ -380,7 +380,7 @@ class UnifiedDataset(Dataset):
         if self.proportion_links != 0:
             num_additions = 0
             num_corrections = 0
-            A_matrix = create_big_A_matrix(self.Ids, proportion_links=self.proportion_links, only_positives=False) # THIS IS A SPARSE TENSOR
+            A_matrix = create_big_A_matrix(self.Ids, proportion_links=self.proportion_links, only_positives=True) # THIS IS A SPARSE TENSOR
             linked_indices = A_matrix._indices().T
             values = A_matrix._values()
             if only_correct == False:
