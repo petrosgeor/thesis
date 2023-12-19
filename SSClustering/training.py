@@ -451,7 +451,7 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
             total_loss.backward()
             optimizer.step()
             optimizer.zero_grad()
-        if (epoch + 1)%200 == 0:
+        if (epoch%20) == 0:
             true_labels = []
             predictions = []
             true_labels_conf = []
@@ -480,8 +480,8 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
                 print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
                 print(f"Accuracy (ACC): {acc:.2f}%")
                 print('\n')
-        if epoch == (num_epochs - 1):
-            save_to_csv(num_links=proportion_links, ACC=acc, NMI=nmi, ARI=ari)
+            if epoch == (num_epochs - 1):
+                save_to_csv(num_links=proportion_links, ACC=acc, NMI=nmi, ARI=ari)
                 #print('confident examples')
                 # nmi, ari, acc = cluster_metric(label=true_labels_conf.numpy(), pred=predictions_conf.numpy())
                 # print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
