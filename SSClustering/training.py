@@ -426,7 +426,7 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
                                         ,dataset_name=dataset_name)
 
     optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4), weight_decay=10**(-4))
-    ConsistencyLoss = losses.ClusterConsistencyLoss(threshold = -3)
+    ConsistencyLoss = losses.ClusterConsistencyLoss(threshold = -0.5)
     kl_loss = losses.KLClusterDivergance(num_clusters=num_clusters)
 
     for epoch in range(0, num_epochs):
@@ -508,7 +508,7 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 
-proportion_links = np.arange(0, 2.2, 0.2)
+proportion_links = np.arange(0.2, 2.2, 0.2)
 for i in range(len(proportion_links)):
     train_clustering_network3(num_epochs=101, n_neighbors=20, consider_distnaces=False, proportion_links=proportion_links[i], dataset_name='cifar100')
 
