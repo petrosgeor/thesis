@@ -258,7 +258,7 @@ def initializeClusterModel(n_heads: int=1, dataset_name: str = 'cifar10', freeze
 # print(net(x)[0].shape)
 
 def save_to_csv(num_links: int, ACC: int, NMI: int, ARI: int):
-    file_name = 'NeuralNets/plots/results'
+    file_name = 'NeuralNets/results/results.csv'
     data = {'num_links': [num_links], 'ACC': [ACC], 'NMI': [NMI], 'ARI': [ARI]}
 
     file_exits = os.path.isfile(file_name)
