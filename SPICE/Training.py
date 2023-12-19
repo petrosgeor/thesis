@@ -152,24 +152,6 @@ def TrainLogRegrOnFeatures(train_loader, test_loader, n_features, n_classes):
     return accuracy
 
 
-class ClassCenters:
-    def __init__(self, num_classes):
-        self.centers = None
-        self.momentum = 0.6
-
-    def __call__(self, new_centers):
-        if self.centers is None:
-            self.centers = new_centers
-            return self.centers
-        else:
-            self.centers = self.momentum * new_centers + (1- self.momentum) * self.centers
-
-'''def kl_divergance(P: torch.Tensor, Q_matrix: torch.Tensor) -> torch.Tensor:
-    kl_loss = 0
-    for row in P:
-        kl_loss += F.kl_div(Q_matrix, row, reduction='none').mean()
-    return kl_loss
-'''
 def kl_divergance(P_matrix: torch.Tensor, Q_matrix: torch.Tensor) -> torch.Tensor:
     kl_loss = 0
     for row in Q_matrix:
