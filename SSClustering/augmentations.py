@@ -22,11 +22,12 @@ class Weak_Augmentation:
     def __init__(self):
         self.weak_aug = v2.Compose(
             [
-                v2.Resize((32, 32), interpolation=Image.BICUBIC),
+                v2.Resize((32, 32), interpolation=Image.BICUBIC, antialias=True),
                 v2.RandomHorizontalFlip(p=0.5),
                 v2.RandomAffine(degrees=0, translate=(0.125,0.125)),
                 v2.ToImage(),
-                v2.ToDtype(torch.float32, scale=True)
+                v2.ToDtype(torch.float32, scale=True),
+                v2.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010])
             ]
         )
 

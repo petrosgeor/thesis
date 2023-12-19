@@ -297,9 +297,9 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
 
 def create_unified_dataset(net, n_neighbors=20, return_distances: bool = True, num_links: int=5000, dataset_name='cifar10') -> tuple:
     if dataset_name == 'cifar10':
-        dataset = CIFAR10(proportion=1)
+        dataset = CIFAR10(proportion=1/6)
     elif dataset_name == 'cifar100':
-        dataset = CIFAR100(proportion=1)
+        dataset = CIFAR100(proportion=1/6)
 
     cifar_dataloader = DataLoader(dataset, batch_size=300, shuffle=False)
     id_aug = Identity_Augmentation()
@@ -422,6 +422,7 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
 
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
+    weak_aug = Weak_Augmentation()
     dataloader = create_unified_dataset(net=clusternet, n_neighbors=n_neighbors, return_distances=consider_distnaces, num_links=num_links, dataset_name=dataset_name)
 
     optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4), weight_decay=10**(-4))
@@ -431,14 +432,18 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
     for epoch in range(0, num_epochs):
         for i, (images_u, neighbor_images, weights, _) in enumerate(dataloader):
             images_u = images_u.to(device)
-            images_u_id = id_aug(images_u)  # identity augmentation
+            neighbor_images = neighbor_images.to(device)
+            images_u_id = weak_aug(images_u)  # identity augmentation
             images_u_clr = aug_clr(images_u)
-            neighbor_images = id_aug(neighbor_images.to(device))
+            neighbor_images_id = weak_aug(neighbor_images)
+            neighbor_images_clr = aug_clr(neighbor_images)
             weights = weights.to(device)
             probs = clusternet.forward(images_u_id)[0]
             probs_clr = clusternet.forward(images_u_clr)[0]
-            probs_neighbors = clusternet.forward(neighbor_images)[0]
-            loss1 = ConsistencyLoss.forward(probs1=probs, probs2=probs_neighbors, weights=weights) + ConsistencyLoss.forward(probs1=probs, probs2=probs_clr, weights=None)
+            probs_neighbors_id = clusternet.forward(neighbor_images_id)[0]
+            probs_neighbors_clr = clusternet.forward(neighbor_images_clr)[0]
+            loss1 = ConsistencyLoss.forward(probs1=probs, probs2=probs_neighbors_id, weights=weights) + ConsistencyLoss.forward(probs1=probs, probs2=probs_clr, weights=None) + ConsistencyLoss.forward(probs1=probs, probs2=probs_neighbors_clr, weights=weights) 
+
 
             loss2 = kl_loss.forward(probs=probs)
 
@@ -501,7 +506,7 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 
-train_clustering_network3(num_epochs=101, n_neighbors=20, consider_distnaces=False, num_links=20000, dataset_name='cifar100')
+train_clustering_network3(num_epochs=101, n_neighbors=20, consider_distnaces=False, num_links=2000, dataset_name='cifar100')
 
 # scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = True, n_neighbors=20,
 #                                            testing=True, take_neighbors='paiper')
