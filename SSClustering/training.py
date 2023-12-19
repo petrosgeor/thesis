@@ -295,7 +295,7 @@ def train_clustering_network(num_epochs=2, t_contrastive=0.5, consider_links: bo
             x = torch.unique(predictions, return_inverse=False, return_counts=True)
 
 
-def create_unified_dataset(net, n_neighbors=20, return_distances: bool = True, num_links: int=5000, dataset_name='cifar10') -> tuple:
+def create_unified_dataset(net, n_neighbors=20, return_distances: bool = True, proportion_links: int=0, dataset_name='cifar10') -> tuple:
     if dataset_name == 'cifar10':
         dataset = CIFAR10(proportion=1/6)
     elif dataset_name == 'cifar100':
@@ -312,7 +312,7 @@ def create_unified_dataset(net, n_neighbors=20, return_distances: bool = True, n
         embeddings = torch.cat(embeddings, dim=0)
         distances, indices = find_indices_of_closest_embeddings(embeddings, n_neighbors=n_neighbors, return_distances=return_distances)
         unified_dataset = UnifiedDataset(data=dataset.data, Ids=dataset.Ids, neighbor_indices=indices,
-                                         neighbors_distances=distances, num_links=num_links)
+                                         neighbors_distances=distances, proportion_links=proportion_links)
         
         dataloader = DataLoader(dataset=unified_dataset, batch_size=500, shuffle=True)
         return dataloader
@@ -411,7 +411,7 @@ def train_clustering_network2(num_epochs=2, consider_links: bool = False, n_neig
                 print(f"Accuracy (ACC): {acc:.2f}%")
 
 
-def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_distnaces:bool=True, num_links:int=5000, dataset_name='cifar10'):
+def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_distnaces:bool=True, proportion_links:int=0, dataset_name='cifar10'):
     assert (dataset_name == 'cifar10') | (dataset_name == 'cifar100')
     clusternet = initializeClusterModel(freeze_backbone=False, dataset_name=dataset_name)
     if dataset_name == 'cifar10':
@@ -422,7 +422,8 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
 
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
-    dataloader = create_unified_dataset(net=clusternet, n_neighbors=n_neighbors, return_distances=consider_distnaces, num_links=num_links, dataset_name=dataset_name)
+    dataloader = create_unified_dataset(net=clusternet, n_neighbors=n_neighbors, return_distances=consider_distnaces, proportion_links=proportion_links
+                                        ,dataset_name=dataset_name)
 
     optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4), weight_decay=10**(-4))
     ConsistencyLoss = losses.ClusterConsistencyLoss(threshold = -3)
@@ -479,7 +480,8 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
                 print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
                 print(f"Accuracy (ACC): {acc:.2f}%")
                 print('\n')
-                print('confident examples')
+                save_to_csv(num_links=proportion_links, ACC=acc, NMI=nmi, ARI=ari)
+                #print('confident examples')
                 # nmi, ari, acc = cluster_metric(label=true_labels_conf.numpy(), pred=predictions_conf.numpy())
                 # print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
                 # print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
@@ -505,7 +507,11 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 
-train_clustering_network3(num_epochs=101, n_neighbors=20, consider_distnaces=False, num_links=0, dataset_name='cifar100')
+proportion_links = np.arange(0, 2.2, 0.2)
+for i in range(len(proportion_links)):
+    train_clustering_network3(num_epochs=101, n_neighbors=20, consider_distnaces=False, proportion_links=proportion_links[i], dataset_name='cifar100')
+
+
 
 # scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = True, n_neighbors=20,
 #                                            testing=True, take_neighbors='paiper')

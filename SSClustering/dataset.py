@@ -76,28 +76,29 @@ def random_links2label(data:torch.Tensor, labels: torch.Tensor, num_links: int):
     return X_subset, A_matrix, labels_subset, indices
 
 
-def create_big_A_matrix(labels: torch.Tensor, num_links: int, only_positives: bool):
+def create_big_A_matrix(labels: torch.Tensor, proportion_links: int, only_positives: bool):
+    assert (proportion_links <= 2) and (proportion_links >= 0), 'the number of links is basically a proportion of the dataset'
     n_samples = labels.numel()
+    n_links = int(proportion_links * n_samples)
     indices = torch.arange(0, n_samples, step=1).tolist()
     if only_positives == False:
-
-        random_pairs = [random.choice(indices) for _ in range(2 * num_links)]
+        random_pairs = [random.choice(indices) for _ in range(2 * n_links)]
         #random_pairs = random.sample(indices, k=2*num_links)
         indices_pairs = [torch.tensor([random_pairs[i], random_pairs[i+1]]) for i in range(0, len(random_pairs), 2)]
         indices_pairs = torch.stack(indices_pairs, dim=0)
 
-        indices_pairs = torch.cat((indices_pairs, indices_pairs[:, [1,0]]), dim=0)
+        #indices_pairs = torch.cat((indices_pairs, indices_pairs[:, [1,0]]), dim=0)
         relations = torch.eq(labels[indices_pairs[:, 0]], labels[indices_pairs[:, 1]])
         relations = relations.type(torch.float) * 2 - 1
         A_matrix = torch.sparse.FloatTensor(indices_pairs.T, relations, torch.Size([n_samples, n_samples]))
         return A_matrix
     else:
-        random_pairs = [random.choice(indices) for _ in range(2 * num_links * 20)]
+        random_pairs = [random.choice(indices) for _ in range(2 * n_links * 20)]
         #random_pairs = random.sample(indices, k=2*num_links)
         indices_pairs = [torch.tensor([random_pairs[i], random_pairs[i+1]]) for i in range(0, len(random_pairs), 2)]
         indices_pairs = torch.stack(indices_pairs, dim=0)
 
-        indices_pairs = torch.cat((indices_pairs, indices_pairs[:, [1,0]]), dim=0)
+        #indices_pairs = torch.cat((indices_pairs, indices_pairs[:, [1,0]]), dim=0)
         relations = torch.eq(labels[indices_pairs[:, 0]], labels[indices_pairs[:, 1]])
         relations = relations.type(torch.float) * 2 - 1
         positive_indices = torch.where(relations == 1)[0]
@@ -327,10 +328,10 @@ class SCANdatasetWithNeighbors(Dataset):
 
 class UnifiedDataset(Dataset):
     def __init__(self, data: torch.Tensor, Ids: torch.Tensor, neighbor_indices: torch.Tensor,
-                 neighbors_distances: torch.Tensor=None, num_links: int=5000):
+                 neighbors_distances: torch.Tensor=None, proportion_links: int=0):
         self.data = data
         self.Ids = Ids
-        self.num_links = num_links
+        self.proportion_links = proportion_links
         self.neighbor_indices = neighbor_indices
         self.neighbors_distances = neighbors_distances
         if neighbors_distances != None:
@@ -338,7 +339,7 @@ class UnifiedDataset(Dataset):
         elif neighbors_distances == None:
             self.neighbor_weights = torch.ones(neighbor_indices.size(), dtype=torch.float)
         
-        self.all_neighbors_indices, self.all_weights = self.consider_links(only_correct=True)
+        self.all_neighbors_indices, self.all_weights = self.consider_links(only_correct=False)
         self.check_neighbors_function()
         print('DONE WITH PREPROCESSING')
 
@@ -379,7 +380,7 @@ class UnifiedDataset(Dataset):
         if self.num_links != 0:
             num_additions = 0
             num_corrections = 0
-            A_matrix = create_big_A_matrix(self.Ids, num_links=self.num_links, only_positives=True) # THIS IS A SPARSE TENSOR
+            A_matrix = create_big_A_matrix(self.Ids, proportion_links=self.proportion_links, only_positives=False) # THIS IS A SPARSE TENSOR
             linked_indices = A_matrix._indices().T
             values = A_matrix._values()
             if only_correct == False:

@@ -8,6 +8,7 @@ from torch.nn import functional as F
 from sklearn.manifold import TSNE, MDS
 #from models import *
 from models2 import *
+import pandas as pd
 
 device = 'cuda'
 
@@ -256,4 +257,17 @@ def initializeClusterModel(n_heads: int=1, dataset_name: str = 'cifar10', freeze
 # x = torch.randn((10, 3, 32, 32))
 # print(net(x)[0].shape)
 
+def save_to_csv(num_links: int, ACC: int, NMI: int, ARI: int):
+    file_name = 'NeuralNets/plots/results'
+    data = {'num_links': [num_links], 'ACC': [ACC], 'NMI': [NMI], 'ARI': [ARI]}
 
+    file_exits = os.path.isfile(file_name)
+
+    if not file_exits:
+        df = pd.DataFrame(data)
+        df.to_csv(file_name, index=False)
+    else:
+        existing_data = pd.read_csv(file_name)
+        new_data = pd.DataFrame(data)
+        combined_data = pd.concat([existing_data, new_data], ignore_index=True)
+        combined_data.to_csv(file_name, index=False)
