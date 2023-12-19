@@ -432,7 +432,7 @@ class UnifiedDataset(Dataset):
                 print('THE NUMBER OF ADDITIONS IS: ', num_additions)
                 return all_neighbors, all_weights
             
-        elif self.num_links == 0:
+        elif self.proportion_links == 0:
             all_neighbors = [row for row in self.neighbor_indices]
             all_weights = [row for row in self.neighbor_weights]
             return all_neighbors, all_weights
