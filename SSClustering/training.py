@@ -451,7 +451,7 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
             total_loss.backward()
             optimizer.step()
             optimizer.zero_grad()
-        if (epoch + 1)%20 == 0:
+        if (epoch + 1)%200 == 0:
             true_labels = []
             predictions = []
             true_labels_conf = []
