@@ -377,7 +377,7 @@ class UnifiedDataset(Dataset):
         all_weights = []
 
         n_samples = self.Ids.numel()
-        if self.num_links != 0:
+        if self.proportion_links != 0:
             num_additions = 0
             num_corrections = 0
             A_matrix = create_big_A_matrix(self.Ids, proportion_links=self.proportion_links, only_positives=False) # THIS IS A SPARSE TENSOR
