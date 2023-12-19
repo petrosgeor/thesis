@@ -435,13 +435,13 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
             images_u_id = id_aug(images_u)  # identity augmentation
             images_u_clr = aug_clr(images_u)
             neighbor_images_id = id_aug(neighbor_images)
-            neighbor_images_clr = aug_clr(neighbor_images)
+            #neighbor_images_clr = aug_clr(neighbor_images)
             weights = weights.to(device)
             probs = clusternet.forward(images_u_id)[0]
             probs_clr = clusternet.forward(images_u_clr)[0]
             probs_neighbors_id = clusternet.forward(neighbor_images_id)[0]
-            probs_neighbors_clr = clusternet.forward(neighbor_images_clr)[0]
-            loss1 = ConsistencyLoss.forward(probs1=probs, probs2=probs_neighbors_id, weights=weights) + ConsistencyLoss.forward(probs1=probs, probs2=probs_clr, weights=None) + ConsistencyLoss.forward(probs1=probs, probs2=probs_neighbors_clr, weights=weights) 
+            #probs_neighbors_clr = clusternet.forward(neighbor_images_clr)[0]
+            loss1 = ConsistencyLoss.forward(probs1=probs, probs2=probs_neighbors_id, weights=weights) + ConsistencyLoss.forward(probs1=probs, probs2=probs_clr, weights=None) #+ ConsistencyLoss.forward(probs1=probs, probs2=probs_neighbors_clr, weights=weights) 
 
 
             loss2 = kl_loss.forward(probs=probs)
@@ -480,11 +480,11 @@ def train_clustering_network3(num_epochs:int=50, n_neighbors:int=20, consider_di
                 print(f"Accuracy (ACC): {acc:.2f}%")
                 print('\n')
                 print('confident examples')
-                nmi, ari, acc = cluster_metric(label=true_labels_conf.numpy(), pred=predictions_conf.numpy())
-                print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
-                print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
-                print(f"Accuracy (ACC): {acc:.2f}%")
-                print(torch.unique(predictions_conf, return_counts=True)[1])
+                # nmi, ari, acc = cluster_metric(label=true_labels_conf.numpy(), pred=predictions_conf.numpy())
+                # print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
+                # print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
+                # print(f"Accuracy (ACC): {acc:.2f}%")
+                # print(torch.unique(predictions_conf, return_counts=True)[1])
 
 def run_pretraining_function():
     run_pretraining = input("do you want to run the pretraining step? ")
@@ -505,7 +505,7 @@ def run_pretraining_function():
         return 'no pretraining will take place'
 
 
-train_clustering_network3(num_epochs=101, n_neighbors=20, consider_distnaces=False, num_links=2000, dataset_name='cifar100')
+train_clustering_network3(num_epochs=101, n_neighbors=20, consider_distnaces=False, num_links=0, dataset_name='cifar100')
 
 # scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = True, n_neighbors=20,
 #                                            testing=True, take_neighbors='paiper')
