@@ -52,6 +52,7 @@ def train_clustering_network(num_epochs: int, n_neighbors: int, dataset_name='ci
         num_clusters = 20
     clusternet.to(device)
 
+    earlystopping = EarlyStopping(path='NeuralNets/scan_cifar20.pth', patience=3, verbose=False, delta=0.05)
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
     dataloader = create_scan_dataset(net=clusternet, n_neighbors=n_neighbors, dataset_name=dataset_name)
@@ -112,8 +113,8 @@ def train_clustering_network(num_epochs: int, n_neighbors: int, dataset_name='ci
                 print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
                 print(f"Accuracy (ACC): {acc:.2f}%")
                 print('\n')
-                torch.save(clusternet.state_dict(), 'NeuralNets/scan_cifar20.pth')
+                earlystopping(model=clusternet, val_accuracy=acc)
 
 
-train_clustering_network(num_epochs=300, n_neighbors=20, dataset_name='cifar100')
+train_clustering_network(num_epochs=1000, n_neighbors=20, dataset_name='cifar100')
 

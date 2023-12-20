@@ -10,6 +10,7 @@ from sklearn import metrics
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
+import copy
 
 def running_on_colab():
     import os
@@ -186,19 +187,21 @@ class CustomCrossEntropyLoss(nn.Module):
 
 class EarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given patience."""
-    def __init__(self, patience=7, verbose=False, delta=0, path='checkpoint.pt', trace_func=print):
-
+    def __init__(self, path='checkpoint.pt', patience=7, verbose=False, delta=0, trace_func=print, model=None):
+        
         self.patience = patience
         self.counter = 0
         self.best_score = None
         self.early_stop = False
-        self.val_loss_min = np.Inf
         self.delta = delta
         self.path = path
         self.trace_func = trace_func
-    def __call__(self, val_accuracy):
+        self.best_model = None
+    def __call__(self, model, val_accuracy):
         if self.best_score is None:
             self.best_score = val_accuracy
+            self.best_model = copy.deepcopy(model)
+
         elif val_accuracy < self.best_score + self.delta:
             self.counter += 1
             self.trace_func(f'EarlyStopping counter: {self.counter} out of {self.patience}')
@@ -207,6 +210,7 @@ class EarlyStopping:
         else:
             self.best_score = val_accuracy
             self.counter = 0
+            self.best_model = copy.deepcopy(model)
 
 
 def FreezeResnet(model: Network)-> Network:

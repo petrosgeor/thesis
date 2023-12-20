@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 from sklearn.base import BaseEstimator, ClassifierMixin
-
+import copy
 
 
 device = 'cuda'
@@ -31,22 +31,25 @@ class EarlyStopping:
         self.delta = delta
         self.path = path
         self.trace_func = trace_func
-    def __call__(self, val_accuracy):
+        self.best_model = None
 
-
+    def __call__(self, val_accuracy, model):
         if self.best_score is None:
             self.best_score = val_accuracy
+            self.best_model = copy.deepcopy(model)
         elif val_accuracy < self.best_score + self.delta:
             self.counter += 1
             self.trace_func(f'EarlyStopping counter: {self.counter} out of {self.patience}')
             if self.counter >= self.patience:
                 self.early_stop = True
+                self.save_best_model()
         else:
             self.best_score = val_accuracy
             self.counter = 0
+            self.best_model = copy.deepcopy(model)
 
-
-
+    def save_best_model(self):
+        torch.save(self.best_model.state_dict(), self.path)
 
 class Cluster_KL(nn.Module):
     def __init__(self, num_classes: int, target_distribution: torch.Tensor) -> None:
@@ -263,5 +266,30 @@ model.fit(X, masked_Ids=labels)
 
 
 
+class EarlyStopping:
+    """Early stops the training if validation loss doesn't improve after a given patience."""
+    def __init__(self, path='checkpoint.pt', patience=7, verbose=False, delta=0, trace_func=print, model=None):
+        
+        self.patience = patience
+        self.counter = 0
+        self.best_score = None
+        self.early_stop = False
+        self.delta = delta
+        self.path = path
+        self.trace_func = trace_func
+        self.best_model = None
+    def __call__(self, model, val_accuracy):
+        if self.best_score is None:
+            self.best_score = val_accuracy
+            self.best_model = copy.deepcopy(model)
 
+        elif val_accuracy < self.best_score + self.delta:
+            self.counter += 1
+            self.trace_func(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            if self.counter >= self.patience:
+                self.early_stop = True
+        else:
+            self.best_score = val_accuracy
+            self.counter = 0
+            self.best_model = copy.deepcopy(model)
 
