@@ -197,8 +197,6 @@ class EarlyStopping:
         self.path = path
         self.trace_func = trace_func
     def __call__(self, val_accuracy):
-
-
         if self.best_score is None:
             self.best_score = val_accuracy
         elif val_accuracy < self.best_score + self.delta:

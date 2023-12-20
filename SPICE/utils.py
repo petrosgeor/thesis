@@ -228,7 +228,7 @@ class GaussianMixture(BaseEstimator, ClassifierMixin):
     def fit(self, X: torch.Tensor, masked_Ids: torch.Tensor):
         known_Ids = torch.unique(torch.masked_select(masked_Ids, masked_Ids != -1))
         for i in known_Ids:
-            indices = torch.where(masked_Ids == i)
+            indices = torch.where(masked_Ids == i)[0]
             mean = torch.mean(X[indices, :], dim=0)
             cov_matrix = torch.cov(X[indices, :].T)
             self.means.append(mean)
@@ -256,9 +256,12 @@ class GaussianMixture(BaseEstimator, ClassifierMixin):
         return R
     
 
-# x = torch.randn(10,3)
-# mean = torch.randn(3)
-# cov_matrix = torch.randn(3,3)
-# model = GaussianMixture()
-# print(model.GaussianPDFprob(x, mean, cov_matrix))
+labels = torch.randint(-1, 10, (10000,))
+X= torch.randn(10000, 100)
+model = GaussianMixture()
+model.fit(X, masked_Ids=labels)
+
+
+
+
 

@@ -112,19 +112,8 @@ def train_clustering_network(num_epochs: int, n_neighbors: int, dataset_name='ci
                 print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
                 print(f"Accuracy (ACC): {acc:.2f}%")
                 print('\n')
+                torch.save(clusternet.state_dict(), 'NeuralNets/scan_cifar20.pth')
 
 
 train_clustering_network(num_epochs=300, n_neighbors=20, dataset_name='cifar100')
-
-
-
-
-
-
-
-
-
-
-
-
 
