@@ -47,6 +47,7 @@ class EarlyStopping:
             self.best_score = val_accuracy
             self.counter = 0
             self.best_model = copy.deepcopy(model)
+            self.save_best_model(self.best_model)
 
     def save_best_model(self):
         torch.save(self.best_model.state_dict(), self.path)
@@ -264,32 +265,4 @@ X= torch.randn(10000, 100)
 model = GaussianMixture()
 model.fit(X, masked_Ids=labels)
 
-
-
-class EarlyStopping:
-    """Early stops the training if validation loss doesn't improve after a given patience."""
-    def __init__(self, path='checkpoint.pt', patience=7, verbose=False, delta=0, trace_func=print, model=None):
-        
-        self.patience = patience
-        self.counter = 0
-        self.best_score = None
-        self.early_stop = False
-        self.delta = delta
-        self.path = path
-        self.trace_func = trace_func
-        self.best_model = None
-    def __call__(self, model, val_accuracy):
-        if self.best_score is None:
-            self.best_score = val_accuracy
-            self.best_model = copy.deepcopy(model)
-
-        elif val_accuracy < self.best_score + self.delta:
-            self.counter += 1
-            self.trace_func(f'EarlyStopping counter: {self.counter} out of {self.patience}')
-            if self.counter >= self.patience:
-                self.early_stop = True
-        else:
-            self.best_score = val_accuracy
-            self.counter = 0
-            self.best_model = copy.deepcopy(model)
 
