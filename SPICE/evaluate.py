@@ -4,6 +4,7 @@ from munkres import Munkres
 import numpy as np
 import torch
 from scipy.optimize import linear_sum_assignment
+import matplotlib.pyplot as plt
 
 'code from "https://github.com/Yunfan-Li/Twin-Contrastive-Learning/blob/main/evaluate.py"'
 
@@ -96,21 +97,34 @@ def get_y_preds(y_true, cluster_assignments, n_clusters):
 
 
 
+def plot_confusion_matrix(labels_true: np.ndarray, labels_pred: np.ndarray) -> None:
+    conf_matrix = metrics.confusion_matrix(labels_true, labels_pred)
+    plt.figure(figsize=(8, 6))
 
-'''from sklearn.datasets import make_blobs  # For generating sample data
-from sklearn.cluster import KMeans  # For clustering
+    plt.imshow(conf_matrix, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.title('Confusion Matrix')
+    plt.colorbar()
+    num_classes = np.unique(labels_pred)
 
-# Generate sample data with 5 clusters
-X, y_true = make_blobs(n_samples=1000, centers=5, random_state=42)
+    classes = [str(i) for i in range(len(num_classes))]  # Replace with your class names
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
 
-# Apply your clustering algorithm (e.g., KMeans)
-kmeans = KMeans(n_clusters=5, random_state=42)
-pred_labels = kmeans.fit_predict(X)
+    fmt = 'd'
+    thresh = conf_matrix.max() / 2.
+    for i in range(conf_matrix.shape[0]):
+        for j in range(conf_matrix.shape[1]):
+            plt.text(j, i, format(conf_matrix[i, j], fmt),
+                    horizontalalignment="center",
+                    color="white" if conf_matrix[i, j] > thresh else "black")
 
-# Calculate clustering accuracy using the provided functions
-nmi, ari, acc = cluster_metric(y_true, pred_labels)
+    plt.xlabel('Predicted label')
+    plt.ylabel('True label')
+    plt.tight_layout()
+    #plt.show()
+    plt.savefig('NeuralNets/plots/confusion_matrix.png')
 
-# Print the evaluation metrics
-print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
-print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
-print(f"Accuracy (ACC): {acc:.2f}%")'''
+
+
+

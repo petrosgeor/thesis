@@ -106,6 +106,7 @@ def train_clustering_network(num_epochs: int, n_neighbors: int, dataset_name='ci
                 predictions = torch.cat(predictions, dim=0)
                 nmi, ari, acc = cluster_metric(label=true_labels.numpy(), pred=predictions.numpy())
                 print('------------------- Epoch: ', epoch,' ---------------------')
+                plot_confusion_matrix(labels_true=true_labels.numpy(), labels_pred=predictions.numpy())
                 # Print the evaluation metrics
                 print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
                 print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
