@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import warnings
 import matplotlib.cbook
 from PIL import Image
-from randaugment import Identity_Augmentation, Weak_Augmentation, Strong_Augmentation
+from augmentations import Identity_Augmentation, Weak_Augmentation, Strong_Augmentation
 from utils import running_on_colab
 from utils import LoadEMtrainedNeuralNet
 warnings.filterwarnings('ignore', category=matplotlib.cbook.mplDeprecation)
@@ -33,19 +33,6 @@ def split_classes(Ids: np.array):    # This function accepts the numpy array wit
     seen_classes = unique_Ids[not_zs_classe_indices]
     return seen_classes, zs_classes
 
-def keep_part_of_dataset(data: np.ndarray, Ids: np.ndarray, classes: list, N: int)-> np.ndarray:    # As i have written the code now i SHOULD KEEP ONLY THE FIRST N IDS:
-    '''                                                 # for example [1,2,3] or [1,2,3,4,5,6]
-        N: is the number of classes to keep
-    '''
-    unique_Ids = np.unique(Ids)                                 
-    Ids2keep = unique_Ids[:N]       # VERY IMPORTANT DO NOT CHANGE THAT
-    indices2keep = np.where(np.isin(Ids, Ids2keep))[0]
-    classes_new = []
-    for i in range(0, len(indices2keep)):
-        classes_new.append(classes[indices2keep[i]])
-
-    return data[indices2keep], Ids[indices2keep], classes_new 
-
 
 
 def plot_image_from_tensor(tensor):
@@ -56,15 +43,13 @@ def plot_image_from_tensor(tensor):
 
 
 class CIFAR100(Dataset):
-    def __init__(self, identity_transform=None, weak_transform = None, strong_transform = None, pretrain = False):
+    def __init__(self, pretrain = False):
         self.data_path = self.find_environment()
         self.pretrain = pretrain
         self.data_path_train = self.data_path + 'train'
         self.data_path_test = self.data_path + 'test'
         self.data, self.Ids, self.classes = self.load_data()
-        self.identity_transform = identity_transform
-        self.weak_transform = weak_transform
-        self.strong_transform = strong_transform
+
 
         self.Id2class, self.class2Id = self.make_dict_correspondace()
         self.known_Ids, self.zs_Ids = split_classes(self.Ids)
@@ -88,17 +73,17 @@ class CIFAR100(Dataset):
         meta_dict = unpickle(self.data_path + 'meta')
 
         data_train = data_train_dict[b'data']
-        train_Ids = np.array(data_train_dict[b'fine_labels'])
+        train_Ids = np.array(data_train_dict[b'coarse_label_names'])
         data_test = data_test_dict[b'data']
-        test_Ids = np.array(data_test_dict[b'fine_labels'])
+        test_Ids = np.array(data_test_dict[b'coarse_label_names'])
 
-        classes_names = [label.decode('utf-8') for label in meta_dict[b'fine_label_names']]
+        classes_names = [label.decode('utf-8') for label in meta_dict[b'coarse_label_names']]
 
         data = np.vstack((data_train, data_test))
-        data = data.reshape(len(data),3,32,32).transpose(0,2,3,1)
+        data = data.reshape(len(data),3,32,32)
 
         Ids = np.hstack((train_Ids, test_Ids))
-        return keep_part_of_dataset(data, Ids, make_classes_list(Ids, classes_names), N=N)
+        return data, Ids, make_classes_list(Ids, classes_names)
 
 
     def make_masked_Ids(self):          # returns a list where if an instance has an unknown Id, then it makes it -1
