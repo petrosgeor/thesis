@@ -186,7 +186,7 @@ def find_indices_of_closest_embeddings(embedings: torch.Tensor, masked_Ids: torc
             e = D[i, :]
             indices = torch.topk(e, k=n_neighbors)[1]
             neighbor_indices.append(indices)
-    return indices
+    return neighbor_indices
 
 
 def initializeClusterModel(n_heads: int = 1, dataset_name: str = 'cifar10', freeze_backbone=False):
