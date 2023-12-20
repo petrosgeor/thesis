@@ -84,33 +84,33 @@ def train_clustering_network(num_epochs: int, n_neighbors: int, dataset_name='ci
 
             if (epoch%20) == 0:
                 true_labels = []
-            predictions = []
-            true_labels_conf = []
-            predictions_conf = []
-            with torch.no_grad():
-                for i, (images_batch, _, labels_batch, _) in enumerate(dataloader):
-                    images_batch = id_aug(images_batch.to(device))
-                    batch_probs = clusternet.forward(images_batch)[0]
-                    indices_conf = torch.where(batch_probs >= 0.95)
-                    
-                    true_labels_conf.append(labels_batch[indices_conf[0].cpu()])
-                    predictions_conf.append(indices_conf[1].cpu())
+                predictions = []
+                true_labels_conf = []
+                predictions_conf = []
+                with torch.no_grad():
+                    for i, (images_batch, _, labels_batch, _) in enumerate(dataloader):
+                        images_batch = id_aug(images_batch.to(device))
+                        batch_probs = clusternet.forward(images_batch)[0]
+                        indices_conf = torch.where(batch_probs >= 0.95)
+                        
+                        true_labels_conf.append(labels_batch[indices_conf[0].cpu()])
+                        predictions_conf.append(indices_conf[1].cpu())
 
-                    batch_predictions = torch.argmax(batch_probs, dim=1)
-                    predictions.append(batch_predictions.cpu())
-                    true_labels.append(labels_batch)
-                
-                true_labels_conf = torch.cat(true_labels_conf, dim=0)
-                predictions_conf = torch.cat(predictions_conf, dim=0)
-                true_labels = torch.cat(true_labels, dim=0)
-                predictions = torch.cat(predictions, dim=0)
-                nmi, ari, acc = cluster_metric(label=true_labels.numpy(), pred=predictions.numpy())
-                print('------------------- Epoch: ', epoch,' ---------------------')
-                # Print the evaluation metrics
-                print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
-                print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
-                print(f"Accuracy (ACC): {acc:.2f}%")
-                print('\n')
+                        batch_predictions = torch.argmax(batch_probs, dim=1)
+                        predictions.append(batch_predictions.cpu())
+                        true_labels.append(labels_batch)
+                    
+                    true_labels_conf = torch.cat(true_labels_conf, dim=0)
+                    predictions_conf = torch.cat(predictions_conf, dim=0)
+                    true_labels = torch.cat(true_labels, dim=0)
+                    predictions = torch.cat(predictions, dim=0)
+                    nmi, ari, acc = cluster_metric(label=true_labels.numpy(), pred=predictions.numpy())
+                    print('------------------- Epoch: ', epoch,' ---------------------')
+                    # Print the evaluation metrics
+                    print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
+                    print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
+                    print(f"Accuracy (ACC): {acc:.2f}%")
+                    print('\n')
 
 
 train_clustering_network(num_epochs=50, n_neighbors=20, dataset_name='cifar100')
