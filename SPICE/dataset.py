@@ -63,9 +63,9 @@ class CIFAR100(Dataset):
         meta_dict = self.unpickle('CIFAR100/meta')
 
         data_train = data_train_dict[b'data']
-        train_Ids = np.array(data_train_dict[b'coarse_label_names'])
+        train_Ids = np.array(data_train_dict[b'coarse_labels'])
         data_test = data_test_dict[b'data']
-        test_Ids = np.array(data_test_dict[b'coarse_label_names'])
+        test_Ids = np.array(data_test_dict[b'coarse_labels'])
 
         classes_names = [label.decode('utf-8') for label in meta_dict[b'coarse_label_names']]
 
@@ -117,3 +117,19 @@ class CIFAR100(Dataset):
 dataset = CIFAR100()
 
 
+class SCANDATASET(Dataset):
+    def __init__(self, data: torch.Tensor, Ids: torch.Tensor, masked_Ids: torch.Tensor, all_neighbors_indices: list):
+        self.data = data
+        self.Ids = Ids
+        self.masked_Ids = masked_Ids
+        self.all_neighbors_indices = all_neighbors_indices
+
+    def __getitem__(self, item):
+        related_indices = self.all_neighbors_indices[item]
+        n_neighbors = related_indices.numel()
+        random_index_index = torch.randint(0, n_neighbors, (1,)).item()
+        random_index = related_indices[random_index_index]
+        return self.data[item, :], self.data[random_index, :], self.Ids[item], self.masked_Ids[item]
+    
+    def __len__(self):
+        return self.Ids.numel()

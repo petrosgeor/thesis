@@ -17,57 +17,6 @@ device = 'cuda'
 
 
 
-class InfoNCELoss(nn.Module):
-    def __init__(self, temperature: int)-> torch.Tensor:
-        super(InfoNCELoss, self).__init__()
-        self.temperature = temperature
-
-    def forward(self, z_i: torch.Tensor, z_j: torch.Tensor)-> torch.Tensor:
-        batch_size = z_i.shape[0]
-        representations = torch.vstack((z_i, z_j))
-        Sim_matrix = torch.matmul(representations, representations.T)/self.temperature
-        Sim_matrix = torch.exp(Sim_matrix)
-
-        n1 = torch.arange(0, batch_size)
-        n2 = torch.arange(batch_size, 2*batch_size)
-
-        mask = torch.zeros((2*batch_size, 2*batch_size), dtype=torch.bool, device=device)
-        mask[n1, n2] = True
-        mask[n2, n1] = True
-
-
-        nominator_ij = Sim_matrix[n1, n2]
-        nominator_ji = Sim_matrix[n2, n1]
-        nominator = torch.cat((nominator_ij, nominator_ji), dim=0)
-        denominator = (~mask * Sim_matrix).sum(dim=1)
-        return torch.mean(-(nominator/denominator).log())
-
-
-class CustomCrossEntropyLoss(nn.Module):
-    def __init__(self, num_classes: int):
-        super(CustomCrossEntropyLoss, self).__init__()
-        self.num_classes = num_classes
-
-    def forward(self, predicted_probs:torch.Tensor, labels:torch.Tensor)-> torch.Tensor:
-        '''
-        predicted_probs: A torch 2d tensor. Each row represents probabilities for one cluster center
-        labels: A 1d torch tensor
-        '''
-        one_hot_labels = self.CreateOneHotVectors(labels, num_classes=self.num_classes)
-        Matrix = (-(one_hot_labels * predicted_probs.log())).sum(dim=1)
-        return torch.mean(Matrix)
-
-    def forwardOneHot(self, predicted_probs: torch.Tensor, one_hot_labels: torch.Tensor)-> torch.Tensor:
-        Matrix = (-(one_hot_labels * predicted_probs.log())).sum(dim=1)
-        return torch.mean(Matrix)
-
-    def CreateOneHotVectors(self, labels: torch.Tensor, num_classes: int = 100)-> torch.Tensor:
-        num_examples = labels.shape[0]
-        one_hot = torch.zeros(num_examples, num_classes, device=str(labels.device))
-        one_hot[torch.arange(0, num_examples), labels] = 1
-        return one_hot
-
-
 
 class EarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given patience."""
@@ -208,6 +157,64 @@ class ClusteringMetrics(object):
         plt.tight_layout()
         plt.show()
 
-        
+
+def map_back_indices(selected_indices: torch.Tensor, selected_indices2) -> torch.Tensor:
+    return selected_indices[selected_indices2]
+
+# x = torch.tensor([1,10,20,-1,5])
+# y = torch.tensor([3,1,0])
+# print(x[y])
+
+
+
+def find_indices_of_closest_embeddings(embedings: torch.Tensor, masked_Ids: torch.Tensor,
+                                        n_neighbors: int = 20, return_distances=False) -> torch.Tensor:
+    D = torch.matmul(embedings, embedings.T)
+    n_samples = masked_Ids.numel()
+    #_, all_indices = torch.topk(D, k=n_neighbors, dim=1)
+    known_dictionary = {}
+    known_Ids = torch.unique(torch.masked_select(masked_Ids, masked_Ids != -1))
+    for i in known_Ids:
+        known_dictionary[i.item()] = torch.where(masked_Ids == i)[0]
+    
+    neighbor_indices = []
+    for i in range(0, n_samples):
+        if torch.isin(masked_Ids[i], known_Ids).item():
+            neighbors = known_dictionary[masked_Ids[i].item()]
+            neighbor_indices.append(neighbors)
+        else:
+            e = D[i, :]
+            indices = torch.topk(e, k=n_neighbors)[1]
+            neighbor_indices.append(indices)
+    return indices
+
+
+def initializeClusterModel(n_heads: int = 1, dataset_name: str = 'cifar10', freeze_backbone=False):
+    assert (dataset_name == 'cifar10') | (dataset_name == 'cifar100'), 'no implementation yet for the other datasets'
+    backbone = resnet18()
+    con_model = ContrastiveModel(backbone=backbone)
+    file_path_10 = 'NeuralNets/simclr_cifar10.pth'
+    file_path_100 = 'NeuralNets/simclr_cifar20.pth'
+    if dataset_name == 'cifar10':
+        n_clusters = 10
+        checkpoint = torch.load(file_path_10)
+
+        con_model.load_state_dict(checkpoint)
+
+        clustermodel = ClusteringModel(backbone={'backbone': con_model.backbone, 'dim': con_model.backbone_dim}, nclusters=n_clusters)
+        if freeze_backbone:
+            for param in clustermodel.backbone.parameters():
+                param.requires_grad = False
+        return clustermodel
+    elif dataset_name == 'cifar100':
+        n_clusters = 20
+        checkpoint = torch.load(file_path_100)
+        con_model.load_state_dict(checkpoint)
+        clustermodel = ClusteringModel(backbone={'backbone': con_model.backbone, 'dim': con_model.backbone_dim}, nclusters=n_clusters)
+        if freeze_backbone:
+            for param in clustermodel.backbone.parameters():
+                param.requires_grad = False
+        return clustermodel
+
 
 
