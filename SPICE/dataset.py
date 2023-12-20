@@ -113,8 +113,7 @@ class CIFAR100(Dataset):
         with open(file, 'rb') as fo:
             dict = pickle.load(fo, encoding='bytes')
         return dict
-
-dataset = CIFAR100()
+#
 
 
 class SCANDATASET(Dataset):
