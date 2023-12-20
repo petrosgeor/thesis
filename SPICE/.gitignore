@@ -1,6 +1,6 @@
 # Ignore data files
 .idea/
-cifar-100/
+CIFAR100/
 Neural_Networks/
 __pycache__/
 # Add more patterns as needed

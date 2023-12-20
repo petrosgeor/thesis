@@ -6,9 +6,7 @@ import matplotlib.pyplot as plt
 import warnings
 import matplotlib.cbook
 from PIL import Image
-from augmentations import Identity_Augmentation, Weak_Augmentation, Strong_Augmentation
-from utils import running_on_colab
-from utils import LoadEMtrainedNeuralNet
+#from utils import running_on_colab
 warnings.filterwarnings('ignore', category=matplotlib.cbook.mplDeprecation)
 
 
@@ -16,10 +14,7 @@ np.random.seed(42)
 num_zs_classes = 5  # number of zero shot classes
 N = 20              # the number of classes to keep from CIFAR100 DATASET
 
-def unpickle(file):
-    with open(file, 'rb') as fo:
-        dict = pickle.load(fo, encoding='bytes')
-    return dict
+
 
 def plot_numpy_image(img):
     plt.figure()
@@ -43,13 +38,8 @@ def plot_image_from_tensor(tensor):
 
 
 class CIFAR100(Dataset):
-    def __init__(self, pretrain = False):
-        self.data_path = self.find_environment()
-        self.pretrain = pretrain
-        self.data_path_train = self.data_path + 'train'
-        self.data_path_test = self.data_path + 'test'
+    def __init__(self):
         self.data, self.Ids, self.classes = self.load_data()
-
 
         self.Id2class, self.class2Id = self.make_dict_correspondace()
         self.known_Ids, self.zs_Ids = split_classes(self.Ids)
@@ -68,9 +58,9 @@ class CIFAR100(Dataset):
             return classes_list
 
 
-        data_train_dict = unpickle(self.data_path_train)
-        data_test_dict = unpickle(self.data_path_test)
-        meta_dict = unpickle(self.data_path + 'meta')
+        data_train_dict = self.unpickle('CIFAR100/train')
+        data_test_dict = self.unpickle('CIFAR100/test')
+        meta_dict = self.unpickle('CIFAR100/meta')
 
         data_train = data_train_dict[b'data']
         train_Ids = np.array(data_train_dict[b'coarse_label_names'])
@@ -119,28 +109,11 @@ class CIFAR100(Dataset):
         return known_indices, zs_indices
 
     @staticmethod
-    def find_environment():
-        if running_on_colab() == True:
-            path = '/content/drive/MyDrive/data/cifar-100/'
-        else:
-            path = 'cifar-100/'
-        return path
+    def unpickle(file):
+        with open(file, 'rb') as fo:
+            dict = pickle.load(fo, encoding='bytes')
+        return dict
 
+dataset = CIFAR100()
 
-
-'''identity_aug = Identity_Augmentation()
-weak_aug = Weak_Augmentation()
-strong_aug = Strong_Augmentation()
-
-dataset = CIFAR100(identity_transform=identity_aug, weak_transform=weak_aug, strong_transform=strong_aug, )
-
-dataloader = DataLoader(dataset, batch_size=10, shuffle=True)
-'''
-'''Ids = []
-for i, data in enumerate(dataloader):
-    _, _, _, Ids_batch, _ = data
-    Ids.append(Ids_batch)
-Ids = torch.cat(Ids, dim=0)
-'''
-#net = LoadEMtrainedNeuralNet(num_classes=20)
 
