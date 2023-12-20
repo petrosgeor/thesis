@@ -114,7 +114,8 @@ def train_clustering_network(num_epochs: int, n_neighbors: int, dataset_name='ci
                 print(f"Accuracy (ACC): {acc:.2f}%")
                 print('\n')
                 earlystopping(model=clusternet, val_accuracy=acc)
-
+                if earlystopping.early_stop == True:
+                    break
 
 train_clustering_network(num_epochs=1000, n_neighbors=20, dataset_name='cifar100')
 
