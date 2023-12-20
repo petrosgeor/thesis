@@ -10,6 +10,7 @@ from sklearn import metrics
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
+from sklearn.base import BaseEstimator, ClassifierMixin
 
 
 
@@ -217,4 +218,47 @@ def initializeClusterModel(n_heads: int = 1, dataset_name: str = 'cifar10', free
         return clustermodel
 
 
+
+class GaussianMixture(BaseEstimator, ClassifierMixin):
+    def __init__(self):
+        self.means = []
+        self.cov_matrices = []
+        self.known_classes_num = None
+    
+    def fit(self, X: torch.Tensor, masked_Ids: torch.Tensor):
+        known_Ids = torch.unique(torch.masked_select(masked_Ids, masked_Ids != -1))
+        for i in known_Ids:
+            indices = torch.where(masked_Ids == i)
+            mean = torch.mean(X[indices, :], dim=0)
+            cov_matrix = torch.cov(X[indices, :].T)
+            self.means.append(mean)
+            self.cov_matrices.append(cov_matrix)
+        self.known_classes_num = len(self.means)
+        
+    def predict(self, X: torch.Tensor):
+        probs = []
+        for i in range(0, self.known_classes_num):
+            class_probs = self.GaussianPDFprob(X, mean=self.means[i], cov_matrix=self.cov_matrices[i])
+            probs.append(class_probs)
+        probs = torch.cat(probs, dim=0)
+        total_probs = torch.mean(probs, dim=0)
+        return total_probs
+
+    @staticmethod
+    def GaussianPDFprob(x: torch.Tensor, mean: torch.Tensor, cov_matrix: torch.Tensor):
+        num_features = x.shape[1]
+        A = x - mean
+        C = torch.linalg.inv(cov_matrix)
+        B = torch.matmul(C, A.T)
+
+        R = torch.bmm(A.unsqueeze(1), B.T.unsqueeze(1).transpose(2,1)).squeeze()
+        R = torch.exp(-1/2 * R) * (1/(2*torch.pi)**(num_features/2)) * (1/(torch.linalg.det(cov_matrix))**(1/2))
+        return R
+    
+
+# x = torch.randn(10,3)
+# mean = torch.randn(3)
+# cov_matrix = torch.randn(3,3)
+# model = GaussianMixture()
+# print(model.GaussianPDFprob(x, mean, cov_matrix))
 

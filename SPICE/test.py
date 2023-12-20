@@ -1,15 +1,20 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import torch
 
 
 
-x = np.arange(0, 10)
-y = 10*x
+x = torch.tensor([[1,2,3],
+                  [10,20,30],
+                  [-1,-2,-3]])
 
-plt.figure()
-plt.plot(x, y)
-plt.savefig('NeuralNets/plots/test.png')
+
+
+
+
+
+
 
 
 

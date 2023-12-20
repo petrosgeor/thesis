@@ -6,11 +6,13 @@ import matplotlib.pyplot as plt
 import warnings
 import matplotlib.cbook
 from PIL import Image
+import random
 #from utils import running_on_colab
 warnings.filterwarnings('ignore', category=matplotlib.cbook.mplDeprecation)
 
 
 np.random.seed(42)
+random.seed(42)
 num_zs_classes = 5  # number of zero shot classes
 N = 20              # the number of classes to keep from CIFAR100 DATASET
 
@@ -113,7 +115,7 @@ class CIFAR100(Dataset):
         with open(file, 'rb') as fo:
             dict = pickle.load(fo, encoding='bytes')
         return dict
-#
+
 
 
 class SCANDATASET(Dataset):
