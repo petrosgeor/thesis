@@ -152,6 +152,13 @@ def TrainLogRegrOnFeatures(train_loader, test_loader, n_features, n_classes):
     return accuracy
 
 
+def kl_divergance(P_matrix: torch.Tensor, Q_matrix: torch.Tensor) -> torch.Tensor:
+    kl_loss = 0
+    for row in Q_matrix:
+        kl_loss += F.kl_div(P_matrix.log(), row, reduction='none').mean()
+    return kl_loss
+
+
 
 
 
