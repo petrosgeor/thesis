@@ -116,7 +116,7 @@ def train_clustering_network(num_epochs: int, n_neighbors: int, dataset_name='ci
 train_clustering_network(num_epochs=50, n_neighbors=20, dataset_name='cifar100')
 
 
-
+print('my name is peter')
 
 
 
