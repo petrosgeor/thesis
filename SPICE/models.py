@@ -1,69 +1,158 @@
-from torch import nn
-from torch.nn import functional as F
-from torchvision.models.resnet import Bottleneck, BasicBlock, conv1x1
 import torch
-from timm.models.layers import trunc_normal_
+import torch.nn as nn
+import torch.nn.functional as F
+from torchvision.transforms import v2
+from PIL import Image
+
+'from https://github.com/wvangansbeke/Unsupervised-Classification/blob/master/models/resnet_cifar.py'
+
+class ContrastiveModel(nn.Module):
+    def __init__(self, backbone, head='mlp', features_dim=128):
+        super(ContrastiveModel, self).__init__()
+        self.backbone = backbone['backbone']
+        self.backbone_dim = backbone['dim']
+        self.head = head
+ 
+        if head == 'linear':
+            self.contrastive_head = nn.Linear(self.backbone_dim, features_dim)
+
+        elif head == 'mlp':
+            self.contrastive_head = nn.Sequential(
+                    nn.Linear(self.backbone_dim, self.backbone_dim),
+                    nn.ReLU(), nn.Linear(self.backbone_dim, features_dim))
+        
+        else:
+            raise ValueError('Invalid head {}'.format(head))
+
+    def forward(self, x):
+        features = self.contrastive_head(self.backbone(x))
+        features = F.normalize(features, dim = 1)
+        return features
+
+
+class ClusteringModel(nn.Module):
+    def __init__(self, backbone, nclusters, nheads=1):
+        super(ClusteringModel, self).__init__()
+        self.backbone = backbone['backbone']
+        self.backbone_dim = backbone['dim']
+        self.nheads = nheads
+        assert(isinstance(self.nheads, int))
+        assert(self.nheads > 0)
+        self.cluster_head = nn.ModuleList([nn.Linear(self.backbone_dim, nclusters) for _ in range(self.nheads)])
+
+    def forward(self, x, forward_pass='default'):
+        if forward_pass == 'default':
+            features = self.backbone(x)
+            #out = [cluster_head(features) for cluster_head in self.cluster_head]
+            out = [F.softmax(cluster_head(features), dim=1) for cluster_head in self.cluster_head]
+
+        elif forward_pass == 'backbone':
+            out = self.backbone(x)
+
+        elif forward_pass == 'head':
+            #out = [cluster_head(x) for cluster_head in self.cluster_head]
+            out = [F.softmax(cluster_head(features), dim=1) for cluster_head in self.cluster_head]
+        elif forward_pass == 'return_all':
+            features = self.backbone(x)
+            #out = {'features': features, 'output': [cluster_head(features) for cluster_head in self.cluster_head]}
+            out = {'features': features, 'output': [F.softmax(cluster_head(features), dim=1) for cluster_head in self.cluster_head]}
+        
+        else:
+            raise ValueError('Invalid forward pass {}'.format(forward_pass))        
+
+        return out
+
+
+
+
+class BasicBlock(nn.Module):
+    expansion = 1
+
+    def __init__(self, in_planes, planes, stride=1, is_last=False):
+        super(BasicBlock, self).__init__()
+        self.is_last = is_last
+        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(planes)
+
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_planes != self.expansion * planes:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(self.expansion * planes)
+            )
+
+    def forward(self, x):
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.bn2(self.conv2(out))
+        out += self.shortcut(x)
+        preact = out
+        out = F.relu(out)
+        if self.is_last:
+            return out, preact
+        else:
+            return out
+
+
+class Bottleneck(nn.Module):
+    expansion = 4
+
+    def __init__(self, in_planes, planes, stride=1, is_last=False):
+        super(Bottleneck, self).__init__()
+        self.is_last = is_last
+        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(planes)
+        self.conv3 = nn.Conv2d(planes, self.expansion * planes, kernel_size=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(self.expansion * planes)
+
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_planes != self.expansion * planes:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(self.expansion * planes)
+            )
+
+    def forward(self, x):
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = F.relu(self.bn2(self.conv2(out)))
+        out = self.bn3(self.conv3(out))
+        out += self.shortcut(x)
+        preact = out
+        out = F.relu(out)
+        if self.is_last:
+            return out, preact
+        else:
+            return out
+
 
 class ResNet(nn.Module):
-    def __init__(
-        self,
-        block,
-        layers,
-        in_channel=3,
-        zero_init_residual=False,
-        groups=1,
-        width_per_group=64,
-        replace_stride_with_dilation=None,
-        norm_layer=None,
-    ):
+    def __init__(self, block, num_blocks, in_channel=3, zero_init_residual=False):
         super(ResNet, self).__init__()
-        if norm_layer is None:
-            norm_layer = nn.BatchNorm2d
-        self._norm_layer = norm_layer
+        self.in_planes = 64
 
-        self.inplanes = 64
-        self.dilation = 1
-        if replace_stride_with_dilation is None:
-            # each element in the tuple indicates if we should replace
-            # the 2x2 stride with a dilated convolution instead
-            replace_stride_with_dilation = [False, False, False]
-        if len(replace_stride_with_dilation) != 3:
-            raise ValueError(
-                "replace_stride_with_dilation should be None "
-                "or a 3-element tuple, got {}".format(replace_stride_with_dilation)
-            )
-        self.groups = groups
-        self.base_width = width_per_group
-        self.conv1 = nn.Conv2d(
-            in_channel, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False
-        )
-        self.bn1 = norm_layer(self.inplanes)
-        self.relu = nn.ReLU(inplace=True)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, 64, layers[0])
-        self.layer2 = self._make_layer(
-            block, 128, layers[1], stride=2, dilate=replace_stride_with_dilation[0]
-        )
-        self.layer3 = self._make_layer(
-            block, 256, layers[2], stride=2, dilate=replace_stride_with_dilation[1]
-        )
-        self.layer4 = self._make_layer(
-            block, 512, layers[3], stride=2, dilate=replace_stride_with_dilation[2]
-        )
+        self.conv1 = nn.Conv2d(in_channel, 64, kernel_size=3, stride=1, padding=1,
+                               bias=False)
+        self.bn1 = nn.BatchNorm2d(64)
+        self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
+        self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
+        self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
+        self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.rep_dim = 512 * block.expansion
-        self.fc = nn.Linear(self.rep_dim, self.rep_dim)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
 
         # Zero-initialize the last BN in each residual branch,
-        # so that the residual branch starts with zeros, and each residual block behaves like an identity.
-        # This improves the model by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
+        # so that the residual branch starts with zeros, and each residual block behaves
+        # like an identity. This improves the model by 0.2~0.3% according to:
+        # https://arxiv.org/abs/1706.02677
         if zero_init_residual:
             for m in self.modules():
                 if isinstance(m, Bottleneck):
@@ -71,179 +160,28 @@ class ResNet(nn.Module):
                 elif isinstance(m, BasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)
 
-        # for name, param in self.named_parameters():
-        #     if (
-        #         name.startswith("conv1")
-        #         or name.startswith("bn1")
-        #         or name.startswith("layer1")
-        #         or name.startswith("layer2")
-        #     ):
-        #         print("Freeze gradient for", name)
-        #         param.requires_grad = False
-
-    def _make_layer(self, block, planes, blocks, stride=1, dilate=False):
-        norm_layer = self._norm_layer
-        downsample = None
-        previous_dilation = self.dilation
-        if dilate:
-            self.dilation *= stride
-            stride = 1
-        if stride != 1 or self.inplanes != planes * block.expansion:
-            downsample = nn.Sequential(
-                conv1x1(self.inplanes, planes * block.expansion, stride),
-                norm_layer(planes * block.expansion),
-            )
-
+    def _make_layer(self, block, planes, num_blocks, stride):
+        strides = [stride] + [1] * (num_blocks - 1)
         layers = []
-        layers.append(
-            block(
-                self.inplanes,
-                planes,
-                stride,
-                downsample,
-                self.groups,
-                self.base_width,
-                previous_dilation,
-                norm_layer,
-            )
-        )
-        self.inplanes = planes * block.expansion
-        for _ in range(1, blocks):
-            layers.append(
-                block(
-                    self.inplanes,
-                    planes,
-                    groups=self.groups,
-                    base_width=self.base_width,
-                    dilation=self.dilation,
-                    norm_layer=norm_layer,
-                )
-            )
-
+        for i in range(num_blocks):
+            stride = strides[i]
+            layers.append(block(self.in_planes, planes, stride))
+            self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
-    def _forward_impl(self, x):
-        # See note [TorchScript super()]
-        # with torch.no_grad():
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        x = self.maxpool(x)
-
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
-
-        x = self.avgpool(x)
-        x = torch.flatten(x, 1)
-        x = self.fc(x)
-
-        return x
-
     def forward(self, x):
-        return self._forward_impl(x)
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.layer1(out)
+        out = self.layer2(out)
+        out = self.layer3(out)
+        out = self.layer4(out)
+        out = self.avgpool(out)
+        out = torch.flatten(out, 1)
+        return out
 
 
-def get_resnet(model):
-    if model == "resnet18":
-        return ResNet(BasicBlock, [2, 2, 2, 2]), 512
-    elif model == "resnet34":
-        return ResNet(BasicBlock, [3, 4, 6, 3]), 512
-    elif model == "resnet50":
-        return ResNet(Bottleneck, [3, 4, 6, 3]), 2048
-    else:
-        raise NotImplementedError
-
-
-class Network(nn.Module):
-    def __init__(self, resnet, hidden_dim, feature_dim, class_num):
-        super(Network, self).__init__()
-        self.resnet = resnet
-        self.feature_dim = feature_dim
-        self.cluster_num = class_num
-
-        self.instance_projector = nn.Sequential(        # This is the 2 layers MLP head used to project the resnet features into the
-            nn.BatchNorm1d(hidden_dim),                 # space where the contrastive loss is used
-            nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.BatchNorm1d(hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, self.feature_dim),
-        )
-
-        self.cluster_projector = nn.Sequential(         # This the 2 layers MLP used to find the probability of a sample belonging to
-            nn.BatchNorm1d(hidden_dim),                 # a particular cluster
-            nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.BatchNorm1d(hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, self.cluster_num),
-        )
-        trunc_normal_(self.cluster_projector[2].weight, std=0.02)
-        trunc_normal_(self.cluster_projector[5].weight, std=0.02)
-
-    '''def forward(self, x_i, x_j, return_ci=True):
-        h_i = self.resnet(x_i)
-        h_j = self.resnet(x_j)
-
-        z_i = F.normalize(self.instance_projector(h_i), dim=1)
-        z_j = F.normalize(self.instance_projector(h_j), dim=1)
-
-        c_j = self.cluster_projector(h_j)
-
-        if return_ci:
-            c_i = self.cluster_projector(h_i)
-            return z_i, z_j, c_i, c_j
-        else:
-            return z_i, z_j, c_j
-
-    def forward_c(self, x):
-        h = self.resnet(x)
-        c = self.cluster_projector(h)
-        c = F.softmax(c, dim=1)
-        return c
-
-    def forward_zc(self, x):
-        h = self.resnet(x)
-        z = F.normalize(self.instance_projector(h), dim=1)
-        c = self.cluster_projector(h)
-        c = F.softmax(c, dim=1)
-        return z, c'''
-
-    def forward(self, x):        # this forward is used in the first step in order to pretrain
-        h = self.resnet(x)          # the backbone using contrastive learning
-        z = F.normalize(self.instance_projector(h), dim=1)
-        return z
-
-    def forward_c(self, x):
-        h = self.resnet(x)
-        c = self.cluster_projector(h)
-        c = F.softmax(c, dim=1)
-        return c
-
-    def forward_r(self, x):
-        h = self.resnet(x)
-        return h
-
-
-class LogisticRegr(nn.Module):
-    def __init__(self, n_features_in, n_classes):
-        super(LogisticRegr, self).__init__()
-        self.n_features_in = n_features_in
-        self.n_classes = n_classes
-        self.softmax = nn.Softmax(dim=1)
-        self.linear = nn.Linear(in_features=self.n_features_in, out_features=self.n_classes)
-
-
-    def forward(self, x):
-        logits = self.linear(x)
-        probs = self.softmax(logits)
-        return probs
-
-
-
-
+def resnet18(**kwargs):
+    return {'backbone': ResNet(BasicBlock, [2, 2, 2, 2], **kwargs), 'dim': 512}
 
 
 

@@ -105,21 +105,7 @@ class CIFAR100(Dataset):
 
 
     def __getitem__(self, item):
-        if self.pretrain == True:                               # if we are at the pretraining stage then we need two strong augmentations of the same image to compare
-            x_numpy = self.data[item]
-            image = Image.fromarray(x_numpy)                    # convert the numpy array to a PIL image
-            identity_image = self.identity_transform(image)
-            strong1_image = self.strong_transform(image)        # First strong augmentation of the image
-            strong2_image = self.strong_transform(image)        # Second strong augmentation of the image
-            return identity_image, strong1_image, strong2_image, self.Ids[item]
-
-        else:
-            x_numpy = self.data[item]
-            image = Image.fromarray(x_numpy)
-            identity_image = self.identity_transform(image)
-            weak_image = self.weak_transform(image)
-            strong_image = self.strong_transform(image)
-            return identity_image, weak_image, strong_image, self.Ids[item], self.masked_Ids[item]
+        return self.data[item,:], self.Ids[item], self.masked_Ids[item]
 
 
     def __len__(self):

@@ -247,14 +247,13 @@ class Augmentation:
 
 
 class Identity_Augmentation:
-    def __init__(self,
-                 mean=[0.485, 0.456, 0.406],
-                 std=[0.229, 0.224, 0.225]):
-        self.identity_aug = transforms.Compose(
+    def __init__(self):
+        self.identity_aug = v2.Compose(
             [
-                transforms.Resize((224, 224), interpolation=Image.BICUBIC),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=mean, std=std)
+                v2.Resize((32, 32), interpolation=Image.BICUBIC, antialias=True),
+                v2.ToImage(),
+                v2.ToDtype(torch.float32, scale=True),
+                v2.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010]),
             ]
         )
     def __call__(self, x):
@@ -262,83 +261,41 @@ class Identity_Augmentation:
 
 
 class Weak_Augmentation:
-    def __init__(self,
-        img_size = 224,
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225]
-        ):
-        self.weak_aug = transforms.Compose(
+    def __init__(self):
+        self.weak_aug = v2.Compose(
             [
-                transforms.Resize((img_size, img_size), interpolation=Image.BICUBIC),
-                transforms.RandomHorizontalFlip(p=0.5),
-                transforms.RandomAffine(degrees=0, translate=(0.125,0.125)),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=mean, std=std)
+                v2.Resize((32, 32), interpolation=Image.BICUBIC, antialias=True),
+                v2.RandomHorizontalFlip(p=0.5),
+                v2.RandomAffine(degrees=0, translate=(0.125,0.125)),
+                v2.ToImage(),
+                v2.ToDtype(torch.float32, scale=True),
+                v2.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010])
             ]
         )
 
     def __call__(self, x):
-        return self.weak_aug(x)
+     return self.weak_aug(x)
 
-class Strong_Augmentation:
-    def __init__(self,
-            img_size=224,
-            num_aug=4,
-            cutout_holes=1,
-            cutout_size=75,
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225],
-            ):
-        self.strong_aug = transforms.Compose(
-            [
-                transforms.Resize((img_size, img_size), interpolation=Image.BICUBIC),
-                AutoAugment(n=num_aug),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=mean,std=std),
-                Cutout(n_holes=cutout_holes, length=cutout_size)
-            ]
-        )
+class SimCLRaugment:
+    def __init__(self, size = (32,32)):
+        self.s = 1
+        self.size = size
+        self.color_jitter = v2.ColorJitter()
+        self.data_transforms = v2.Compose([v2.RandomResizedCrop(size=size, antialias=True),
+                                           #v2.Resize((32, 32), interpolation=Image.BICUBIC, antialias=True),
+                                           v2.RandomHorizontalFlip(),
+                                           v2.RandomApply([self.color_jitter], p=0.8),
+                                           v2.RandomGrayscale(p=0.2),
+                                           v2.ToImage(),
+                                           v2.ToDtype(torch.float32, scale=True),
+                                           v2.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010]),
+                                           ]
+                                        )
+    
     def __call__(self, x):
-        return self.strong_aug(x)
+        return self.data_transforms(x)
 
 
-
-def build_transform(is_train, args):
-    if args.dataset == "CIFAR-10":
-        augmentation = Augmentation(
-            img_size=224,
-            val_img_size=256,
-            s=0.5,
-            num_aug=4,
-            cutout_holes=1,
-            cutout_size=75,
-            mean=[0.4914, 0.4822, 0.4465],
-            std=[0.2023, 0.1994, 0.2010],
-        )
-    elif args.dataset == "CIFAR-100":
-        augmentation = Augmentation(
-            img_size=224,
-            val_img_size=256,
-            s=0.5,
-            num_aug=4,
-            cutout_holes=1,
-            cutout_size=75,
-            mean=[0.5071, 0.4867, 0.4408],
-            std=[0.2675, 0.2565, 0.2761],
-        )
-    elif args.dataset == "ImageNet-10" or args.dataset == "ImageNet":
-        augmentation = Augmentation(
-            img_size=224,
-            val_img_size=256,
-            s=0.5,
-            num_aug=4,
-            cutout_holes=1,
-            cutout_size=75,
-            blur=0.5,
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225],
-        )
-    return augmentation if is_train else augmentation.val_aug
 
 
 
