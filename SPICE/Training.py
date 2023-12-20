@@ -32,7 +32,7 @@ def create_scan_dataset(net, n_neighbors=20, dataset_name='cifar100'):
         for i, (X_batch, _, _) in enumerate(cifar_dataloader):
             X_batch = X_batch.to(device)
             embeddings_batch = net.forward(id_aug(X_batch), forward_pass='backbone')
-            embeddings.append(embeddings_batch)
+            embeddings.append(embeddings_batch.cpu())
         embeddings = torch.cat(embeddings, dim=0)
         all_neighbor_indices = find_indices_of_closest_embeddings(embedings=embeddings, masked_Ids=torch.from_numpy(dataset.masked_Ids), n_neighbors=n_neighbors)
     scan_dataset = SCANDATASET(data=torch.from_numpy(dataset.data), Ids=torch.from_numpy(dataset.Ids), 
@@ -116,7 +116,6 @@ def train_clustering_network(num_epochs: int, n_neighbors: int, dataset_name='ci
 train_clustering_network(num_epochs=50, n_neighbors=20, dataset_name='cifar100')
 
 
-print('my name is peter')
 
 
 
