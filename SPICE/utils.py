@@ -194,7 +194,7 @@ def find_indices_of_closest_embeddings(embedings: torch.Tensor, masked_Ids: torc
     return neighbor_indices
 
 
-def initializeClusterModel(n_heads: int = 1, dataset_name: str = 'cifar10', freeze_backbone=False):
+def initializeClusterModel(n_heads: int = 1, dataset_name: str = 'cifar10', freeze_backbone=False):     # TRAINED USING THE SIMCLR ALGORITHM
     assert (dataset_name == 'cifar10') | (dataset_name == 'cifar100'), 'no implementation yet for the other datasets'
     backbone = resnet18()
     con_model = ContrastiveModel(backbone=backbone)
@@ -220,6 +220,33 @@ def initializeClusterModel(n_heads: int = 1, dataset_name: str = 'cifar10', free
             for param in clustermodel.backbone.parameters():
                 param.requires_grad = False
         return clustermodel
+
+
+def initializeSCANmodel(n_heads: int = 1, dataset_name: str = 'cifar100', freeze_backbone=False):   # TRAINED USING THE SCAN LOSS
+    assert (dataset_name == 'cifar10') | (dataset_name == 'cifar100'), 'no implementation yet for the other datasets'
+    backbone = resnet18()
+    contrastive_model = ContrastiveModel(backbone=backbone)
+    file_path_10 = 'NeuralNets/scan_cifar10.pth'
+    file_path_100 = 'NeuralNets/scan_cifar20.pth'
+
+    if dataset_name == 'cifar10':
+        n_clusters = 10
+        cluster_model = ClusteringModel(backbone= {'backbone': contrastive_model.backbone, 'dim': contrastive_model.backbone_dim}, nclusters=n_clusters)
+        cluster_model.load_state_dict(torch.load(file_path_10))
+        if freeze_backbone:
+            for param in cluster_model.backbone.parameters():
+                param.requires_grad = False
+        return cluster_model
+    elif dataset_name == 'cifar100':
+        cluster_model = ClusteringModel(backbone= {'backbone': contrastive_model.backbone, 'dim': contrastive_model.backbone_dim}, nclusters=n_clusters)
+        cluster_model.load_state_dict(torch.load(file_path_100))
+        if freeze_backbone:
+            for param in cluster_model.backbone.parameters():
+                param.requires_grad = False
+        return cluster_model
+
+
+
 
 
 
