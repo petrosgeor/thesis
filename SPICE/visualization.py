@@ -90,15 +90,23 @@ id_aug = Identity_Augmentation()
 dataloader = DataLoader(dataset, batch_size=200, shuffle=False)
 embeddings = []
 Ids = []
+masked_Ids = []
 with torch.no_grad():
-    for i, (X_batch, labels_batch, _) in enumerate(dataloader):
+    for i, (X_batch, labels_batch, masked_labels_batch) in enumerate(dataloader):
         X_batch = X_batch.to(device)
         embeddings_batch = net.forward(id_aug(X_batch), forward_pass='backbone')
         embeddings.append(embeddings_batch.cpu())
         Ids.append(labels_batch)
+        masked_Ids.append(masked_labels_batch)
 embeddings = torch.cat(embeddings, dim=0)
 Ids = torch.cat(Ids, dim=0)
-known_indices = torch.where(Ids != -1)[0]
-zs_indices = torch.where(Ids == -1)[0]
+masked_Ids = torch.cat(masked_Ids, dim=0)
 
+known_indices = torch.where(masked_Ids != -1)[0]
+zs_indices = torch.where(masked_Ids == -1)[0]
+
+
+VisualizeWithTSNE(embeddings.numpy(), labels.numpy(), path2save='NeuralNets/plots/scan_cifar20_all.png', n_cpus=3)
+VisualizeWithTSNE(embeddings[known_indices,:].numpy(), labels[known_indices].numpy(), path2save='NeuralNets/plots/scan_cifar20_known.png', n_cpus=3)
+VisualizeWithTSNE(embeddings[zs_indices,:].numpy(), labels[zs_indices].numpy(), path2save='NeuralNets/plots/scan_cifar20_zs.png', n_cpus=3)
 
