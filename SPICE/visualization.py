@@ -19,7 +19,7 @@ def VisualizeWithTSNE(resnet_embeddings: np.ndarray, labels: np.ndarray, path2sa
     assert (type(resnet_embeddings) == np.ndarray) and (type(labels) == np.ndarray), 'input should be numpy arrays not tensors or lists'
 
 
-    X_embedded = TSNE(n_components=2, n_jobs=n_cpus).fit_transform(resnet_embeddings)
+    X_embedded = TSNE(n_components=2,perplexity=15, n_jobs=n_cpus).fit_transform(resnet_embeddings)
     unique_labels = np.unique(labels)
 
     num_colors = len(unique_labels)
