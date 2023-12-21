@@ -15,11 +15,11 @@ gpu_id = input("Enter the GPU ID to be used (e.g., 0, 1, 2, ...): ")
 os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
 
 
-def VisualizeWithTSNE(resnet_embeddings: np.ndarray, labels: np.ndarray, path2save: str) -> None:
+def VisualizeWithTSNE(resnet_embeddings: np.ndarray, labels: np.ndarray, path2save: str, n_cpus: int=2) -> None:
     assert (type(resnet_embeddings) == np.ndarray) and (type(labels) == np.ndarray), 'input should be numpy arrays not tensors or lists'
 
 
-    X_embedded = TSNE(n_components=2).fit_transform(resnet_embeddings)
+    X_embedded = TSNE(n_components=2, n_jobs=n_cpus).fit_transform(resnet_embeddings)
     unique_labels = np.unique(labels)
 
     num_colors = len(unique_labels)
