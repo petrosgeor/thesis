@@ -47,7 +47,7 @@ class EarlyStopping:
             self.best_score = val_accuracy
             self.counter = 0
             self.best_model = copy.deepcopy(model)
-            self.save_best_model(self.best_model)
+            self.save_best_model()
 
     def save_best_model(self):
         torch.save(self.best_model.state_dict(), self.path)
