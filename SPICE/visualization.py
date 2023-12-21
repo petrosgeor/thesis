@@ -106,7 +106,7 @@ known_indices = torch.where(masked_Ids != -1)[0]
 zs_indices = torch.where(masked_Ids == -1)[0]
 
 
-VisualizeWithTSNE(embeddings.numpy(), labels.numpy(), path2save='NeuralNets/plots/scan_cifar20_all.png', n_cpus=3)
-VisualizeWithTSNE(embeddings[known_indices,:].numpy(), labels[known_indices].numpy(), path2save='NeuralNets/plots/scan_cifar20_known.png', n_cpus=3)
-VisualizeWithTSNE(embeddings[zs_indices,:].numpy(), labels[zs_indices].numpy(), path2save='NeuralNets/plots/scan_cifar20_zs.png', n_cpus=3)
+VisualizeWithTSNE(embeddings.numpy(), Ids.numpy(), path2save='NeuralNets/plots/scan_cifar20_all.png', n_cpus=3)
+VisualizeWithTSNE(embeddings[known_indices,:].numpy(), Ids[known_indices].numpy(), path2save='NeuralNets/plots/scan_cifar20_known.png', n_cpus=3)
+VisualizeWithTSNE(embeddings[zs_indices,:].numpy(), Ids[zs_indices].numpy(), path2save='NeuralNets/plots/scan_cifar20_zs.png', n_cpus=3)
 
