@@ -13,7 +13,7 @@ warnings.filterwarnings('ignore', category=matplotlib.cbook.mplDeprecation)
 
 np.random.seed(42)
 random.seed(42)
-num_zs_classes = 5  # number of zero shot classes
+num_zs_classes = 10  # number of zero shot classes
 N = 20              # the number of classes to keep from CIFAR100 DATASET
 
 
