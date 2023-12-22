@@ -1,6 +1,6 @@
 import torch
 import torchvision
-import lightly
+import torch.nn.functional as F
 from lightly.data import LightlyDataset
 from lightly.transforms import SimCLRTransform
 import lightly.transforms as transforms
@@ -8,6 +8,7 @@ from lightly.loss import NTXentLoss
 from lightly.models.modules.heads import SimCLRProjectionHead
 import os
 from utils import *
+from models import *
 import pytorch_lightning as pl
 import torch.nn as nn
 
@@ -25,8 +26,6 @@ seed = 1
 max_epochs = 20
 input_size = 64
 num_ftrs = 32
-
-
 
 path_to_data = set_AwA2_dataset_path() + 'JPEGImages/'
 
@@ -53,6 +52,45 @@ dataloader_train_simclr = torch.utils.data.DataLoader(
     drop_last=True,
     num_workers=num_workers,
 )
+
+class ContrastiveModel(pl.LightningModule):
+    def __init__(self, backbone, head='mlp', features_dim=128):
+        super(ContrastiveModel, self).__init__()
+        self.backbone = backbone['backbone']
+        self.backbone_dim = backbone['dim']
+        self.head = head
+
+        self.criterion = NTXentLoss()
+
+        if head == 'linear':
+            self.contrastive_head = nn.Linear(self.backbone_dim, features_dim)
+
+        elif head == 'mlp':
+            self.contrastive_head = nn.Sequential(
+                    nn.Linear(self.backbone_dim, self.backbone_dim),
+                    nn.ReLU(), nn.Linear(self.backbone_dim, features_dim))
+        
+        else:
+            raise ValueError('Invalid head {}'.format(head))
+
+    def forward(self, x):
+        features = self.contrastive_head(self.backbone(x))
+        features = F.normalize(features, dim = 1)
+        return features
+    def training_step(self, batch, batch_idx):
+        (x0, x1), _, _ = batch
+        z0 = self.forward(x0)
+        z1 = self.forward(x1)
+        loss = self.criterion(z0, z1)
+        return loss
+
+    def configure_optimizers(self):
+        optim = torch.optim.SGD(
+            self.parameters(), lr=6e-2, momentum=0.9, weight_decay=5e-4
+        )
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optim, max_epochs)
+        return [optim], [scheduler]
+    
 
 
 class SimCLRModel(pl.LightningModule):
@@ -89,8 +127,10 @@ class SimCLRModel(pl.LightningModule):
 
 # model = SimCLRModel()
 # trainer = pl.Trainer(max_epochs=max_epochs, devices=1, accelerator="gpu")
-iter(dataloader_train_simclr)
+#iter(dataloader_train_simclr)
 # trainer.fit(model, dataloader_train_simclr)
+
+model = ContrastiveModel(backbone=resnet34())
 
 for batch in dataloader_train_simclr:
     break
