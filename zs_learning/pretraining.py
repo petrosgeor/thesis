@@ -97,6 +97,4 @@ iter(dataloader_train_simclr)
 # Your code here
 # ...
 
-if __name__ == "__main__":
-    for batch in dataloader_train_simclr:
-        break
+
