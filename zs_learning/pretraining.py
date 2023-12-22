@@ -92,9 +92,7 @@ class SimCLRModel(pl.LightningModule):
 iter(dataloader_train_simclr)
 # trainer.fit(model, dataloader_train_simclr)
 
-# train.py
-
-# Your code here
-# ...
+for batch in dataloader_train_simclr:
+    break
 
 
