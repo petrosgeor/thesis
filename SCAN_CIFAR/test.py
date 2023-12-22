@@ -7,8 +7,7 @@ from models import *
 from lightly.transforms.simclr_transform import SimCLRTransform
 
 
-transform = SimCLRTransform(input_size=224)
-
+print('my name is peter')
 
 
 
