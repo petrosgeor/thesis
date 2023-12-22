@@ -23,8 +23,8 @@ os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
 num_workers = 1
 batch_size = 256
 seed = 1
-max_epochs = 20
-input_size = 64
+max_epochs = 800
+input_size = 224
 num_ftrs = 32
 
 path_to_data = set_AwA2_dataset_path() + 'JPEGImages/'
