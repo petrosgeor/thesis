@@ -7,7 +7,6 @@ from models import *
 from lightly.transforms.simclr_transform import SimCLRTransform
 
 
-print('my name is peter')
 
 
 
