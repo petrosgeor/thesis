@@ -90,7 +90,7 @@ class ContrastiveModel(pl.LightningModule):
 
         # update momentum
         update_momentum(self.backbone, self.backbone_momentum, 0.99)
-        update_momentum(self.projection_head, self.projection_head_momentum, 0.99)
+        update_momentum(self.contrastive_head, self.contrastive_head_momentum, 0.99)
 
         q = self.contrastive_head(self.backbone(x_q))
         q = F.normalize(q, dim=1)
