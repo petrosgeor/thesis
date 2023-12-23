@@ -33,7 +33,7 @@ batch_size = 128
 seed = 1
 max_epochs = 800
 input_size = 128
-memory_bank_size = 2048
+memory_bank_size = 500
 
 
 path_to_data = set_AwA2_dataset_path() + 'JPEGImages/'
