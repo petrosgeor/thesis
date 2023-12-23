@@ -32,7 +32,7 @@ num_workers = 2
 batch_size = 128
 seed = 1
 max_epochs = 800
-input_size = 128
+input_size = 32
 memory_bank_size = 500
 
 
