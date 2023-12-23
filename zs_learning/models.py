@@ -189,6 +189,9 @@ def resnet34(**kwargs):
 
 
 
-# x = torch.randn((10, 3, 224, 224))
-# backbone = resnet34()
+# x = torch.randn((10, 3, 64, 64))
+# backbone = resnet18()
+# contrastive_model = ContrastiveModel(backbone=backbone)
+
+
 

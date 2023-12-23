@@ -127,6 +127,9 @@ model = ContrastiveModel(backbone=resnet18())
 trainer = pl.Trainer(max_epochs=max_epochs, devices=1, accelerator="gpu")
 trainer.fit(model, dataloader_train_simclr)
 
+torch.save(model.state_dict(), 'NeuralNets/moco_pretrained_allmodel.pth')
+torch.save(model.backbone.state_dict(), 'NeuralNets/moco_pretrained_backbone.pth')
+
 
 
 
