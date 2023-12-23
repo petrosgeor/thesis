@@ -5,7 +5,6 @@ from lightly.data import LightlyDataset
 from lightly.transforms import SimCLRTransform
 import lightly.transforms as transforms
 from lightly.loss import NTXentLoss
-from lightly.models.modules.heads import SimCLRProjectionHead
 import os
 from utils import *
 from models import *
