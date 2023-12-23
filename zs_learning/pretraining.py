@@ -94,7 +94,7 @@ class ContrastiveModel(pl.LightningModule):
 
         q = self.contrastive_head(self.backbone(x_q))
         q = F.normalize(q, dim=1)
-        print(q)
+        #print(q)
 
         k, shuffle = batch_shuffle(x_k)
 
