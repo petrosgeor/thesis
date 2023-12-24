@@ -79,7 +79,7 @@ class CIFAR100(Dataset):
 
 
     def make_masked_Ids(self):          # returns a list where if an instance has an unknown Id, then it makes it -1
-        masked_Ids = self.Ids.copy()
+        masked_Ids = self.Ids.clone()
         for i, id in enumerate(masked_Ids):
             if id not in self.known_Ids:
                 masked_Ids[i] = -1

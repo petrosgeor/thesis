@@ -3,4 +3,6 @@ __pycache__/
 lightning_logs/
 Animals_with_Attributes2/
 NeuralNets/
-AwA2-features
+AwA2-features/
+plots/
+tests/
