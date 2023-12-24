@@ -29,7 +29,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
 
 
 num_workers = 2
-batch_size = 256
+batch_size = 128
 seed = 1
 max_epochs = 800
 input_size = 128
