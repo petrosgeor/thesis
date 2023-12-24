@@ -97,6 +97,9 @@ class ContrastiveModel(pl.LightningModule):
         #print(q)
 
         k, shuffle = batch_shuffle(x_k)
+        if batch_idx == 1:
+            torch.save(model.state_dict(), 'NeuralNets/moco_pretrained_allmodel.pth')
+            torch.save(model.backbone.state_dict(), 'NeuralNets/moco_pretrained_backbone.pth')
 
         k = self.contrastive_head_momentum(self.backbone_momentum(k))
         k = F.normalize(k, dim=1)
