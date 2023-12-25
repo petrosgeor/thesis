@@ -36,7 +36,7 @@ input_size = 64
 memory_bank_size = 2000
 
 
-path_to_data = set_AwA2_dataset_path() + 'JPEGImages/'
+path_to_data = set_AwA2_dataset_path() + '/JPEGImages/'
 
 transform = MoCoV2Transform(input_size=input_size,
                             gaussian_blur=0.0,

@@ -7,7 +7,6 @@ import warnings
 import matplotlib.cbook
 from PIL import Image
 import random
-#from utils import running_on_colab
 warnings.filterwarnings('ignore', category=matplotlib.cbook.mplDeprecation)
 
 
@@ -41,7 +40,7 @@ def plot_image_from_tensor(tensor):
 
 class CIFAR100(Dataset):
     def __init__(self):
-        self.data, self.Ids, self.classes = self.load_data()
+        self.data, self.Ids, self.classes = self.load_data()    # both data and Ids are numpy arrays
 
         self.Id2class, self.class2Id = self.make_dict_correspondace()
         self.known_Ids, self.zs_Ids = split_classes(self.Ids)

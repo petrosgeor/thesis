@@ -1,33 +1,14 @@
 import pickle
 from torch.utils.data import Dataset
 import torch
+from torchvision.transforms import v2
+from torchvision.io import read_image
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+from utils import *
 
-def create_mapping_dicts(numbers):
-
-    # Sort the input numbers
-    sorted_numbers = sorted(numbers)
-
-    # Create a dictionary to map input numbers to values between 0 and 12
-    Id2index = {num: i for i, num in enumerate(sorted_numbers)}
-
-    # Create a dictionary to map values between 0 and 12 to the corresponding input numbers
-    index2Id = {i: num for i, num in enumerate(sorted_numbers)}
-
-    return Id2index, index2Id
-
-def keep_part_of_dictionary(dictionary, keys2keep):
-    to_keep = {}
-    for i in range(0, len(keys2keep)):
-        key = keys2keep[i]
-        to_keep[key] = dictionary[key]
-    return to_keep
-
-
-
-class AwA2dataset(Dataset):
+class AwA2dataset_pretrained(Dataset):
     def __init__(self, path = 'AwA2-features/Animals_with_Attributes2/Features/ResNet101/'):
         self.path = path
         self.data, self.Ids, self.image_names = self.get_files()
@@ -99,11 +80,102 @@ class AwA2dataset(Dataset):
 
 
 
-def find_indices_of_closest_embeddings(embedings: torch.Tensor, n_neighbors: int = 20) -> torch.Tensor:
-    D = torch.matmul(embedings, embedings.T)
-    indices = torch.topk(D, k=n_neighbors, dim=1)[1]
-    return indices
 
+class AwA2dataset(Dataset):
+    def __init__(self):
+        self.path = set_AwA2_dataset_path()
+        self.data, self.Ids, self.class2Id, self.Id2class = self.load_data()
+        self.known_Ids, self.zs_Ids = self.find_known_zs_Ids()
+        self.masked_Ids = self.make_masked_Ids()
+
+
+    def __getitem__(self, item):
+        return self.data[item,:], self.Ids[item], self.masked_Ids[item]
+
+    def __len__(self):
+        return self.Ids.numel()
+
+    def load_data(self):
+        classes_path = os.path.join(self.path, 'classes.txt')
+        with open(classes_path, 'r') as file:
+            lines = file.readlines()
+        Id2class = {}
+        for line in lines:
+            parts = line.strip().split('\t')
+            key = int(parts[0]) - 1
+            value = parts[1]
+            Id2class[key] = value
+        
+        class2Id = {value: key for key, value in Id2class.items()}
+
+        transform = v2.Compose([
+            v2.Resize((64,64)),
+            v2.ToTensor()
+        ])
+        classes = list(class2Id.keys())
+        images_path = os.path.join(self.path, 'JPEGImages')
+        data = []
+        Ids = []
+        for i in range(0, len(classes)):
+            c_path = os.path.join(images_path, classes[i])
+            image_c_names = os.listdir(c_path)
+            for j in range(0, len(image_c_names)):
+                image = read_image(os.path.join(c_path, image_c_names[i]))  # this is a torch tensor
+                image = transform(image)
+                data.append(image.unsqueeze(0))
+                Ids.append(class2Id[classes[i]])
+
+        data = torch.cat(data, dim=0)
+        Ids = torch.tensor(Ids)
+        return data, Ids, class2Id, Id2class
+    
+    def find_known_zs_Ids(self):
+        classes_path = os.path.join(self.path, 'trainclasses.txt')
+        string_list = []
+
+        with open(classes_path, 'r') as file:
+            string_list = [line.strip() for line in file]
+        known_Ids = [self.class2Id[i] for i in string_list]
+        known_Ids = torch.tensor(known_Ids)
+
+        classes_path = os.path.join(self.path, 'testclasses.txt')
+        string_list = []
+        
+        with open(classes_path, 'r') as file:
+            string_list = [line.strip() for line in file]
+        zs_Ids = [self.class2Id[i] for i in string_list]
+        zs_Ids = torch.tensor(zs_Ids)
+
+        return known_Ids, zs_Ids
+
+
+    def make_masked_Ids(self):
+        masked_Ids = self.Ids.clone()
+        for i, id in enumerate(masked_Ids):
+            if torch.isin(id, self.zs_Ids).item():
+                masked_Ids[i] = -1
+        return masked_Ids
+
+# dataset = AwA2dataset()
+
+
+
+class SCANDATASET(Dataset):
+    def __init__(self, data: torch.Tensor, Ids: torch.Tensor, masked_Ids: torch.Tensor, all_neighbors_indices: list):
+        self.data = data
+        self.Ids = Ids
+        self.masked_Ids = masked_Ids
+        self.all_neighbors_indices = all_neighbors_indices
+
+    def __getitem__(self, item):
+        related_indices = self.all_neighbors_indices[item]
+        n_neighbors = related_indices.numel()
+        random_index_index = torch.randint(0, n_neighbors, (1,)).item()
+        random_index = related_indices[random_index_index]
+        return self.data[item, :], self.data[random_index, :], self.Ids[item], self.masked_Ids[item]
+    
+    def __len__(self):
+        return self.Ids.numel()
 
 
 def plot_histogram_NN(Ids: torch.Tensor, indices: torch.Tensor):
