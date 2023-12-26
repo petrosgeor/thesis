@@ -5,7 +5,6 @@ import numpy as np
 from sklearn import metrics
 import matplotlib.pyplot as plt
 from torch.nn import functional as F
-from sklearn.manifold import TSNE, MDS
 #from models import *
 from models2 import *
 import pandas as pd
@@ -226,7 +225,7 @@ def probabilistic_closest_indices(Ids: torch.Tensor, n_neighbors: int = 20, n_co
 
 
 
-def initializeClusterModel(n_heads: int=1, dataset_name: str = 'cifar10', freeze_backbone=False):
+def initializeClusterModel(n_heads: int=1, dataset_name: str = 'cifar10', freeze_backbone=False):   #loads the pretrained model using SimCLR
     assert (dataset_name == 'cifar10') | (dataset_name == 'cifar100'), 'no implementation yet for the other datasets'
     backbone = resnet18()
     con_model = ContrastiveModel(backbone=backbone)

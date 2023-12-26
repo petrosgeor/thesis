@@ -7,8 +7,9 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 from utils import *
+from torch.nn import functional as F
 
-class AwA2dataset_pretrained(Dataset):
+class AwA2dataset_features(Dataset):
     def __init__(self, path = 'AwA2-features/Animals_with_Attributes2/Features/ResNet101/'):
         self.path = path
         self.data, self.Ids, self.image_names = self.get_files()
@@ -129,7 +130,7 @@ class AwA2dataset(Dataset):
             for j in range(0, len(image_c_names)):
                 image = read_image(os.path.join(c_path, image_c_names[j]))  # this is a torch tensor
                 if image.shape[0] != 3:
-                    continue
+                     image = image.repeat(3,1,1)
                 image = transform(image)
                 data.append(image.unsqueeze(0))
                 Ids.append(class2Id[classes[i]])
@@ -217,9 +218,9 @@ def plot_histogram_NN_zs_Ids(Ids: torch.Tensor, masked_Ids: torch.Tensor, indice
     plt.show()
 
 
-dataset = AwA2dataset()
 
-# dataset = AwA2dataset()
-# zs_indices = torch.where(dataset.masked_Ids == -1)[0]
-# indices = find_indices_of_closest_embeddings(dataset.data)
-# plot_histogram_NN_zs_Ids(Ids=dataset.Ids, masked_Ids=dataset.masked_Ids, indices=indices)
+#dataset = AwA2dataset()
+
+dataset = AwA2dataset_features()
+indices = find_indices_of_closest_embeddings(F.normalize(dataset.data, dim=1))
+#plot_histogram_NN(dataset.Ids, indices=indices)

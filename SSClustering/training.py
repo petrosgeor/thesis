@@ -6,7 +6,6 @@ from models import *
 from augmentations import *
 from dataset import *
 import numpy as np
-#from kmeans_pytorch import kmeans
 from clustering import *
 from evaluate import *
 import os
@@ -513,44 +512,6 @@ for i in range(len(proportion_links)):
     train_clustering_network3(num_epochs=101, n_neighbors=20, consider_distnaces=False, proportion_links=proportion_links[i], dataset_name='cifar100')
 
 
-
-# scan_dataloader = train_clustering_network(num_epochs=300, t_contrastive=0.5, consider_links = True, n_neighbors=20,
-#                                            testing=True, take_neighbors='paiper')
-# Ids = scan_dataloader.dataset.Ids
-# neighbors = scan_dataloader.dataset.neighbor_indices
-# class_correct = []
-# for i in range(0, 10):
-#     current_indices = torch.where(Ids == i)[0]
-#     i_class_current = []
-#     for j in current_indices:
-#         current_neighbor_indices = neighbors[j.item(), :]
-#         i_class_current.append(torch.where(Ids[current_neighbor_indices] == i)[0].numel())
-#     class_correct.append(np.mean(i_class_current))
-
-# print(class_correct)
-
-# same_Ids_list = scan_dataloader.dataset.same_Ids_list
-# plt.figure(figsize=(8, 6))  # Set the figure size (optional)
-# plt.hist(same_Ids_list, bins=20, color='skyblue', edgecolor='black')  # Create a histogram with 20 bins
-# plt.title('Histogram of 20 Distinct Values')  # Set the title of the histogram
-# plt.xlabel('Values')  # Set the label for the x-axis
-# plt.ylabel('Frequency')  # Set the label for the y-axis
-# plt.grid(axis='y', alpha=0.5)  # Add gridlines for better visualization
-
-# plt.savefig('NeuralNets/plots/histogram.png')
-#plt.show()
-
-
-
-#a = scan_dataloader.dataset.correct_links_list
-# print(np.mean(a))
-# neighbor_indices = scan_dataloader.dataset.neighbor_indices
-# Ids = scan_dataloader.dataset.Ids
-# correct = []
-# for i in range(0, Ids.shape[0]):
-#     current_id = Ids[i]
-#     x = torch.where(Ids[neighbor_indices[i,:]] == current_id)[0].numel()
-#     correct.append(x)
 
 
 
