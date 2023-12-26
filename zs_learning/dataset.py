@@ -108,12 +108,27 @@ class AwA2dataset(Dataset):
         self.known_Ids, self.zs_Ids = self.find_known_zs_Ids()
         self.masked_Ids = self.make_masked_Ids()
 
+        self.all_neighbors_indices = self.correct_neighbors()   # this is a list containing the neighbors of each image
 
     def __getitem__(self, item):
-        return self.data[item,:], self.Ids[item], self.masked_Ids[item]
+        related_indices = self.all_neighbors_indices[item]
+        n_neighbors = related_indices.numel()
+        random_index_index = torch.randint(0, n_neighbors, (1,)).item()
+        random_index = related_indices[random_index_index]
+        return self.data[item, :], self.data[random_index, :], self.Ids[item], self.masked_Ids[item]
 
     def __len__(self):
         return self.Ids.numel()
+
+    def correct_neighbors(self):
+        all_neighbors_indices = []
+        for i, id in enumerate(self.Ids):
+            if torch.isin(id, self.known_Ids).item():
+                x = torch.where(self.Ids == id)[0]
+                all_neighbors_indices.append(x)
+            else:
+                all_neighbors_indices.append(self.neighbor_indices[i,:])
+        return all_neighbors_indices
 
     def load_data(self):
         classes_path = os.path.join(self.path, 'classes.txt')
