@@ -42,24 +42,23 @@ class ClusteringModel(nn.Module):
 
     def forward(self, x, forward_pass='default'):
         if forward_pass == 'default':
-            features = self.backbone(x)
+            features = self.backbone(x).squeeze()
             #out = [cluster_head(features) for cluster_head in self.cluster_head]
             out = [F.softmax(cluster_head(features), dim=1) for cluster_head in self.cluster_head]
 
         elif forward_pass == 'backbone':
-            out = self.backbone(x)
+            out = self.backbone(x).squeeze()
 
         elif forward_pass == 'head':
             #out = [cluster_head(x) for cluster_head in self.cluster_head]
             out = [F.softmax(cluster_head(features), dim=1) for cluster_head in self.cluster_head]
         elif forward_pass == 'return_all':
-            features = self.backbone(x)
+            features = self.backbone(x).squeeze()
             #out = {'features': features, 'output': [cluster_head(features) for cluster_head in self.cluster_head]}
             out = {'features': features, 'output': [F.softmax(cluster_head(features), dim=1) for cluster_head in self.cluster_head]}
         
         else:
             raise ValueError('Invalid forward pass {}'.format(forward_pass))        
-
         return out
 
 

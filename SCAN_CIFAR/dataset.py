@@ -48,6 +48,14 @@ class CIFAR100(Dataset):
 
         self.masked_Ids = self.make_masked_Ids()
 
+        self.data = torch.from_numpy(self.data)
+        self.Ids = torch.from_numpy(self.Ids)
+        self.known_Ids = torch.from_numpy(self.known_Ids)
+        self.zs_Ids = torch.from_numpy(self.zs_Ids)
+        self.masked_Ids = torch.from_numpy(self.masked_Ids)
+        self.known_indices = torch.from_numpy(self.known_indices)
+        self.zs_indices = torch.from_numpy(self.zs_indices)
+
 
     def load_data(self):
 
@@ -78,7 +86,10 @@ class CIFAR100(Dataset):
 
 
     def make_masked_Ids(self):          # returns a list where if an instance has an unknown Id, then it makes it -1
-        masked_Ids = self.Ids.clone()
+        if type(self.Ids) == np.ndarray:
+            masked_Ids = self.Ids.copy()
+        elif type(self.Ids == torch.Tensor):
+            masked_Ids = self.Ids.clone()
         for i, id in enumerate(masked_Ids):
             if id not in self.known_Ids:
                 masked_Ids[i] = -1

@@ -287,9 +287,9 @@ class GaussianMixture(BaseEstimator, ClassifierMixin):
         return R
     
 
-labels = torch.randint(-1, 10, (10000,))
-X= torch.randn(10000, 100)
-model = GaussianMixture()
-model.fit(X, masked_Ids=labels)
+# labels = torch.randint(-1, 10, (10000,))
+# X= torch.randn(10000, 100)
+# model = GaussianMixture()
+# model.fit(X, masked_Ids=labels)
 
 

@@ -247,13 +247,19 @@ class Augmentation:
 
 
 class Identity_Augmentation:
-    def __init__(self):
+    def __init__(self, dataset_name='cifar100'):
+        if dataset_name == 'cifar10':
+            self.mean = [0.4914, 0.4822, 0.4465]
+            self.std = [0.2023, 0.1994, 0.2010]
+        elif dataset_name == 'cifar100':
+            self.mean = [0.5071, 0.4867, 0.4408]
+            self.std = [0.2675, 0.2565, 0.2761]
         self.identity_aug = v2.Compose(
             [
                 v2.Resize((32, 32), interpolation=Image.BICUBIC, antialias=True),
                 v2.ToImage(),
                 v2.ToDtype(torch.float32, scale=True),
-                v2.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010]),
+                v2.Normalize(mean=self.mean, std=self.std),
             ]
         )
     def __call__(self, x):
@@ -277,8 +283,15 @@ class Weak_Augmentation:
      return self.weak_aug(x)
 
 class SimCLRaugment:
-    def __init__(self, size = (32,32)):
+    def __init__(self, size = (32,32), dataset_name = 'cifar100'):
         self.s = 1
+
+        if dataset_name == 'cifar10':
+            self.mean = [0.4914, 0.4822, 0.4465]
+            self.std = [0.2023, 0.1994, 0.2010]
+        elif dataset_name == 'cifar100':
+            self.mean = [0.5071, 0.4867, 0.4408]
+            self.std = [0.2675, 0.2565, 0.2761]
         self.size = size
         self.color_jitter = v2.ColorJitter()
         self.data_transforms = v2.Compose([v2.RandomResizedCrop(size=size, antialias=True),
@@ -288,7 +301,7 @@ class SimCLRaugment:
                                            v2.RandomGrayscale(p=0.2),
                                            v2.ToImage(),
                                            v2.ToDtype(torch.float32, scale=True),
-                                           v2.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010]),
+                                           v2.Normalize(mean=self.mean, std=self.std),
                                            ]
                                         )
     

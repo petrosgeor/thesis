@@ -1,6 +1,7 @@
 import torch
 import platform
 from models import *
+from lightly.models import ResNetGenerator
 
 def set_AwA2_dataset_path():
     system = platform.system()
@@ -18,12 +19,18 @@ def find_indices_of_closest_embeddings(embedings: torch.Tensor, n_neighbors: int
     return indices
 
 def load_pretrained_backbone() -> tuple:
-    x = resnet18()
+    '''x = resnet18()
     backbone = x['backbone']
     dim = x['dim']
     backbone.load_state_dict(torch.load('NeuralNets/moco_pretrained_backbone.pth'))
-    return backbone, dim
-
+    return backbone, dim'''
+    resnet = ResNetGenerator('resnet-18', 1)
+    backbone = nn.Sequential(
+                            *list(resnet.children())[:-1],
+                             nn.AdaptiveAvgPool2d(1),
+                            )
+    backbone.load_state_dict(torch.load('NeuralNets/moco_pretrained_backbone.pth'))
+    return backbone, 512
 
 def initialize_clustering_net(n_classes: int=50, nheads: int=1):        # returns an instance of the clusteringNet class
     backbone, dim = load_pretrained_backbone()

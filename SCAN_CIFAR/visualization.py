@@ -82,31 +82,42 @@ def VisualizeResNetEmbeddings(net, dataset_name: str='cifar100'):
             VisualizeWithTSNE(resnet_embeddings=embeddings[indices].numpy(), labels=Ids[indices].numpy(), path2save=path)
 
 
-
-net = initializeClusterModel(dataset_name='cifar100')
-net.to(device)
-dataset = CIFAR100()
-id_aug = Identity_Augmentation()
-dataloader = DataLoader(dataset, batch_size=200, shuffle=False)
-embeddings = []
-Ids = []
-masked_Ids = []
-with torch.no_grad():
-    for i, (X_batch, labels_batch, masked_labels_batch) in enumerate(dataloader):
-        X_batch = X_batch.to(device)
-        embeddings_batch = net.forward(id_aug(X_batch), forward_pass='backbone')
-        embeddings.append(embeddings_batch.cpu())
-        Ids.append(labels_batch)
-        masked_Ids.append(masked_labels_batch)
-embeddings = torch.cat(embeddings, dim=0)
-Ids = torch.cat(Ids, dim=0)
-masked_Ids = torch.cat(masked_Ids, dim=0)
-
-known_indices = torch.where(masked_Ids != -1)[0]
-zs_indices = torch.where(masked_Ids == -1)[0]
+def find_indices_of_closest_embeddings(embedings: torch.Tensor, n_neighbors: int = 20) -> torch.Tensor:
+    D = torch.matmul(embedings, embedings.T)
+    indices = torch.topk(D, k=n_neighbors, dim=1)[1]
+    return indices
 
 
-VisualizeWithTSNE(embeddings.numpy(), Ids.numpy(), path2save='NeuralNets/plots/scan_cifar20_all.png', n_cpus=3)
-VisualizeWithTSNE(embeddings[known_indices,:].numpy(), Ids[known_indices].numpy(), path2save='NeuralNets/plots/scan_cifar20_known.png', n_cpus=3)
-VisualizeWithTSNE(embeddings[zs_indices,:].numpy(), Ids[zs_indices].numpy(), path2save='NeuralNets/plots/scan_cifar20_zs.png', n_cpus=3)
+def plot_histogram_backbone_NN():
+    clusternet = initializeClusterModel(dataset_name='cifar10', n_heads=1)
+    id_aug = Identity_Augmentation(dataset_name='cifar10')
+    dataset = CIFAR100()
+    dataloader = DataLoader(dataset, batch_size=200, shuffle=False)
+    embeddings = []
+    clusternet.to(device)
+    with torch.no_grad():
+        for i, (X_batch, _, _) in enumerate(dataloader):
+            X_batch = X_batch.to(device)
+            X_batch = id_aug(X_batch)
+            embeddings_batch = clusternet.forward(X_batch, forward_pass='backbone')
+            embeddings.append(embeddings_batch.cpu())
 
+        embeddings = torch.cat(embeddings, dim=0)
+        neighbor_indices = find_indices_of_closest_embeddings(embeddings)
+        Ids = dataset.Ids
+        correct = []
+        for i in range(0, Ids.numel()):
+            neighbor_Ids = Ids[neighbor_indices[i, :]]
+            n_correct = torch.where(neighbor_Ids == Ids[i])[0].numel()
+            correct.append(n_correct)
+        
+        plt.figure(figsize=(8, 6))  # Set the figure size (optional)
+        plt.hist(correct, bins=20, color='skyblue', edgecolor='black')  
+        plt.title('Histogram of 20 Distinct Values') 
+        plt.xlabel('Values') 
+        plt.ylabel('Frequency')
+        plt.grid(axis='y', alpha=0.5)
+        plt.show()
+
+
+plot_histogram_backbone_NN()

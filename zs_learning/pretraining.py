@@ -114,19 +114,19 @@ class MocoModel(pl.LightningModule):
         return [optim], [scheduler]
     
 
+# model = MocoModel()
+# trainer = pl.Trainer(max_epochs=max_epochs, devices=1, accelerator="gpu")
+# trainer.fit(model, dataloader_train_simclr)
+
+# torch.save(model.state_dict(), 'NeuralNets/moco_pretrained_allmodel.pth')
+# torch.save(model.backbone.state_dict(), 'NeuralNets/moco_pretrained_backbone.pth')
 
 
-
-# model = SimCLRModel()
-#iter(dataloader_train_simclr)
-
-model = MocoModel()
-trainer = pl.Trainer(max_epochs=max_epochs, devices=1, accelerator="gpu")
-trainer.fit(model, dataloader_train_simclr)
-
-torch.save(model.state_dict(), 'NeuralNets/moco_pretrained_allmodel.pth')
-torch.save(model.backbone.state_dict(), 'NeuralNets/moco_pretrained_backbone.pth')
-
+# resnet = ResNetGenerator('resnet-18', 1)
+# backbone = backbone = nn.Sequential(
+#                                         *list(resnet.children())[:-1],
+#                                         nn.AdaptiveAvgPool2d(1),
+#                                     )
 
 
 
