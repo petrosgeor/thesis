@@ -265,5 +265,5 @@ def plot_histogram_NN_zs_Ids(Ids: torch.Tensor, masked_Ids: torch.Tensor, indice
 
 #dataset = AwA2dataset()
 
-dataset = AwA2dataset()
+#dataset = AwA2dataset()
 # plot_histogram_NN(Ids=dataset.Ids, indices=indices)
