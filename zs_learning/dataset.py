@@ -109,6 +109,7 @@ class AwA2dataset(Dataset):
         self.masked_Ids = self.make_masked_Ids()
 
         self.all_neighbors_indices = self.correct_neighbors()   # this is a list containing the neighbors of each image
+        print('done creating the dataset')
 
     def __getitem__(self, item):
         related_indices = self.all_neighbors_indices[item]
