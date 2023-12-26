@@ -55,7 +55,7 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
             true_labels_conf = []
             predictions_conf = []
             with torch.no_grad():
-                for i, (images_batch, _, _, labels_batch) in enumerate(dataloader):
+                for i, (images_batch, _, labels_batch, _) in enumerate(dataloader):
                     images_batch = id_aug(images_batch.to(device))
                     batch_probs = F.softmax(clusternet.forward(images_batch)[0], dim=1)
                     indices_conf = torch.where(batch_probs >= 0.95)
