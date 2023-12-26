@@ -10,6 +10,8 @@ from utils import *
 from models import *
 import pytorch_lightning as pl
 import torch.nn as nn
+from lightly.models import ResNetGenerator
+from lightly.models.modules.heads import MoCoProjectionHead
 from lightly.models.utils import (
     batch_shuffle,
     batch_unshuffle,
@@ -62,49 +64,39 @@ dataloader_train_simclr = torch.utils.data.DataLoader(
     num_workers=num_workers,
 )
 
-class ContrastiveModel(pl.LightningModule):
-    def __init__(self, backbone, head='mlp', features_dim=128):
-        super(ContrastiveModel, self).__init__()
-        self.backbone = backbone['backbone']
-        self.backbone_dim = backbone['dim']
-        self.head = head
+class MocoModel(pl.LightningModule):
+    def __init__(self):
+        super(MocoModel, self).__init__()
+        
+        resnet = ResNetGenerator('resnet-18', 1)
+        self.backbone = self.backbone = nn.Sequential(
+                                        *list(resnet.children())[:-1],
+                                        nn.AdaptiveAvgPool2d(1),
+                                    )
+
+        self.projection_head = MoCoProjectionHead(512, 512, 128)
+        self.backbone_momentum = copy.deepcopy(self.backbone)
+        self.projection_head_momentum = copy.deepcopy(self.projection_head)
+        deactivate_requires_grad(self.backbone_momentum)
+        deactivate_requires_grad(self.projection_head_momentum)
 
         self.criterion = NTXentLoss(temperature=0.1, memory_bank_size=memory_bank_size)
-
-        if head == 'linear':
-            self.contrastive_head = nn.Linear(self.backbone_dim, features_dim)
-
-        elif head == 'mlp':
-            self.contrastive_head = nn.Sequential(
-                    nn.Linear(self.backbone_dim, self.backbone_dim),
-                    nn.ReLU(), nn.Linear(self.backbone_dim, features_dim))
-        
-        else:
-            raise ValueError('Invalid head {}'.format(head))
-        
-        self.backbone_momentum = copy.deepcopy(self.backbone)
-        self.contrastive_head_momentum = copy.deepcopy(self.contrastive_head)
-        deactivate_requires_grad(self.backbone_momentum)
-        deactivate_requires_grad(self.contrastive_head_momentum)
 
     def training_step(self, batch, batch_idx):
         (x_q, x_k), _, _ = batch
 
-        # update momentum
         update_momentum(self.backbone, self.backbone_momentum, 0.99)
-        update_momentum(self.contrastive_head, self.contrastive_head_momentum, 0.99)
+        update_momentum(self.projection_head, self.projection_head_momentum, 0.99)
 
-        q = self.contrastive_head(self.backbone(x_q))
-        q = F.normalize(q, dim=1)
-        #print(q)
+        q = self.backbone(x_q).flatten(start_dim=1)
+        q = self.projection_head(q)
+
+        if batch_idx == 1:
+            torch.save(self.backbone.state_dict(), 'NeuralNets/moco_pretrained_backbone.pth')
 
         k, shuffle = batch_shuffle(x_k)
-        if batch_idx == 1:
-            torch.save(model.state_dict(), 'NeuralNets/moco_pretrained_allmodel.pth')
-            torch.save(model.backbone.state_dict(), 'NeuralNets/moco_pretrained_backbone.pth')
-
-        k = self.contrastive_head_momentum(self.backbone_momentum(k))
-        k = F.normalize(k, dim=1)
+        k = self.backbone_momentum(k).flatten(start_dim=1)
+        k = self.projection_head_momentum(k)
         k = batch_unshuffle(k, shuffle)
 
         loss = self.criterion(q, k)

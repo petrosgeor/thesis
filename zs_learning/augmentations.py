@@ -8,7 +8,7 @@ class Identity_Augmentation:
     def __init__(self):
         self.identity_aug = v2.Compose(
             [
-                v2.Resize((32, 32), interpolation=Image.BICUBIC, antialias=True),
+                #v2.Resize((64, 64), interpolation=Image.BICUBIC, antialias=True),
                 v2.ToImage(),
                 v2.ToDtype(torch.float32, scale=True),
                 v2.Normalize(mean=IMAGENET_NORMALIZE['mean'], std=IMAGENET_NORMALIZE['std']),
@@ -23,7 +23,7 @@ class SimCLRaugment:
         self.s = 1
         self.size = size
         self.color_jitter = v2.ColorJitter()
-        self.data_transforms = v2.Compose([v2.RandomResizedCrop(size=size, antialias=True),
+        self.data_transforms = v2.Compose([#v2.RandomResizedCrop(size=size, antialias=True),
                                            #v2.Resize((32, 32), interpolation=Image.BICUBIC, antialias=True),
                                            v2.RandomHorizontalFlip(),
                                            v2.RandomApply([self.color_jitter], p=0.8),

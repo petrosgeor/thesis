@@ -81,6 +81,13 @@ class AwA2dataset_pretrained(Dataset):
 
 
 
+def plot_image_from_tensor(tensor):
+    numpy_image = tensor.permute(1,2,0).numpy()
+    plt.imshow(numpy_image)
+    plt.axis('off')
+    plt.show()
+
+
 class AwA2dataset(Dataset):
     def __init__(self):
         self.path = set_AwA2_dataset_path()
@@ -109,7 +116,7 @@ class AwA2dataset(Dataset):
         class2Id = {value: key for key, value in Id2class.items()}
 
         transform = v2.Compose([
-            v2.Resize((64,64)),
+            v2.Resize((64, 64), interpolation=Image.BICUBIC, antialias=True),
             v2.ToTensor()
         ])
         classes = list(class2Id.keys())
@@ -120,7 +127,9 @@ class AwA2dataset(Dataset):
             c_path = os.path.join(images_path, classes[i])
             image_c_names = os.listdir(c_path)
             for j in range(0, len(image_c_names)):
-                image = read_image(os.path.join(c_path, image_c_names[i]))  # this is a torch tensor
+                image = read_image(os.path.join(c_path, image_c_names[j]))  # this is a torch tensor
+                if image.shape[0] != 3:
+                    continue
                 image = transform(image)
                 data.append(image.unsqueeze(0))
                 Ids.append(class2Id[classes[i]])
@@ -208,7 +217,7 @@ def plot_histogram_NN_zs_Ids(Ids: torch.Tensor, masked_Ids: torch.Tensor, indice
     plt.show()
 
 
-
+dataset = AwA2dataset()
 
 # dataset = AwA2dataset()
 # zs_indices = torch.where(dataset.masked_Ids == -1)[0]
