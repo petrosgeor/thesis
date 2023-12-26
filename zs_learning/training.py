@@ -20,7 +20,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
 
 def scan_training(num_epochs: int=200, num_classes:int = 50):
     dataset = AwA2dataset()
-    dataloader = DataLoader(dataset, batch_size=256, shuffle=True, num_workers=2)
+    dataloader = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=2)
 
     clusternet = ClusteringModel(backbone=resnet18(), nclusters=num_classes, nheads=1)
     clusternet.to(device)
