@@ -120,7 +120,7 @@ class MocoModel(pl.LightningModule):
 # model = SimCLRModel()
 #iter(dataloader_train_simclr)
 
-model = ContrastiveModel(backbone=resnet18())
+model = MocoModel()
 trainer = pl.Trainer(max_epochs=max_epochs, devices=1, accelerator="gpu")
 trainer.fit(model, dataloader_train_simclr)
 
