@@ -8,8 +8,9 @@ import os
 import matplotlib.pyplot as plt
 from utils import *
 from torch.nn import functional as F
+from os.path import join
 
-class AwA2dataset_features(Dataset):
+'''class AwA2dataset_features(Dataset):
     def __init__(self, path = 'AwA2-features/Animals_with_Attributes2/Features/ResNet101/'):
         self.path = path
         self.data, self.Ids, self.image_names = self.get_files()
@@ -64,21 +65,31 @@ class AwA2dataset_features(Dataset):
             if torch.isin(id, self.zs_Ids).item():
                 masked_Ids[i] = -1
         return masked_Ids
-    # def get_classCLIPembeddings(self):
-    #     model_id = "openai/clip-vit-base-patch32"
-    #     prompt = 'a photo of a '
-    #     tokenizer = CLIPTokenizerFast.from_pretrained(model_id)
-    #     processor = CLIPProcessor.from_pretrained(model_id)
-    #     model = CLIPModel.from_pretrained(model_id)
-    #     embedding_dictionary = {}
-    #     for i in self.Id2class.keys():
-    #         s = self.Id2class[i].replace('+',' ')
-    #         phrase = prompt + s
-    #         token = tokenizer(phrase, return_tensors='pt')
-    #         class_embedding = model.get_text_features(**token).detach().numpy()
-    #         embedding_dictionary[i] = class_embedding
-    #     return embedding_dictionary
 
+'''
+
+'''
+class AwA2dataset_features:
+    def __init__(self, path = 'AwA2-features/Animals_with_Attributes2/Features/ResNet101'):
+        self.path = path
+        self.data, self.Ids, self.filenames = self.get_files()
+
+        self.test_classes_names = ['leopard', 'pig', 'hippopotamus', 'seal', 'persian+cat', 'chimpanzee', 'rat',
+                                   'humpback+whale', 'giant+panda', 'raccoon']
+        self.neighbor_indices = find_indices_of_closest_embeddings(embedings=F.normalize(self.data, dim=1), n_neighbors=20)
+
+    def get_files(self):
+        data = np.loadtxt(os.path.join(self.path, 'AwA2-features.txt'))
+        Ids = np.loadtxt(os.path.join(self.path, 'AwA2-labels.txt'), dtype=np.int32)
+
+        with open(os.path.join(self.path, 'AwA2-filenames.txt'), 'r') as file:
+            lines = file.readlines()
+        
+        data = torch.from_numpy(data)
+        Ids = torch.from_numpy(Ids)
+        filenames = [line.strip() for line in lines]
+        return data, Ids, filenames
+'''
 
 
 
@@ -92,6 +103,7 @@ def plot_image_from_tensor(tensor):
 class AwA2dataset(Dataset):
     def __init__(self):
         self.path = set_AwA2_dataset_path()
+        self.filenames, self.neighbor_indices = self.get_filenames_neighbors()
         self.data, self.Ids, self.class2Id, self.Id2class = self.load_data()
         self.known_Ids, self.zs_Ids = self.find_known_zs_Ids()
         self.masked_Ids = self.make_masked_Ids()
@@ -120,20 +132,19 @@ class AwA2dataset(Dataset):
             v2.Resize((64, 64), interpolation=Image.BICUBIC, antialias=True),
             v2.ToTensor()
         ])
-        classes = list(class2Id.keys())
         images_path = os.path.join(self.path, 'JPEGImages')
         data = []
         Ids = []
-        for i in range(0, len(classes)):
-            c_path = os.path.join(images_path, classes[i])
-            image_c_names = os.listdir(c_path)
-            for j in range(0, len(image_c_names)):
-                image = read_image(os.path.join(c_path, image_c_names[j]))  # this is a torch tensor
-                if image.shape[0] != 3:
-                     image = image.repeat(3,1,1)
-                image = transform(image)
-                data.append(image.unsqueeze(0))
-                Ids.append(class2Id[classes[i]])
+        for filename in self.filenames:
+            c = self.get_first_part(filename)
+            c_path = join(images_path, c)
+
+            image = read_image(join(c_path, filename))  # this is a torch tensor
+            if image.shape[0] != 3:
+                    image = image.repeat(3,1,1)
+            image = transform(image)
+            data.append(image.unsqueeze(0))
+            Ids.append(class2Id[c])
 
         data = torch.cat(data, dim=0)
         Ids = torch.tensor(Ids)
@@ -166,8 +177,26 @@ class AwA2dataset(Dataset):
                 masked_Ids[i] = -1
         return masked_Ids
 
-# dataset = AwA2dataset()
+    @staticmethod
+    def get_first_part(string):
+        parts = string.split('_')
+        return parts[0]
 
+    @staticmethod
+    def get_filenames_neighbors():
+        path = 'AwA2-features/Animals_with_Attributes2/Features/ResNet101'
+        data = np.loadtxt(os.path.join(path, 'AwA2-features.txt'))
+        Ids = np.loadtxt(os.path.join(path, 'AwA2-labels.txt'), dtype=np.int32)
+
+        with open(os.path.join(path, 'AwA2-filenames.txt'), 'r') as file:
+            lines = file.readlines()
+        
+        data = torch.from_numpy(data)
+        Ids = torch.from_numpy(Ids)
+        filenames = [line.strip() for line in lines]
+
+        neighbor_indices = find_indices_of_closest_embeddings(embedings=F.normalize(data, dim=1), n_neighbors=20)
+        return filenames, neighbor_indices
 
 
 class SCANDATASET(Dataset):
@@ -221,6 +250,5 @@ def plot_histogram_NN_zs_Ids(Ids: torch.Tensor, masked_Ids: torch.Tensor, indice
 
 #dataset = AwA2dataset()
 
-dataset = AwA2dataset_features()
-indices = find_indices_of_closest_embeddings(F.normalize(dataset.data, dim=1))
-#plot_histogram_NN(dataset.Ids, indices=indices)
+dataset = AwA2dataset()
+# plot_histogram_NN(Ids=dataset.Ids, indices=indices)
