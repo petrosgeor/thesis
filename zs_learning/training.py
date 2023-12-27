@@ -48,7 +48,10 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
             total_loss.backward()
             optimizer.step()
             optimizer.zero_grad()
+        torch.save(clusternet.backbone.state_dict(), 'NeuralNets/backbone_AwA2.pth')
+        torch.save(clusternet.cluster_head.state_dict(), 'NeuralNets/cluster_head_AwA2.pth')
 
+        
         if (epoch%5) == 0:
             true_labels = []
             predictions = []
@@ -81,7 +84,6 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
             earlystopping(val_accuracy=acc)
             if earlystopping.early_stop == True:
                 break
-            torch.save(clusternet.backbone.state_dict(), 'NeuralNets/backbone_AwA2.pth')
-            torch.save(clusternet.cluster_head.state_dict(), 'NeuralNets/cluster_head_AwA2.pth')
+            
 
 scan_training(num_epochs=200, num_classes=50)
