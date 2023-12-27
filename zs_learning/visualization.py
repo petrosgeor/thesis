@@ -5,20 +5,42 @@ from utils import *
 from augmentations import *
 from torch.utils.data import DataLoader
 from torch.nn import functional as F
+from evaluation import *
+
 
 
 device = 'cuda'
+# Set the CUDA_VISIBLE_DEVICES environment variable to the desired GPU ID
+gpu_id = input("Enter the GPU ID to be used (e.g., 0, 1, 2, ...): ")
+os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
+
+
 clusternet = ClusteringModel(backbone=resnet18(), nclusters=50)
 clusternet.load_state_dict(torch.load('NeuralNets/scan_trained_model.pth'))
 dataset = AwA2dataset()
-
-data = dataset.data[0:300, :]
 id_aug = Identity_Augmentation()
-data = id_aug(data)
 
-logits = clusternet.forward(data)[0]
-probs = F.softmax(logits, dim=1)
+dataloader = DataLoader(dataset, batch_size=200, shuffle=False)
+clusternet.to(device)
+predictions = []
+embeddings = []
+labels = []
+with torch.no_grad():
+    for (X_batch, _, labels_batch, _) in dataloader:
+        X_batch = X_batch.to(device)
+        X_batch = id_aug(X_batch)
+        
+        logits = clusternet.forward(X_batch)[0]
+        probs = F.softmax(logits, dim=1)
+        batch_predictions = torch.argmax(probs, dim=1)
 
+        predictions.append(batch_predictions.cpu())
+        labels.append(labels_batch)
+
+
+predictions = torch.cat(predictions, dim=0)
+labels = torch.cat(labels, dim=0)
+nmi, ari, acc = cluster_metric(label=labels.numpy(), pred=predictions.numpy())
 
 
 def plot_histogram_backbone_NN():
