@@ -29,7 +29,7 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
     aug_clr = SimCLRaugment()
     ScanLoss = clusterlosses.SCANLoss()
     optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4), weight_decay=10**(-4))
-    earlystopping = EarlyStopping(patience=3, delta=0.01, path='NeuralNets/scan_trained_model.pth')
+    earlystopping = EarlyStopping(patience=3, delta=0.01)
     for epoch in range(0, num_epochs):
         for i, (images_u, neighbor_images, _, _) in enumerate(dataloader):
             images_u = images_u.to(device)
@@ -78,8 +78,9 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
                 print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
                 print(f"Accuracy (ACC): {acc:.2f}%")
                 print('\n')
-                earlystopping(val_accuracy=acc, model=clusternet)
+                earlystopping(val_accuracy=acc)
                 if earlystopping.early_stop == True:
                     break
+                torch.save(clusternet.state_dict(), 'NeuralNets/scan_trained_model.pth')
 
 scan_training(num_epochs=200, num_classes=50)
