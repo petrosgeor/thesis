@@ -2,6 +2,8 @@ import torch
 import platform
 from models import *
 from lightly.models import ResNetGenerator
+import numpy as np
+import copy
 
 def set_AwA2_dataset_path():
     system = platform.system()
@@ -38,7 +40,35 @@ def initialize_clustering_net(n_classes: int=50, nheads: int=1):        # return
     return clusternet
 
 
+class EarlyStopping:
+    """Early stops the training if validation loss doesn't improve after a given patience."""
+    def __init__(self, patience=7, verbose=False, delta=0, path='checkpoint.pt', trace_func=print):
 
+        self.patience = patience
+        self.counter = 0
+        self.best_score = None
+        self.early_stop = False
+        self.val_loss_min = np.Inf
+        self.delta = delta
+        self.path = path
+        self.trace_func = trace_func
+        self.best_model = None
 
-# clusternet = initialize_clustering_net()
-# x = torch.randn(10, 3, 64, 64)
+    def __call__(self, val_accuracy, model):
+        if self.best_score is None:
+            self.best_score = val_accuracy
+            self.best_model = copy.deepcopy(model)
+        elif val_accuracy < self.best_score + self.delta:
+            self.counter += 1
+            self.trace_func(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            if self.counter >= self.patience:
+                self.early_stop = True
+                self.save_best_model()
+        else:
+            self.best_score = val_accuracy
+            self.counter = 0
+            self.best_model = copy.deepcopy(model)
+            self.save_best_model()
+
+    def save_best_model(self):
+        torch.save(self.best_model.state_dict(), self.path)
