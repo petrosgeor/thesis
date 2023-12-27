@@ -67,20 +67,20 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
                     predictions.append(batch_predictions.cpu())
                     true_labels.append(labels_batch)
                 
-                true_labels_conf = torch.cat(true_labels_conf, dim=0)
-                predictions_conf = torch.cat(predictions_conf, dim=0)
-                true_labels = torch.cat(true_labels, dim=0)
-                predictions = torch.cat(predictions, dim=0)
-                nmi, ari, acc = cluster_metric(label=true_labels.numpy(), pred=predictions.numpy())
-                print('------------------- Epoch: ', epoch,' ---------------------')
-                # Print the evaluation metrics
-                print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
-                print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
-                print(f"Accuracy (ACC): {acc:.2f}%")
-                print('\n')
-                earlystopping(val_accuracy=acc)
-                if earlystopping.early_stop == True:
-                    break
-                torch.save(clusternet.state_dict(), 'NeuralNets/scan_trained_model.pth')
+            true_labels_conf = torch.cat(true_labels_conf, dim=0)
+            predictions_conf = torch.cat(predictions_conf, dim=0)
+            true_labels = torch.cat(true_labels, dim=0)
+            predictions = torch.cat(predictions, dim=0)
+            nmi, ari, acc = cluster_metric(label=true_labels.numpy(), pred=predictions.numpy())
+            print('------------------- Epoch: ', epoch,' ---------------------')
+            # Print the evaluation metrics
+            print(f"Normalized Mutual Information (NMI): {nmi:.2f}%")
+            print(f"Adjusted Rand Index (ARI): {ari:.2f}%")
+            print(f"Accuracy (ACC): {acc:.2f}%")
+            print('\n')
+            earlystopping(val_accuracy=acc)
+            if earlystopping.early_stop == True:
+                break
+            torch.save(clusternet.state_dict(), 'NeuralNets/scan_trained_model.pth')
 
 scan_training(num_epochs=200, num_classes=50)
