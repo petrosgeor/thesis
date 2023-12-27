@@ -109,6 +109,8 @@ class AwA2dataset(Dataset):
         self.masked_Ids = self.make_masked_Ids()
 
         self.all_neighbors_indices = self.correct_neighbors()   # this is a list containing the neighbors of each image
+
+        self.Id2attribute = self.load_attributes()
         print('done creating the dataset')
 
     def __getitem__(self, item):
@@ -214,6 +216,14 @@ class AwA2dataset(Dataset):
         neighbor_indices = find_indices_of_closest_embeddings(embedings=F.normalize(data, dim=1), n_neighbors=20)
         return filenames, neighbor_indices
 
+    def load_attributes(self) -> dict:
+        path = set_AwA2_dataset_path()
+        path = join(path, 'predicate-matrix-continuous.txt')
+        attributes_matrix = np.loadtxt(path)
+        Id2attribute = {}
+        for i in self.Id2class.keys():
+            Id2attribute[i] = torch.from_numpy(attributes_matrix[i, :])
+        return Id2attribute
 
 class SCANDATASET(Dataset):
     def __init__(self, data: torch.Tensor, Ids: torch.Tensor, masked_Ids: torch.Tensor, all_neighbors_indices: list):

@@ -79,5 +79,7 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
                 print(f"Accuracy (ACC): {acc:.2f}%")
                 print('\n')
                 earlystopping(val_accuracy=acc, model=clusternet)
+                if earlystopping.early_stop == True:
+                    break
 
 scan_training(num_epochs=200, num_classes=50)
