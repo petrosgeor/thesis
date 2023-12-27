@@ -257,6 +257,16 @@ def plot_histogram_NN(Ids: torch.Tensor, indices: torch.Tensor):
     plt.grid(axis='y', alpha=0.5)
     plt.show()
 
+def correct_neighbors_mean(Ids: torch.Tensor, indices: torch.Tensor):
+    correct = []
+    for i, id in enumerate(Ids):
+        neighbor_indices = indices[i, :]
+        n_correct = torch.where(Ids[neighbor_indices] == id)[0].numel()
+        correct.append(n_correct)
+    mean = np.mean(correct)
+    print(f"the mean of the correct nearest neighbors is: {mean:.2f}%")
+
+
 def plot_histogram_NN_zs_Ids(Ids: torch.Tensor, masked_Ids: torch.Tensor, indices: torch.Tensor):
     correct = []
     zs_indices = torch.where(masked_Ids == -1)[0]

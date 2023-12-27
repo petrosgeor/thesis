@@ -51,29 +51,36 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
         torch.save(clusternet.backbone.state_dict(), 'NeuralNets/backbone_AwA2.pth')
         torch.save(clusternet.cluster_head.state_dict(), 'NeuralNets/cluster_head_AwA2.pth')
 
-        
+
         if (epoch%5) == 0:
             true_labels = []
             predictions = []
             true_labels_conf = []
             predictions_conf = []
+            embeddings = []
             with torch.no_grad():
                 for i, (images_batch, _, labels_batch, _) in enumerate(dataloader):
                     images_batch = id_aug(images_batch.to(device))
-                    batch_probs = F.softmax(clusternet.forward(images_batch)[0], dim=1)
-                    indices_conf = torch.where(batch_probs >= 0.95)
+                    x = clusternet.forward(images_batch, forward_pass='return_all')
+                    embeddings.append(x['features'].cpu())
+                    batch_probs = F.softmax(x['output'][0], dim=1)
                     
-                    true_labels_conf.append(labels_batch[indices_conf[0].cpu()])
-                    predictions_conf.append(indices_conf[1].cpu())
+                    
+                    #indices_conf = torch.where(batch_probs >= 0.95)
+                    #true_labels_conf.append(labels_batch[indices_conf[0].cpu()])
+                    #predictions_conf.append(indices_conf[1].cpu())
 
                     batch_predictions = torch.argmax(batch_probs, dim=1)
                     predictions.append(batch_predictions.cpu())
                     true_labels.append(labels_batch)
                 
-            true_labels_conf = torch.cat(true_labels_conf, dim=0)
-            predictions_conf = torch.cat(predictions_conf, dim=0)
+            #true_labels_conf = torch.cat(true_labels_conf, dim=0)
+            #predictions_conf = torch.cat(predictions_conf, dim=0)
+            embeddings = torch.cat(embeddings, dim=0)
+            indices = find_indices_of_closest_embeddings(embedings=embeddings)
             true_labels = torch.cat(true_labels, dim=0)
             predictions = torch.cat(predictions, dim=0)
+            correct_neighbors_mean(Ids=true_labels, indices=indices)
             nmi, ari, acc = cluster_metric(label=true_labels.numpy(), pred=predictions.numpy())
             print('------------------- Epoch: ', epoch,' ---------------------')
             # Print the evaluation metrics
