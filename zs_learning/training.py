@@ -77,7 +77,7 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
             #true_labels_conf = torch.cat(true_labels_conf, dim=0)
             #predictions_conf = torch.cat(predictions_conf, dim=0)
             embeddings = torch.cat(embeddings, dim=0)
-            indices = find_indices_of_closest_embeddings(embedings=embeddings)
+            indices = find_indices_of_closest_embeddings(embedings=F.normalize(embeddings, dim=1))
             true_labels = torch.cat(true_labels, dim=0)
             predictions = torch.cat(predictions, dim=0)
             correct_neighbors_mean(Ids=true_labels, indices=indices)
