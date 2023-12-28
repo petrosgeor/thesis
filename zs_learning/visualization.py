@@ -19,11 +19,11 @@ resnet = x['backbone']
 resnet.load_state_dict(torch.load('NeuralNets/backbone_AwA2.pth'))
 
 clusternet = ClusteringModel(backbone= {'backbone':resnet, 'dim':512}, nclusters=50)
-#clusternet.load_state_dict(torch.load('NeuralNets/scan_trained_model.pth'))
+clusternet.load_state_dict(torch.load('NeuralNets/scan_trained_model.pth'))
 dataset = AwA2dataset()
 id_aug = Identity_Augmentation()
 
-dataloader = DataLoader(dataset, batch_size=50, shuffle=False)
+dataloader = DataLoader(dataset, batch_size=200, shuffle=False)
 clusternet.to(device)
 predictions = []
 embeddings = []
@@ -50,7 +50,7 @@ def plot_histogram_backbone_NN():
     #clusternet = initialize_clustering_net(n_classes=50, nheads=1)
     id_aug = Identity_Augmentation()
     dataset = AwA2dataset()
-    dataloader = DataLoader(dataset, batch_size=50, shuffle=False)
+    dataloader = DataLoader(dataset, batch_size=200, shuffle=False)
     embeddings = []
     Ids = []
     clusternet.to(device)
@@ -64,12 +64,12 @@ def plot_histogram_backbone_NN():
 
         embeddings = torch.cat(embeddings, dim=0)
         Ids = torch.cat(Ids, dim=0)
-        neighbor_indices = find_indices_of_closest_embeddings(F.normalize(embeddings, dim=1))
+        indices = find_indices_of_closest_embeddings(F.normalize(embeddings, dim=1))
         #Ids = dataset.Ids
         correct = []
-        for i in range(0, Ids.numel()):
-            neighbor_Ids = Ids[neighbor_indices[i, :]]
-            n_correct = torch.where(neighbor_Ids == Ids[i])[0].numel()
+        for i, id in enumerate(Ids):
+            neighbor_indices = indices[i, :]    
+            n_correct = torch.where(Ids[neighbor_indices] == id)[0].numel()
             correct.append(n_correct)
         
         plt.figure(figsize=(8, 6))  # Set the figure size (optional)
