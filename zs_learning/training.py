@@ -31,6 +31,7 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
     optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4), weight_decay=10**(-4))
     earlystopping = EarlyStopping(patience=3, delta=0.01)
     for epoch in range(0, num_epochs):
+        clusternet.train()
         for i, (images_u, neighbor_images, _, _) in enumerate(dataloader):
             images_u = images_u.to(device)
             neighbor_images = neighbor_images.to(device)
@@ -50,6 +51,7 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
             optimizer.zero_grad()
 
         if (epoch%5) == 0:
+            clusternet.eval()
             true_labels = []
             predictions = []
             true_labels_conf = []
