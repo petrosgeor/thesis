@@ -21,41 +21,42 @@ resnet.load_state_dict(torch.load('NeuralNets/backbone_AwA2.pth'))
 clusternet = ClusteringModel(backbone={'backbone':resnet, 'dim': 512}, nclusters=50)
 clusternet.cluster_head.load_state_dict(torch.load('NeuralNets/cluster_head_AwA2.pth'))
 #clusternet.load_state_dict(torch.load('NeuralNets/scan_trained_model.pth'))
-dataset = AwA2dataset()
-id_aug = Identity_Augmentation()
+# dataset = AwA2dataset()
+# id_aug = Identity_Augmentation()
 
-dataloader = DataLoader(dataset, batch_size=200, shuffle=False)
-clusternet.to(device)
-predictions = []
-embeddings = []
-labels = []
-clusternet.eval()
-with torch.no_grad():
-    for i, (X_batch, _, labels_batch, _) in enumerate(dataloader):
-        X_batch = X_batch.to(device)
-        X_batch = id_aug(X_batch)
+# dataloader = DataLoader(dataset, batch_size=200, shuffle=False)
+# clusternet.to(device)
+# predictions = []
+# embeddings = []
+# labels = []
+# clusternet.eval()
+# with torch.no_grad():
+#     for i, (X_batch, _, labels_batch, _) in enumerate(dataloader):
+#         X_batch = X_batch.to(device)
+#         X_batch = id_aug(X_batch)
         
-        logits = clusternet.forward(X_batch)[0]
-        probs = F.softmax(logits, dim=1)
-        batch_predictions = torch.argmax(probs, dim=1)
+#         logits = clusternet.forward(X_batch)[0]
+#         probs = F.softmax(logits, dim=1)
+#         batch_predictions = torch.argmax(probs, dim=1)
 
-        predictions.append(batch_predictions.cpu())
-        labels.append(labels_batch)
+#         predictions.append(batch_predictions.cpu())
+#         labels.append(labels_batch)
 
 
-predictions = torch.cat(predictions, dim=0)
-labels = torch.cat(labels, dim=0)
-nmi, ari, acc = cluster_metric(label=labels.numpy(), pred=predictions.numpy())
+# predictions = torch.cat(predictions, dim=0)
+# labels = torch.cat(labels, dim=0)
+# nmi, ari, acc = cluster_metric(label=labels.numpy(), pred=predictions.numpy())
 
 
 def plot_histogram_backbone_NN():
     #clusternet = initialize_clustering_net(n_classes=50, nheads=1)
     id_aug = Identity_Augmentation()
     dataset = AwA2dataset()
-    dataloader = DataLoader(dataset, batch_size=200, shuffle=False)
+    dataloader = DataLoader(dataset, batch_size=60, shuffle=False)
     embeddings = []
     Ids = []
     clusternet.to(device)
+    clusternet.eval()
     with torch.no_grad():
         for i, (X_batch, _, labels_batch, _) in enumerate(dataloader):
             X_batch = X_batch.to(device)
@@ -66,7 +67,7 @@ def plot_histogram_backbone_NN():
 
         embeddings = torch.cat(embeddings, dim=0)
         Ids = torch.cat(Ids, dim=0)
-        indices = find_indices_of_closest_embeddings(F.normalize(embeddings, dim=1))
+        indices = find_indices_of_closest_embeddings(F.normalize(embeddings, dim=1), n_neighbors=50)
         #Ids = dataset.Ids
         correct = []
         for i, id in enumerate(Ids):
@@ -83,7 +84,7 @@ def plot_histogram_backbone_NN():
         plt.show()
 
 
-#plot_histogram_backbone_NN()
+plot_histogram_backbone_NN()
 
 
 
