@@ -19,7 +19,7 @@ resnet = x['backbone']
 resnet.load_state_dict(torch.load('NeuralNets/backbone_AwA2.pth'))
 
 clusternet = ClusteringModel(backbone= {'backbone':resnet, 'dim':512}, nclusters=50)
-clusternet.load_state_dict(torch.load('NeuralNets/scan_trained_model.pth'))
+#clusternet.load_state_dict(torch.load('NeuralNets/scan_trained_model.pth'))
 dataset = AwA2dataset()
 id_aug = Identity_Augmentation()
 
