@@ -18,7 +18,8 @@ x = resnet18()
 resnet = x['backbone']
 resnet.load_state_dict(torch.load('NeuralNets/backbone_AwA2.pth'))
 
-clusternet = ClusteringModel(backbone= {'backbone':resnet, 'dim': 512}, nclusters=50)
+clusternet = ClusteringModel(backbone={'backbone':resnet, 'dim': 512}, nclusters=50)
+clusternet.cluster_head.load_state_dict(torch.load('NeuralNets/cluster_head_AwA2.pth'))
 #clusternet.load_state_dict(torch.load('NeuralNets/scan_trained_model.pth'))
 dataset = AwA2dataset()
 id_aug = Identity_Augmentation()
@@ -28,8 +29,9 @@ clusternet.to(device)
 predictions = []
 embeddings = []
 labels = []
+clusternet.eval()
 with torch.no_grad():
-    for (X_batch, _, labels_batch, _) in dataloader:
+    for i, (X_batch, _, labels_batch, _) in enumerate(dataloader):
         X_batch = X_batch.to(device)
         X_batch = id_aug(X_batch)
         
