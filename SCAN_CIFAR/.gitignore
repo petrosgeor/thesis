@@ -3,4 +3,5 @@
 CIFAR100/
 NeuralNets/
 __pycache__/
+.test.py.swp
 # Add more patterns as needed
