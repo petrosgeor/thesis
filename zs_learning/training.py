@@ -32,8 +32,9 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
     earlystopping = EarlyStopping(patience=3, delta=0.01)
     for epoch in range(0, num_epochs):
         clusternet.train()
-        for i, (images_u, neighbor_images, _, _) in enumerate(dataloader):
+        for i, (images_u, neighbor_images, _, masked_Ids) in enumerate(dataloader):
             images_u = images_u.to(device)
+            masked_Ids = masked_Ids.to(device)
             neighbor_images = neighbor_images.to(device)
             images_u_id = id_aug(images_u)  # identity augmentation
             images_u_clr = aug_clr(images_u)
@@ -46,6 +47,9 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
             #total_loss, _, _ = ScanLoss.forward(anchors=anchors_id, neighbors=neighbors_id) + ScanLoss.forward(anchors=anchors_id, neighbors=anchors_clr) #+ ConsistencyLoss.forward(probs1=probs, probs2=probs_neighbors_clr, weights=weights) 
             total_loss, _, _ = ScanLoss.forward(anchors=torch.cat([anchors_id, anchors_id]), neighbors=torch.cat([neighbors_id, anchors_clr]))
 
+            c_loss = F.cross_entropy(input=anchors_id, target=masked_Ids, ignore_index=-1)
+
+            total_loss = total_loss + c_loss * 10**(-3)
             total_loss.backward()
             optimizer.step()
             optimizer.zero_grad()
@@ -79,6 +83,8 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
             indices = find_indices_of_closest_embeddings(embedings=F.normalize(embeddings, dim=1))
             true_labels = torch.cat(true_labels, dim=0)
             predictions = torch.cat(predictions, dim=0)
+            i0 = torch.where(predictions == 49)[0]
+            print(true_labels[i0])
             correct_neighbors_mean(Ids=true_labels, indices=indices)
             nmi, ari, acc = cluster_metric(label=true_labels.numpy(), pred=predictions.numpy())
             print('------------------- Epoch: ', epoch,' ---------------------')

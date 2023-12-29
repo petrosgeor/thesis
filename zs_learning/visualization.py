@@ -7,6 +7,12 @@ from torch.utils.data import DataLoader
 from torch.nn import functional as F
 from evaluation import *
 
+def plot_image_from_tensor(tensor):
+    numpy_image = tensor.permute(1,2,0).numpy()
+    plt.imshow(numpy_image)
+    plt.axis('off')
+    #plt.show()
+    plt.savefig('plots/aaaaa')
 
 
 device = 'cuda'
@@ -34,9 +40,12 @@ with torch.no_grad():
         X_batch = X_batch.to(device)
         X_batch = id_aug(X_batch)
         
-        logits = clusternet.forward(X_batch)[0]
-        probs = F.softmax(logits, dim=1)
-        batch_predictions = torch.argmax(probs, dim=1)
+
+        x = clusternet.forward(X_batch, forward_pass='return_all')
+        embeddings.append(x['features'].cpu())
+        batch_probs = F.softmax(x['output'][0], dim=1)
+
+        batch_predictions = torch.argmax(batch_probs, dim=1)
 
         predictions.append(batch_predictions.cpu())
         labels.append(labels_batch)
@@ -44,8 +53,41 @@ with torch.no_grad():
 
 predictions = torch.cat(predictions, dim=0)
 labels = torch.cat(labels, dim=0)
-nmi, ari, acc = cluster_metric(label=labels.numpy(), pred=predictions.numpy())
+predictions2labels = torch.from_numpy(get_y_preds(y_true=labels.numpy(), cluster_assignments=predictions.numpy(), n_clusters=50))
+embeddings = torch.cat(embeddings, dim=0)
+embeddings = F.normalize(embeddings, dim=1)
 
+Ids = torch.unique(predictions, sorted=True)
+means = []
+for i, id in enumerate(Ids):
+    indices = torch.where(predictions == id)[0]
+    m = embeddings[indices, :].mean(dim=0).unsqueeze(0)
+    means.append(m)
+
+means = torch.cat(means, dim=0)
+similarity_matrix = torch.matmul(means, embeddings.T)
+best_examples = torch.topk(similarity_matrix, k=10, dim=1)[1]
+
+known_Ids = dataset.known_Ids
+zs_Ids = dataset.zs_Ids
+
+known_Ids2clusterassignments = {}
+for i in known_Ids:
+    indices = torch.where(labels == i)[0]
+    x = torch.unique(predictions[indices], return_counts=True)
+    print(i)
+    print(x)
+    print('------------------------')
+    clusters = x[0]
+    counts = x[1]
+    c = torch.argmax(counts)
+    known_Ids2clusterassignments[i.item()] = clusters[c].item()
+
+known_clusters = torch.tensor(list(known_Ids2clusterassignments.values()))
+#zs_clusters = torch.tensor(list(set(list(range(50))) - set(known_clusters.tolist())))
+
+zs_clusters = torch.arange(0, known_Ids.numel() + zs_Ids.numel())
+zs_clusters = torch.masked_select(zs_clusters, ~torch.isin(zs_clusters, known_clusters))
 
 def plot_histogram_backbone_NN():
     #clusternet = initialize_clustering_net(n_classes=50, nheads=1)
