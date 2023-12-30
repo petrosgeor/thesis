@@ -4,6 +4,8 @@ from models import *
 from lightly.models import ResNetGenerator
 import numpy as np
 import copy
+from scipy.optimize import linear_sum_assignment
+
 
 def set_AwA2_dataset_path():
     system = platform.system()
@@ -62,3 +64,11 @@ class EarlyStopping:
         else:
             self.best_score = val_accuracy
             self.counter = 0
+
+
+def find_permutation_matrix(cost_matrix: torch.Tensor):
+    row_ind, col_ind = linear_sum_assignment(cost_matrix.numpy())
+
+    P = np.zeros_like(cost_matrix)
+    P[row_ind, col_ind] = 1.
+    return torch.from_numpy(P)

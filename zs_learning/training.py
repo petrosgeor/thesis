@@ -28,6 +28,8 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
     id_aug = Identity_Augmentation()
     aug_clr = SimCLRaugment()
     ScanLoss = clusterlosses.SCANLoss()
+    custom_cross_entropy = clusterlosses.CustomCrossEntropyLoss(num_classes=num_classes)
+
     optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4), weight_decay=10**(-4))
     earlystopping = EarlyStopping(patience=3, delta=0.01)
     for epoch in range(0, num_epochs):
@@ -44,12 +46,12 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
             anchors_id = clusternet.forward(images_u_id)[0]
             anchors_clr = clusternet.forward(images_u_clr)[0]
             neighbors_id = clusternet.forward(neighbor_images_id)[0]
-            #total_loss, _, _ = ScanLoss.forward(anchors=anchors_id, neighbors=neighbors_id) + ScanLoss.forward(anchors=anchors_id, neighbors=anchors_clr) #+ ConsistencyLoss.forward(probs1=probs, probs2=probs_neighbors_clr, weights=weights) 
             total_loss, _, _ = ScanLoss.forward(anchors=torch.cat([anchors_id, anchors_id]), neighbors=torch.cat([neighbors_id, anchors_clr]))
 
-            c_loss = F.cross_entropy(input=anchors_id, target=masked_Ids, ignore_index=-1)
+            #c_loss = F.cross_entropy(input=anchors_id, target=masked_Ids, ignore_index=-1)
+            c_loss = custom_cross_entropy.forward(anchors=anchors_id, labels=masked_Ids, input_as_probabilities=False)
 
-            total_loss = total_loss + c_loss * 10**(-3)
+            total_loss = total_loss + c_loss * 10**(-2)
             total_loss.backward()
             optimizer.step()
             optimizer.zero_grad()

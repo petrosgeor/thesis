@@ -6,13 +6,8 @@ from torch.nn import functional as F
 'https://github.com/wvangansbeke/Unsupervised-Classification/blob/master/losses/losses.py'
 
 
-
 device = 'cuda'
 EPS=1e-8
-
-
-
-
 
 class MaskedCrossEntropyLoss(nn.Module):
     def __init__(self):
@@ -112,3 +107,42 @@ class SCANLoss(nn.Module):
         total_loss = consistency_loss - self.entropy_weight * entropy_loss
 
         return total_loss, consistency_loss, entropy_loss
+    
+
+
+class CustomCrossEntropyLoss(nn.Module):
+    def __init__(self, num_classes: int):
+        super(CustomCrossEntropyLoss, self).__init__()
+        self.num_classes = num_classes
+
+    def forward(self, anchors:torch.Tensor, labels:torch.Tensor, input_as_probabilities: bool=False)-> torch.Tensor:
+        '''
+        predicted_probs: A torch 2d tensor. Each row represents probabilities for one cluster center
+        labels: A 1d torch tensor
+        '''
+        if input_as_probabilities == True:
+            indices_keep = torch.where(labels != -1)[0]
+            labels_keep = labels[indices_keep]
+            anchors_keep = anchors[indices_keep, :]
+
+            one_hot_labels = self.CreateOneHotVectors(labels=labels_keep, num_classes=self.num_classes)
+            Matrix = (-(one_hot_labels * anchors_keep.log())).sum(dim=1)
+            return torch.mean(Matrix)
+        elif input_as_probabilities == False:
+            indices_keep = torch.where(labels != -1)[0]
+            labels_keep = labels[indices_keep]
+            anchors_keep = anchors[indices_keep, :]
+            probs = F.softmax(anchors_keep, dim=1)
+            one_hot_labels = self.CreateOneHotVectors(labels=labels_keep, num_classes=self.num_classes)
+            Matrix = (-(one_hot_labels * probs.log())).sum(dim=1)
+            return torch.mean(Matrix)
+
+    def forwardOneHot(self, predicted_probs: torch.Tensor, one_hot_labels: torch.Tensor)-> torch.Tensor:
+        Matrix = (-(one_hot_labels * predicted_probs.log())).sum(dim=1)
+        return torch.mean(Matrix)
+
+    def CreateOneHotVectors(self, labels: torch.Tensor, num_classes: int = 100)-> torch.Tensor:
+        num_examples = labels.shape[0]
+        one_hot = torch.zeros(num_examples, num_classes, device=str(labels.device))
+        one_hot[torch.arange(0, num_examples), labels] = 1
+        return one_hot

@@ -179,6 +179,17 @@ class ResNet(nn.Module):
         return out
 
 
+class SemanticNetwork(nn.Module):
+    def __init__(self):
+        super(SemanticNetwork, self).__init__()
+
+        self.sequential = nn.Sequential(
+                                        nn.Linear(85, 512),
+        )
+    
+    def forward(self, x):
+        return F.normalize(self.sequential(x), dim=1)
+
 def resnet18(**kwargs):
     return {'backbone': ResNet(BasicBlock, [2, 2, 2, 2], **kwargs), 'dim': 512}
 
