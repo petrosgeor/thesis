@@ -10,7 +10,7 @@ from utils import *
 from torch.nn import functional as F
 from os.path import join
 
-'''class AwA2dataset_features(Dataset):
+class AwA2dataset_features(Dataset):
     def __init__(self, path = 'AwA2-features/Animals_with_Attributes2/Features/ResNet101/'):
         self.path = path
         self.data, self.Ids, self.image_names = self.get_files()
@@ -28,29 +28,23 @@ from os.path import join
     def __getitem__(self, item):
         X = self.data[item, :]
         label_id = self.Ids[item]
-        name = self.image_names[item]
-        #label_embedding = self.embedding_dictionary[label_id]
-        return X, label_id, name
-
-
+        masked_id = self.masked_Ids[item]
+        return X, label_id, masked_id
 
     def __len__(self):
-        return len(self.image_labels)
+        return self.Ids.numel()
 
     def get_files(self):
-        image_features1 = np.loadtxt(self.path + 'features_train'+'.txt')
-        image_features2 = np.loadtxt(self.path + 'features_test.txt')
-        image_features = np.vstack((image_features1, image_features2))
-        image_labels1 = np.loadtxt(self.path + 'image_labels_train.txt').astype(int)
-        image_labels2 = np.loadtxt(self.path + 'image_labels_test.txt').astype(int)
-        image_labels = np.hstack((image_labels1, image_labels2))
+        data = np.loadtxt(os.path.join(self.path, 'AwA2-features.txt'))
+        Ids = np.loadtxt(os.path.join(self.path, 'AwA2-labels.txt'), dtype=np.int32)
 
-        with open(self.path + 'image_names_train' + '.pkl', 'rb') as file:
-            image_names1 = pickle.load(file)
-        with open(self.path + 'image_names_test' + '.pkl', 'rb') as file:
-            image_names2 = pickle.load(file)
-        image_names = image_names1 + image_names2
-        return torch.from_numpy(image_features), torch.from_numpy(image_labels), image_names
+        with open(os.path.join(self.path, 'AwA2-filenames.txt'), 'r') as file:
+            lines = file.readlines()
+        
+        data = torch.from_numpy(data)
+        Ids = torch.from_numpy(Ids)
+        filenames = [line.strip() for line in lines]
+        return data, Ids, filenames
 
 
     def get_class2Id(self):
@@ -66,7 +60,7 @@ from os.path import join
                 masked_Ids[i] = -1
         return masked_Ids
 
-'''
+
 
 '''
 class AwA2dataset_features:
@@ -90,8 +84,6 @@ class AwA2dataset_features:
         filenames = [line.strip() for line in lines]
         return data, Ids, filenames
 '''
-
-
 
 def plot_image_from_tensor(tensor):
     numpy_image = tensor.permute(1,2,0).numpy()
@@ -145,28 +137,37 @@ class AwA2dataset(Dataset):
             Id2class[key] = value
         
         class2Id = {value: key for key, value in Id2class.items()}
+        resized_images_path = self.path + '_resized'
 
-        transform = v2.Compose([
-            v2.Resize((64, 64), interpolation=Image.BICUBIC, antialias=True),
-            v2.ToTensor()
-        ])
-        images_path = os.path.join(self.path, 'JPEGImages')
-        data = []
-        Ids = []
-        for filename in self.filenames:
-            c = self.get_first_part(filename)
-            c_path = join(images_path, c)
+        if os.path.exists(join(resized_images_path, 'resized_images.pt')) == False:
+            transform = v2.Compose([
+                v2.Resize((64, 64), interpolation=Image.BICUBIC, antialias=True),
+                v2.ToTensor()
+            ])
+            images_path = os.path.join(self.path, 'JPEGImages')
+            data = []
+            Ids = []
+            for filename in self.filenames:
+                c = self.get_first_part(filename)
+                c_path = join(images_path, c)
 
-            image = read_image(join(c_path, filename))  # this is a torch tensor
-            if image.shape[0] != 3:
-                    image = image.repeat(3,1,1)
-            image = transform(image)
-            data.append(image.unsqueeze(0))
-            Ids.append(class2Id[c])
+                image = read_image(join(c_path, filename))  # this is a torch tensor
+                if image.shape[0] != 3:
+                        image = image.repeat(3,1,1)
+                image = transform(image)
+                data.append(image.unsqueeze(0))
+                Ids.append(class2Id[c])
 
-        data = torch.cat(data, dim=0)
-        Ids = torch.tensor(Ids)
-        return data, Ids, class2Id, Id2class
+            data = torch.cat(data, dim=0)
+            Ids = torch.tensor(Ids)
+
+            torch.save(data, join(resized_images_path, 'resized_images.pt'))
+            torch.save(Ids, join(resized_images_path, 'labels.pt'))
+            return data, Ids, class2Id, Id2class
+        else:
+            data = torch.load(join(resized_images_path, 'resized_images.pt'))
+            Ids = torch.load(join(resized_images_path, 'labels.pt'))
+            return data, Ids, class2Id, Id2class
     
     def find_known_zs_Ids(self):
         classes_path = os.path.join(self.path, 'trainclasses.txt')

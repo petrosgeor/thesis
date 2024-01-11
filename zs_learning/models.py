@@ -40,6 +40,7 @@ class ClusteringModel(nn.Module):
         assert(self.nheads > 0)
         self.cluster_head = nn.ModuleList([nn.Linear(self.backbone_dim, nclusters) for _ in range(self.nheads)])
 
+
     def forward(self, x, forward_pass='default'):
         if forward_pass == 'default':
             features = self.backbone(x).squeeze()
@@ -60,6 +61,34 @@ class ClusteringModel(nn.Module):
         else:
             raise ValueError('Invalid forward pass {}'.format(forward_pass))        
         return out
+
+class LittleNet(nn.Module):
+    def __init__(self,backbone_dim: int=512, nclusters: int=50):
+        super(LittleNet, self).__init__()
+        self.n_clusters = nclusters
+        self.backbone_dim = backbone_dim
+        self.backbone = nn.Sequential(
+            nn.Linear(self.backbone_dim, self.backbone_dim),
+            nn.ReLU(),
+            nn.Linear(self.backbone_dim, self.backbone_dim)
+        )
+
+        self.cluster_head = nn.Linear(self.backbone_dim, self.n_clusters)
+
+    def forward(self, x, forward_pass = 'default'):
+        if forward_pass == 'default':
+            features = self.backbone(x)
+            return self.cluster_head(features)
+        
+        elif forward_pass == 'backbone':
+            return self.backbone(x)
+        
+        elif forward_pass == 'head':
+            return self.cluster_head(x)
+        
+        else:
+            raise ValueError('Invalid forward pass {}'.format(forward_pass))
+
 
 
 
