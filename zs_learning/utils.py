@@ -9,6 +9,15 @@ import socket
 import matplotlib.pyplot as plt
 
 
+def plot_image_from_tensor(tensor, path2save):
+    numpy_image = tensor.permute(1,2,0).numpy()
+    plt.imshow(numpy_image)
+    plt.axis('off')
+    plt.savefig(path2save)
+
+
+
+
 def set_AwA2_dataset_path():
     system = platform.system()
     assert (system == 'Windows') | (system == 'Linux')

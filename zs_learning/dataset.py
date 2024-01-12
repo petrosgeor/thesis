@@ -7,6 +7,8 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 from utils import *
+from augmentations import *
+
 from torch.nn import functional as F
 from os.path import join
 
@@ -93,7 +95,9 @@ def plot_image_from_tensor(tensor):
 
 
 class AwA2dataset(Dataset):
-    def __init__(self):
+    def __init__(self, training: bool, size_resize: int=224):
+        self.training=training
+        self.size_resize = size_resize
         self.path = set_AwA2_dataset_path()
         self.filenames, self.neighbor_indices = self.get_filenames_neighbors()
         self.data, self.Ids, self.class2Id, self.Id2class = self.load_data()
@@ -103,14 +107,28 @@ class AwA2dataset(Dataset):
         self.all_neighbors_indices = self.correct_neighbors()   # this is a list containing the neighbors of each image
 
         self.Id2attribute = self.load_attributes()
+
+        self.val_aug = Identity_Augmentation()
+        self.weak_aug = Weak_Augmentation()
+        self.strong_aug = RandAugment_Augmentation()
+
         print('done creating the dataset')
+        
 
     def __getitem__(self, item):
         related_indices = self.all_neighbors_indices[item]
         n_neighbors = related_indices.numel()
         random_index_index = torch.randint(0, n_neighbors, (1,)).item()
         random_index = related_indices[random_index_index]
-        return self.data[item, :], self.data[random_index, :], self.Ids[item], self.masked_Ids[item]
+
+        image = self.data[item,:]
+        neighbor = self.data[random_index,:]
+        Id = self.Ids[item]
+        masked_Id = self.masked_Ids[item]
+        if self.training == False:
+            return image, Id, masked_Id
+        elif self.training == True:
+            return self.val_aug(image), self.weak_aug(image), self.weak_aug(neighbor), self.strong_aug(neighbor), Id, masked_Id
 
     def __len__(self):
         return self.Ids.numel()
@@ -137,11 +155,11 @@ class AwA2dataset(Dataset):
             Id2class[key] = value
         
         class2Id = {value: key for key, value in Id2class.items()}
-        resized_images_path = self.path + '_resized'
+        resized_images_path = self.path + '_resized' + str(self.size_resize)
 
         if os.path.exists(join(resized_images_path, 'resized_images.pt')) == False:
             transform = v2.Compose([
-                v2.Resize((64, 64), interpolation=Image.BICUBIC, antialias=True),
+                v2.Resize((224, 224), interpolation=Image.BICUBIC, antialias=True),
                 v2.ToTensor()
             ])
             images_path = os.path.join(self.path, 'JPEGImages')
@@ -201,21 +219,27 @@ class AwA2dataset(Dataset):
         parts = string.split('_')
         return parts[0]
 
-    @staticmethod
-    def get_filenames_neighbors():
-        path = 'AwA2-features/Animals_with_Attributes2/Features/ResNet101'
-        data = np.loadtxt(os.path.join(path, 'AwA2-features.txt'))
-        Ids = np.loadtxt(os.path.join(path, 'AwA2-labels.txt'), dtype=np.int32)
+    def get_filenames_neighbors(self):
+        if os.path.exists(join(self.path, 'neighbors20.pt')) == False:
+            path = 'AwA2-features/Animals_with_Attributes2/Features/ResNet101'
+            data = np.loadtxt(os.path.join(path, 'AwA2-features.txt'))
+            Ids = np.loadtxt(os.path.join(path, 'AwA2-labels.txt'), dtype=np.int32)
 
-        with open(os.path.join(path, 'AwA2-filenames.txt'), 'r') as file:
-            lines = file.readlines()
-        
-        data = torch.from_numpy(data)
-        Ids = torch.from_numpy(Ids)
-        filenames = [line.strip() for line in lines]
-
-        neighbor_indices = find_indices_of_closest_embeddings(embedings=F.normalize(data, dim=1), n_neighbors=20)
-        return filenames, neighbor_indices
+            with open(os.path.join(path, 'AwA2-filenames.txt'), 'r') as file:
+                lines = file.readlines()
+            
+            data = torch.from_numpy(data)
+            Ids = torch.from_numpy(Ids)
+            filenames = [line.strip() for line in lines]
+            neighbor_indices = find_indices_of_closest_embeddings(embedings=F.normalize(data, dim=1), n_neighbors=20)
+            torch.save(neighbor_indices, f=join(self.path, 'neighbors20.pt'))
+            return filenames, neighbor_indices
+        else:
+            '''with open(os.path.join(path, 'AwA2-filenames.txt'), 'r') as file:
+                lines = file.readlines()
+            filenames = [line.strip() for line in lines]'''
+            neighbor_indices = torch.load(join(self.path, 'neighbors20.pt'))
+            return None, neighbor_indices
 
     def load_attributes(self) -> dict:
         path = set_AwA2_dataset_path()

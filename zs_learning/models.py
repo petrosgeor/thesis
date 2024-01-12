@@ -52,7 +52,7 @@ class ClusteringModel(nn.Module):
 
         elif forward_pass == 'head':
             out = [cluster_head(x) for cluster_head in self.cluster_head]
-            #out = [F.softmax(cluster_head(features), dim=1) for cluster_head in self.cluster_head]
+            
         elif forward_pass == 'return_all':
             features = self.backbone(x).squeeze()
             out = {'features': features, 'output': [cluster_head(features) for cluster_head in self.cluster_head]}
@@ -61,6 +61,50 @@ class ClusteringModel(nn.Module):
         else:
             raise ValueError('Invalid forward pass {}'.format(forward_pass))        
         return out
+
+
+
+
+class ClusteringModel_Pretrained_Backbone(nn.Module):
+    def __init__(self, backbone, nclusters, nheads=1):
+        super(ClusteringModel_Pretrained_Backbone, self).__init__()
+        self.backbone = backbone['backbone']
+        self.backbone_dim = backbone['dim']
+        self.nheads = nheads
+        self.n_clusters = nclusters
+        self.cluster_head = nn.ModuleList([nn.Linear(self.backbone_dim, nclusters) for _ in range(self.nheads)])
+
+        self.smallNN = nn.Sequential(
+            nn.Linear(self.backbone_dim, self.backbone_dim),
+            nn.ReLU(),
+            nn.Linear(self.backbone_dim, self.backbone_dim),
+            nn.ReLU(),
+            nn.Linear(self.backbone_dim, self.backbone_dim)
+        )
+    def forward(self, x, forward_pass='default'):
+        if forward_pass == 'default':
+            resnet_features = self.backbone(x).squeeze()
+            features = self.smallNN(resnet_features)
+            out = [cluster_head(features) for cluster_head in self.cluster_head]
+        
+        elif forward_pass == 'smallNN':
+            features = self.backbone(x).squeeze()
+            out = self.smallNN(features)
+        
+        elif forward_pass == 'head':
+            out = [cluster_head(x) for cluster_head in self.cluster_head]
+        
+        elif forward_pass == 'return_all':
+            resnet_features = self.backbone(x).squeeze()
+            features = self.smallNN(resnet_features)
+            out = {'features': features, 'output': [cluster_head(features) for cluster_head in self.cluster_head]}
+        
+        else:
+            raise ValueError('Invalid forward pass{}'.format(forward_pass))
+        return out
+                
+
+
 
 class LittleNet(nn.Module):
     def __init__(self,backbone_dim: int=512, nclusters: int=50):
@@ -88,9 +132,6 @@ class LittleNet(nn.Module):
         
         else:
             raise ValueError('Invalid forward pass {}'.format(forward_pass))
-
-
-
 
 
 class BasicBlock(nn.Module):
