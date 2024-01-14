@@ -86,14 +86,14 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
             logits = anchors_clr['output'][0]
             spice_loss = F.cross_entropy(logits[mask, :], one_hot_matrix[mask, :], weight=class_weights, reduction='mean')
 
-            total_loss = scan_loss + 10**(-1) * spice_loss'''
+            total_loss = scan_loss + 10**(-1) * spice_loss
             
-            # total_loss = total_loss/num_gradient_steps
-            # total_loss.backward()
-            # if ((i + 1) % num_gradient_steps == 0) or (i + 1 == len(dataloader)):
-            #     optimizer.step()
-            #     optimizer.zero_grad()
-            epoch_loss += total_loss.detach().cpu().item()
+            total_loss = total_loss/num_gradient_steps
+            total_loss.backward()
+            if ((i + 1) % num_gradient_steps == 0) or (i + 1 == len(dataloader)):
+                optimizer.step()
+                optimizer.zero_grad()
+            epoch_loss += total_loss.detach().cpu().item()'''
 
             total_loss.backward()
             optimizer.step()
