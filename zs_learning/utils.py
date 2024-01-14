@@ -41,7 +41,7 @@ def find_indices_of_closest_embeddings(embedings: torch.Tensor, n_neighbors: int
 
 
 def load_scan_trained_model(n_classes: int=50): # loads the model trained using SCAN    
-    x = resnet18()
+    x = give_resnet18()
     resnet = x['backbone']
     resnet.load_state_dict(torch.load('NeuralNets/backbone_AwA2.pth'))
     clusternet = ClusteringModel(backbone={'backbone':resnet, 'dim':512}, nclusters=n_classes)
