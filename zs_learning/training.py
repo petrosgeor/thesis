@@ -8,9 +8,9 @@ from losses import clusterlosses
 import torch
 import torch.optim as optim
 import torch.nn as nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 import numpy as np
-
+from torchvision.models import resnet18, ResNet18_Weights
 
 device = 'cuda'
 # Set the CUDA_VISIBLE_DEVICES environment variable to the desired GPU ID
@@ -18,16 +18,17 @@ gpu_id = input("Enter the GPU ID to be used (e.g., 0, 1, 2, ...): ")
 os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
 
 
-def scan_training(num_epochs: int=200, num_classes:int = 50):
-    dataset = AwA2dataset(training=True)
-    dataloader = DataLoader(dataset, batch_size=14, shuffle=True, num_workers=2)
 
-    clusternet = ClusteringModel(backbone=resnet18(), nclusters=num_classes, nheads=1)
+dataset = AwA2dataset(training=True, size_resize=224)
+def scan_training(num_epochs: int=200, num_classes:int = 50):
+    resnet = resnet18(weights=ResNet18_Weights.DEFAULT)
+    resnet = nn.Sequential(*list(resnet.children())[:-1])
+    dataloader = DataLoader(dataset, batch_size=190, shuffle=True, num_workers=2)
+
+    clusternet = ClusteringModel(backbone={'backbone':resnet, 'dim':512}, nclusters=num_classes, nheads=1)
     clusternet.to(device)
 
-    id_aug = Identity_Augmentation()
-    aug_clr = SimCLRaugment()
-    ScanLoss = clusterlosses.SCANLoss()
+    scanloss = clusterlosses.SCANLoss(entropy_weight=1.0)
 
     zs_Ids = dataset.zs_Ids.to(device)
     known_Ids = dataset.known_Ids.to(device)
@@ -36,24 +37,24 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
     K = 30
     dummy = zs_Ids.repeat(K, 1).T
     optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4), weight_decay=10**(-4))
-    earlystopping = EarlyStopping(patience=3, delta=0.01)
+    earlystopping = EarlyStopping(patience=6, delta=0.01)
     num_gradient_steps = 7
 
 
     for epoch in range(0, num_epochs):
         clusternet.train()
-        for i, (_, images_weak, neighbors_weak, neighbors_strong, Ids, _) in enumerate(dataloader):
-            #masked_Ids = masked_Ids.to(device)
+        epoch_loss = 0
+        for i, (images, _, neighbors, Ids, _) in enumerate(dataloader):
             Ids = Ids.to(device)
-            images_weak = images_weak.to(device)
-            neighbors_weak = neighbors_weak.to(device)
-            neighbors_strong = neighbors_strong.to(device)
+            images = images.to(device)
+            neighbors = neighbors.to(device)
 
-            anchors_logits = clusternet.forward(images_weak)[0]
-            neighbors_weak_logits = clusternet.forward(neighbors_weak)[0]
-            neighbors_strong_logits = clusternet.forward(neighbors_strong)[0]
-            total_loss, _, _ = ScanLoss.forward(anchors=torch.cat([anchors_logits, anchors_logits]), 
-                                                neighbors=torch.cat([neighbors_weak_logits, neighbors_strong_logits]))
+            # the logits for each image and their corresponding neighbors
+            anchors_logits = clusternet.forward(images)[0]
+            neighbors_logits = clusternet.forward(neighbors)[0]
+
+            # Calculating the SCAN-Loss
+            total_loss, _, _ = scanloss.forward(anchors=anchors_logits, neighbors=neighbors_logits)
 
             '''anchors_id = clusternet.forward(images_u_id, forward_pass='return_all')
             anchors_clr = clusternet.forward(images_u_clr, forward_pass='return_all')
@@ -87,37 +88,33 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
 
             total_loss = scan_loss + 10**(-1) * spice_loss'''
             
-            total_loss = total_loss/num_gradient_steps
+            # total_loss = total_loss/num_gradient_steps
+            # total_loss.backward()
+            # if ((i + 1) % num_gradient_steps == 0) or (i + 1 == len(dataloader)):
+            #     optimizer.step()
+            #     optimizer.zero_grad()
+            epoch_loss += total_loss.detach().cpu().item()
+
             total_loss.backward()
-            if ((i + 1) % num_gradient_steps == 0) or (i + 1 == len(dataloader)):
-                optimizer.step()
-                optimizer.zero_grad()
-
-        if (epoch%1) == 0:
+            optimizer.step()
+            optimizer.zero_grad()
+        if (epoch%5) == 0:
             clusternet.eval()
-            true_labels = []
-            predictions = []
-            true_labels_conf = []
-            predictions_conf = []
-            embeddings = []
+            true_labels = []        # a torch tensor containing the true labels 
+            predictions = []        # a torch tensor containing the predictions
+            embeddings = []         # a torch tensor containing the ResNet embeddings, Used to find the correct nearest neighbors
             with torch.no_grad():
-                for i, (images_batch, _, _, _, labels_batch, _) in enumerate(dataloader):
+                for i, (images_batch, _, _, labels_batch, _) in enumerate(dataloader):
                     images_batch = images_batch.to(device)
-                    x = clusternet.forward(images_batch, forward_pass='return_all')
+                    images_batch = images_batch
+                    x = clusternet.forward(images_batch, forward_pass='return_all')     # dictionary containing the embeddings and the logits for a batch
                     embeddings.append(x['features'].cpu())
-                    batch_probs = F.softmax(x['output'][0], dim=1)
+                    batch_probs = F.softmax(x['output'][0], dim=1)      # each row corresponds the probabilites of a sample (the columns are as many as the classes)
                     
-                    
-                    #indices_conf = torch.where(batch_probs >= 0.95)
-                    #true_labels_conf.append(labels_batch[indices_conf[0].cpu()])
-                    #predictions_conf.append(indices_conf[1].cpu())
-
-                    batch_predictions = torch.argmax(batch_probs, dim=1)
+                    batch_predictions = torch.argmax(batch_probs, dim=1) # The prediction is the maximum of each row
                     predictions.append(batch_predictions.cpu())
                     true_labels.append(labels_batch)
                 
-            #true_labels_conf = torch.cat(true_labels_conf, dim=0)
-            #predictions_conf = torch.cat(predictions_conf, dim=0)
             embeddings = torch.cat(embeddings, dim=0)
             indices = find_indices_of_closest_embeddings(embedings=F.normalize(embeddings, dim=1))
             true_labels = torch.cat(true_labels, dim=0)
@@ -149,7 +146,7 @@ def spice_training(num_epochs: int=200, num_classes: int=50):
 
     id_aug = Identity_Augmentation()
     weak_aug = Weak_Augmentation()
-    strong_aug = RandAugment()
+    strong_aug = RandAugment_Augmentation()
 
     known_Ids = (dataset.known_Ids).to(device)
     zs_Ids = (dataset.zs_Ids).to(device)

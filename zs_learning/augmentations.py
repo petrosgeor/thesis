@@ -198,17 +198,26 @@ class Identity_Augmentation:
     
 
 class SimCLRaugment:
-    def __init__(self, size = (64,64)):
-        self.s = 1
-        self.size = size
+    def __init__(self, 
+                 s=1,
+                 num_aug=4,
+                 cutout_holes=1,
+                 cutout_size=75,
+                 blur=1.0,
+                 mean=IMAGENET_NORMALIZE['mean'],
+                 std = IMAGENET_NORMALIZE['std']):
         self.color_jitter = v2.ColorJitter()
         self.data_transforms = v2.Compose([
+                                           v2.ToPILImage(),
                                            v2.RandomHorizontalFlip(),
+                                           v2.GaussianBlur(blur),
+                                           v2.RandomAffine(degrees=0, translate=(0.125, 0.125)),
                                            v2.RandomApply([self.color_jitter], p=0.8),
                                            v2.RandomGrayscale(p=0.2),
                                            v2.ToImage(),
                                            v2.ToDtype(torch.float32, scale=True),
-                                           v2.Normalize(mean=IMAGENET_NORMALIZE['mean'], std=IMAGENET_NORMALIZE['std']),
+                                           v2.Normalize(mean=mean, std=std),
+                                           Cutout(n_holes=cutout_holes, length=cutout_size)
                                            ]
                                         )
     
@@ -269,7 +278,7 @@ class RandAugment_Augmentation:
 
 # val_aug = Identity_Augmentation()
 # weak_aug = Weak_Augmentation()
-# strong_aug = RandAugment_Augmentation()
+# strong_aug = SimCLRaugment()
 
 # image_val = val_aug(image)
 # image_weak = weak_aug(image)

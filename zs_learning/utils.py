@@ -16,8 +16,6 @@ def plot_image_from_tensor(tensor, path2save):
     plt.savefig(path2save)
 
 
-
-
 def set_AwA2_dataset_path():
     system = platform.system()
     assert (system == 'Windows') | (system == 'Linux')
@@ -33,28 +31,14 @@ def set_AwA2_dataset_path():
 
 
 def find_indices_of_closest_embeddings(embedings: torch.Tensor, n_neighbors: int = 20) -> torch.Tensor:
+    '''
+    returns the indices of closest embeddings (cosine similarity) for each embedding. For example the first row contains the indices
+    of the closest embeddings for the first sample
+    '''
     D = torch.matmul(embedings, embedings.T)
     indices = torch.topk(D, k=n_neighbors, dim=1)[1]
     return indices
 
-def load_pretrained_backbone() -> tuple:
-    '''x = resnet18()
-    backbone = x['backbone']
-    dim = x['dim']
-    backbone.load_state_dict(torch.load('NeuralNets/moco_pretrained_backbone.pth'))
-    return backbone, dim'''
-    resnet = ResNetGenerator('resnet-18', 1)
-    backbone = nn.Sequential(
-                            *list(resnet.children())[:-1],
-                             nn.AdaptiveAvgPool2d(1),
-                            )
-    backbone.load_state_dict(torch.load('NeuralNets/moco_pretrained_backbone.pth'))
-    return backbone, 512
-
-def initialize_clustering_net(n_classes: int=50, nheads: int=1):        # returns an instance of the clusteringNet class
-    backbone, dim = load_pretrained_backbone()
-    clusternet = ClusteringModel(backbone= {'backbone': backbone, 'dim': dim}, nheads=nheads, nclusters=n_classes)
-    return clusternet
 
 def load_scan_trained_model(n_classes: int=50): # loads the model trained using SCAN    
     x = resnet18()
@@ -89,6 +73,9 @@ class EarlyStopping:
 
 
 def find_permutation_matrix(cost_matrix: torch.Tensor):
+    '''
+    used to find the optimal assignment matrix between the zero shot semantic vectors, and the unknown class centers.  
+    '''
     row_ind, col_ind = linear_sum_assignment(cost_matrix.numpy())
 
     P = np.zeros_like(cost_matrix)

@@ -64,7 +64,7 @@ def plot_image_from_tensor(tensor):
     plt.savefig('plots/aaaaa')
 
 
-x = resnet18()
+x = give_resnet18()
 resnet = x['backbone']
 resnet.load_state_dict(torch.load('NeuralNets/backbone_AwA2.pth'))
 
@@ -73,7 +73,7 @@ clusternet.cluster_head.load_state_dict(torch.load('NeuralNets/cluster_head_AwA2
 dataset = AwA2dataset(training=False, size_resize=64)
 id_aug = Identity_Augmentation()
 
-dataloader = DataLoader(dataset, batch_size=200, shuffle=False)
+dataloader = DataLoader(dataset, batch_size=50, shuffle=False)
 clusternet.to(device)
 
 predictions = []
@@ -82,11 +82,9 @@ labels = []
 
 clusternet.eval()
 with torch.no_grad():
-    for i, (X_batch, _, labels_batch, _) in enumerate(dataloader):
+    for i, (X_batch, labels_batch, _) in enumerate(dataloader):
         X_batch = X_batch.to(device)
         X_batch = id_aug(X_batch)
-        
-
         x = clusternet.forward(X_batch, forward_pass='return_all')
         embeddings.append(x['features'].cpu())
         batch_probs = F.softmax(x['output'][0], dim=1)
@@ -144,13 +142,6 @@ pairwise_distance = torch.nn.PairwiseDistance(p=2)
 known_means = known_means.to(device)
 zs_means = zs_means.to(device)
 
-'''for epoch in range(0, num_epochs):
-    Y_embedded = semantic_net(Y.float())
-    similarities = pairwise_distance(Y_embedded[known_Ids], known_means)
-    loss = torch.mean(similarities)
-    loss.backward()
-    optimizer.step()
-    optimizer.zero_grad()'''
 
 for epoch in range(0, num_epochs):
     with torch.no_grad():

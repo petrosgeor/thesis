@@ -7,7 +7,10 @@ from PIL import Image
 'from https://github.com/wvangansbeke/Unsupervised-Classification/blob/master/models/resnet_cifar.py'
 
 class ContrastiveModel(nn.Module):
-    def __init__(self, backbone, head='mlp', features_dim=128):
+    '''
+    This model is used for contrastive learning (Pretraining phase).
+    '''
+    def __init__(self, backbone: dict, head='mlp', features_dim=128):
         super(ContrastiveModel, self).__init__()
         self.backbone = backbone['backbone']
         self.backbone_dim = backbone['dim']
@@ -30,8 +33,8 @@ class ContrastiveModel(nn.Module):
         return features
 
 
-class ClusteringModel(nn.Module):
-    def __init__(self, backbone, nclusters, nheads=1):
+class ClusteringModel(nn.Module):       # model used to conduct clustering
+    def __init__(self, backbone: dict, nclusters: int, nheads: int=1):
         super(ClusteringModel, self).__init__()
         self.backbone = backbone['backbone']
         self.backbone_dim = backbone['dim']
@@ -45,7 +48,7 @@ class ClusteringModel(nn.Module):
         if forward_pass == 'default':
             features = self.backbone(x).squeeze()
             out = [cluster_head(features) for cluster_head in self.cluster_head]
-            #ut = [F.softmax(cluster_head(features), dim=1) for cluster_head in self.cluster_head]
+            #out = [F.softmax(cluster_head(features), dim=1) for cluster_head in self.cluster_head]
 
         elif forward_pass == 'backbone':
             out = self.backbone(x).squeeze()
@@ -260,11 +263,11 @@ class SemanticNetwork(nn.Module):
     def forward(self, x):
         return F.normalize(self.sequential(x), dim=1)
 
-def resnet18(**kwargs):
+def give_resnet18(**kwargs):
     return {'backbone': ResNet(BasicBlock, [2, 2, 2, 2], **kwargs), 'dim': 512}
 
 
-def resnet34(**kwargs):
+def give_resnet34(**kwargs):
     return {'backbone': ResNet(BasicBlock, [3, 4, 6, 3], **kwargs), 'dim': 512}
 
 

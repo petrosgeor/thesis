@@ -87,13 +87,6 @@ class AwA2dataset_features:
         return data, Ids, filenames
 '''
 
-def plot_image_from_tensor(tensor):
-    numpy_image = tensor.permute(1,2,0).numpy()
-    plt.imshow(numpy_image)
-    plt.axis('off')
-    plt.show()
-
-
 class AwA2dataset(Dataset):
     def __init__(self, training: bool, size_resize: int=224):
         self.training=training
@@ -110,7 +103,7 @@ class AwA2dataset(Dataset):
 
         self.val_aug = Identity_Augmentation()
         self.weak_aug = Weak_Augmentation()
-        self.strong_aug = RandAugment_Augmentation()
+        self.strong_aug = SimCLRaugment()
 
         print('done creating the dataset')
         
@@ -128,7 +121,8 @@ class AwA2dataset(Dataset):
         if self.training == False:
             return image, Id, masked_Id
         elif self.training == True:
-            return self.val_aug(image), self.weak_aug(image), self.weak_aug(neighbor), self.strong_aug(neighbor), Id, masked_Id
+            #return self.val_aug(image), self.weak_aug(neighbor), self.strong_aug(image), Id, masked_Id
+            return self.val_aug(image), self.strong_aug(image), self.val_aug(neighbor), Id, masked_Id
 
     def __len__(self):
         return self.Ids.numel()
@@ -159,7 +153,7 @@ class AwA2dataset(Dataset):
 
         if os.path.exists(join(resized_images_path, 'resized_images.pt')) == False:
             transform = v2.Compose([
-                v2.Resize((224, 224), interpolation=Image.BICUBIC, antialias=True),
+                v2.Resize((self.size_resize, self.size_resize), interpolation=Image.BICUBIC, antialias=True),
                 v2.ToTensor()
             ])
             images_path = os.path.join(self.path, 'JPEGImages')
@@ -186,6 +180,7 @@ class AwA2dataset(Dataset):
             data = torch.load(join(resized_images_path, 'resized_images.pt'))
             Ids = torch.load(join(resized_images_path, 'labels.pt'))
             return data, Ids, class2Id, Id2class
+
     
     def find_known_zs_Ids(self):
         classes_path = os.path.join(self.path, 'trainclasses.txt')
@@ -220,26 +215,17 @@ class AwA2dataset(Dataset):
         return parts[0]
 
     def get_filenames_neighbors(self):
-        if os.path.exists(join(self.path, 'neighbors20.pt')) == False:
-            path = 'AwA2-features/Animals_with_Attributes2/Features/ResNet101'
-            data = np.loadtxt(os.path.join(path, 'AwA2-features.txt'))
-            Ids = np.loadtxt(os.path.join(path, 'AwA2-labels.txt'), dtype=np.int32)
+        path = 'AwA2-features/Animals_with_Attributes2/Features/ResNet101'
+        data = np.loadtxt(os.path.join(path, 'AwA2-features.txt'))
+        Ids = np.loadtxt(os.path.join(path, 'AwA2-labels.txt'), dtype=np.int32)
 
-            with open(os.path.join(path, 'AwA2-filenames.txt'), 'r') as file:
-                lines = file.readlines()
-            
-            data = torch.from_numpy(data)
-            Ids = torch.from_numpy(Ids)
-            filenames = [line.strip() for line in lines]
-            neighbor_indices = find_indices_of_closest_embeddings(embedings=F.normalize(data, dim=1), n_neighbors=20)
-            torch.save(neighbor_indices, f=join(self.path, 'neighbors20.pt'))
-            return filenames, neighbor_indices
-        else:
-            '''with open(os.path.join(path, 'AwA2-filenames.txt'), 'r') as file:
-                lines = file.readlines()
-            filenames = [line.strip() for line in lines]'''
-            neighbor_indices = torch.load(join(self.path, 'neighbors20.pt'))
-            return None, neighbor_indices
+        with open(os.path.join(path, 'AwA2-filenames.txt'), 'r') as file:
+            lines = file.readlines()
+        data = torch.from_numpy(data)
+        Ids = torch.from_numpy(Ids)
+        filenames = [line.strip() for line in lines]
+        neighbor_indices = find_indices_of_closest_embeddings(embedings=F.normalize(data, dim=1), n_neighbors=20)
+        return filenames, neighbor_indices
 
     def load_attributes(self) -> dict:
         path = set_AwA2_dataset_path()
@@ -249,23 +235,6 @@ class AwA2dataset(Dataset):
         for i in self.Id2class.keys():
             Id2attribute[i] = torch.from_numpy(attributes_matrix[i, :])
         return Id2attribute
-
-class SCANDATASET(Dataset):
-    def __init__(self, data: torch.Tensor, Ids: torch.Tensor, masked_Ids: torch.Tensor, all_neighbors_indices: list):
-        self.data = data
-        self.Ids = Ids
-        self.masked_Ids = masked_Ids
-        self.all_neighbors_indices = all_neighbors_indices
-
-    def __getitem__(self, item):
-        related_indices = self.all_neighbors_indices[item]
-        n_neighbors = related_indices.numel()
-        random_index_index = torch.randint(0, n_neighbors, (1,)).item()
-        random_index = related_indices[random_index_index]
-        return self.data[item, :], self.data[random_index, :], self.Ids[item], self.masked_Ids[item]
-    
-    def __len__(self):
-        return self.Ids.numel()
 
 
 def plot_histogram_NN(Ids: torch.Tensor, indices: torch.Tensor):
@@ -309,7 +278,16 @@ def plot_histogram_NN_zs_Ids(Ids: torch.Tensor, masked_Ids: torch.Tensor, indice
 
 
 
-#dataset = AwA2dataset()
+#dataset = AwA2dataset(training=True, size_resize=224)
+
+
+
+# image, neighbors, neighbor_strong, Id, masked_id = dataset.__getitem__(10000)  
+
+# plot_image_from_tensor(image, 'plots/aaa.png')
+# plot_image_from_tensor(neighbors, 'plots/bbb.png')
+# plot_image_from_tensor(neighbor_strong, 'plots/ccc.png')
+
 
 #dataset = AwA2dataset()
 # plot_histogram_NN(Ids=dataset.Ids, indices=indices)
