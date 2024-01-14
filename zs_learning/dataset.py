@@ -95,9 +95,9 @@ class AwA2dataset(Dataset):
         self.filenames, self.neighbor_indices = self.get_filenames_neighbors()
         self.data, self.Ids, self.class2Id, self.Id2class = self.load_data()
         self.known_Ids, self.zs_Ids = self.find_known_zs_Ids()
-        self.masked_Ids = self.make_masked_Ids()
+        self.masked_Ids = self.make_masked_Ids()                # If a sample i belongs to the known classes the masked_Ids[i] == Ids[i]. Otherwise masked_Ids[i] = -1
 
-        self.all_neighbors_indices = self.correct_neighbors()   # this is a list containing the neighbors of each image
+        self.all_neighbors_indices = self.correct_neighbors()   # this is a list containing the neighbors of each image, e.g all_neighbors_indices[0] contains the neighbors of the first image
 
         self.Id2attribute = self.load_attributes()
 
@@ -128,6 +128,9 @@ class AwA2dataset(Dataset):
         return self.Ids.numel()
 
     def correct_neighbors(self):
+        '''
+        If a sample belongs to the known classes, then we also add the samples belonging to the same class to it's neighbors
+        '''
         all_neighbors_indices = []
         for i, id in enumerate(self.Ids):
             if torch.isin(id, self.known_Ids).item():
@@ -215,6 +218,10 @@ class AwA2dataset(Dataset):
         return parts[0]
 
     def get_filenames_neighbors(self):
+        '''
+        This function loads the embeddings of the dataset calculated with ResNet101, pretrained on ImageNet.
+        Then it finds the 20 nearest neighbors in this space (cosine similarity). 
+        '''
         path = 'AwA2-features/Animals_with_Attributes2/Features/ResNet101'
         data = np.loadtxt(os.path.join(path, 'AwA2-features.txt'))
         Ids = np.loadtxt(os.path.join(path, 'AwA2-labels.txt'), dtype=np.int32)

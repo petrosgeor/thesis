@@ -91,6 +91,9 @@ def FreezeResnet(model):
 
 
 def visualize_embeddings(embeddings: np.ndarray, labels: np.ndarray, means: np.ndarray, Ids: np.ndarray, path2save: str):   # use this function to visualize 2d embeddings and the projected semantic vectors
+    '''
+    used to visualize the final embedding space
+    '''
     unique_labels = np.unique(labels)
 
     if len(unique_labels) == 40:

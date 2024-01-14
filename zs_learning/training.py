@@ -10,7 +10,7 @@ import torch.optim as optim
 import torch.nn as nn
 from torch.utils.data import DataLoader, Subset
 import numpy as np
-from torchvision.models import resnet18, ResNet18_Weights
+from torchvision.models import resnet18, resnet34, ResNet18_Weights
 
 device = 'cuda'
 # Set the CUDA_VISIBLE_DEVICES environment variable to the desired GPU ID
@@ -21,22 +21,22 @@ os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
 
 dataset = AwA2dataset(training=True, size_resize=224)
 def scan_training(num_epochs: int=200, num_classes:int = 50):
-    resnet = resnet18(weights=ResNet18_Weights.DEFAULT)
+    resnet = resnet34(weights=None)
     resnet = nn.Sequential(*list(resnet.children())[:-1])
-    dataloader = DataLoader(dataset, batch_size=190, shuffle=True, num_workers=2)
+    dataloader = DataLoader(dataset, batch_size=140, shuffle=True, num_workers=2)
 
     clusternet = ClusteringModel(backbone={'backbone':resnet, 'dim':512}, nclusters=num_classes, nheads=1)
     clusternet.to(device)
 
-    scanloss = clusterlosses.SCANLoss(entropy_weight=1.0)
+    scanloss = clusterlosses.SCANLoss(entropy_weight=1.0)       # loss defined in SCAN
 
     zs_Ids = dataset.zs_Ids.to(device)
     known_Ids = dataset.known_Ids.to(device)
 
-    num_zs_Ids = zs_Ids.numel()
+    num_zs_Ids = zs_Ids.numel()     # number of zero shot classes
     K = 30
     dummy = zs_Ids.repeat(K, 1).T
-    optimizer = optim.Adam(clusternet.parameters(), lr=10**(-4), weight_decay=10**(-4))
+    optimizer = optim.Adam(clusternet.parameters(), lr=10**(-3), weight_decay=10**(-4))     # lr and weight_decay are setted according to SCAN
     earlystopping = EarlyStopping(patience=6, delta=0.01)
     num_gradient_steps = 7
 
@@ -306,4 +306,4 @@ def spice_training_features(num_epochs: int=200, num_classes: int=50):
 #spice_training()
 
 
-scan_training(num_epochs=200, num_classes=50)
+scan_training(num_epochs=1000, num_classes=50)
