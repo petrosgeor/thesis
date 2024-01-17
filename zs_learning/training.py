@@ -22,7 +22,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = gpu_id
 dataset = AwA2dataset(training=True, size_resize=224)
 def scan_training(num_epochs: int=200, num_classes:int = 50):
     resnet = resnet34(weights=None)
-    resnet = nn.Sequential(*list(resnet.children())[:-1])
+    resnet = nn.Sequential(*list(resnet.children())[:-1])   # Getting all layers except the classification layers (last layer)
     dataloader = DataLoader(dataset, batch_size=140, shuffle=True, num_workers=2)
 
     clusternet = ClusteringModel(backbone={'backbone':resnet, 'dim':512}, nclusters=num_classes, nheads=1)
@@ -56,7 +56,10 @@ def scan_training(num_epochs: int=200, num_classes:int = 50):
             # Calculating the SCAN-Loss
             total_loss, _, _ = scanloss.forward(anchors=anchors_logits, neighbors=neighbors_logits)
 
-            '''anchors_id = clusternet.forward(images_u_id, forward_pass='return_all')
+            '''
+            #### ADDS AN E-M LOSS TO THE SCAN LOSS. MAYBE WE WILL USE IT IN THE FUTURE  ####
+            
+            anchors_id = clusternet.forward(images_u_id, forward_pass='return_all')
             anchors_clr = clusternet.forward(images_u_clr, forward_pass='return_all')
             neighbors_id = clusternet.forward(neighbor_images_id, forward_pass='default')
             scan_loss, _, _ = ScanLoss.forward(anchors=torch.cat([anchors_id['output'][0], anchors_id['output'][0]]), neighbors=torch.cat([neighbors_id, anchors_clr['output'][0]]))
@@ -142,7 +145,7 @@ def spice_training(num_epochs: int=200, num_classes: int=50):
     clusternet = load_scan_trained_model(n_classes=50)
     clusternet = FreezeResnet(clusternet)
 
-    littlenn = LittleNet()
+    smallnn = SmallNet()
 
     id_aug = Identity_Augmentation()
     weak_aug = Weak_Augmentation()
@@ -152,9 +155,9 @@ def spice_training(num_epochs: int=200, num_classes: int=50):
     zs_Ids = (dataset.zs_Ids).to(device)
     num_zs_Ids = zs_Ids.numel()
     clusternet.to(device)
-    littlenn.to(device)
+    smallnn.to(device)
 
-    optimizer = optim.Adam(littlenn.parameters(), lr=10**(-4), weight_decay=10**(-4))
+    optimizer = optim.Adam(smallnn.parameters(), lr=10**(-4), weight_decay=10**(-4))
     earlystopping = EarlyStopping(patience=3, delta=0.01)
 
     K = 30
@@ -172,7 +175,7 @@ def spice_training(num_epochs: int=200, num_classes: int=50):
 
             F_zs = clusternet.forward(id_aug(zs_images), forward_pass='backbone')
             #P_zs = F.softmax(clusternet.forward(weak_aug(zs_images), forward_pass='default')[0], dim=1)[:, zs_Ids]
-            P_zs = F.softmax(littlenn(clusternet.forward(weak_aug(zs_images), 'backbone')), dim=1)[:, zs_Ids]
+            P_zs = F.softmax(smallnn(clusternet.forward(weak_aug(zs_images), 'backbone')), dim=1)[:, zs_Ids]
             confident_indices = torch.topk(P_zs, k=K, dim=0, sorted=False)[1]
 
             Q = F_zs[confident_indices.T.flatten(), :].reshape(num_zs_Ids, K, 512)
@@ -188,7 +191,7 @@ def spice_training(num_epochs: int=200, num_classes: int=50):
             mask = torch.where((one_hot_matrix != 0).any(dim=1))[0]
             class_weights = one_hot_matrix.sum(dim=0)
             #logits = clusternet.forward(strong_aug(images), forward_pass='default')[0]
-            logits = littlenn(clusternet.forward(strong_aug(images), 'backbone'))
+            logits = smallnn(clusternet.forward(strong_aug(images), 'backbone'))
 
             loss = F.cross_entropy(logits[mask,:], one_hot_matrix[mask,:], weight=class_weights, reduction='mean')
 
@@ -205,7 +208,7 @@ def spice_training(num_epochs: int=200, num_classes: int=50):
                     images_batch = id_aug(images_batch.to(device))
 
                     resnet_embeddings = clusternet.forward(images_batch, 'backbone')
-                    logits = littlenn(resnet_embeddings)
+                    logits = smallnn(resnet_embeddings)
                     batch_probs = F.softmax(logits, dim=1)
                     
                     batch_predictions = torch.argmax(batch_probs, dim=1)
@@ -226,19 +229,19 @@ def spice_training(num_epochs: int=200, num_classes: int=50):
 def spice_training_features(num_epochs: int=200, num_classes: int=50):
     dataset_features = AwA2dataset_features()
     dataloader = DataLoader(dataset_features, batch_size=2048, shuffle=True, num_workers=2)
-    littlenn = LittleNet(backbone_dim=2048)
+    smallnn = SmallNet(backbone_dim=2048)
 
     known_Ids = dataset_features.known_Ids.to(device)
     zs_Ids = dataset_features.zs_Ids.to(device)
 
     num_zs_Ids = zs_Ids.numel()
-    littlenn.to(device)
+    smallnn.to(device)
 
-    optimizer = optim.Adam(littlenn.parameters(), lr=10**(-4), weight_decay=10**(-4))
+    optimizer = optim.Adam(smallnn.parameters(), lr=10**(-4), weight_decay=10**(-4))
     earlystopping = EarlyStopping(patience=3, delta=0.01)
     K = 30
     dummy = zs_Ids.repeat(K, 1).T
-    littlenn.double()
+    smallnn.double()
     for epoch in range(0, num_epochs):
         for i, (features, Ids, masked_Ids) in enumerate(dataloader):
             features = features.to(device)
@@ -249,7 +252,7 @@ def spice_training_features(num_epochs: int=200, num_classes: int=50):
             known_indices = torch.where(masked_Ids != -1)[0]
 
             zs_features = features[zs_indices,:]
-            logits = littlenn.forward(features.double(), forward_pass='default')
+            logits = smallnn.forward(features.double(), forward_pass='default')
             P_zs = F.softmax(logits[zs_indices, :], dim=1)[:, zs_Ids]
             confident_indices = torch.topk(P_zs, k=K, dim=0, sorted=False)[1]
 
@@ -274,13 +277,13 @@ def spice_training_features(num_epochs: int=200, num_classes: int=50):
             optimizer.zero_grad()
 
         if (epoch%5) == 0:
-            littlenn.eval()
+            smallnn.eval()
             true_labels = []
             predictions = []
             with torch.no_grad():
                 for i, (features, labels_batch, _) in enumerate(dataloader):
                     features = features.to(device)
-                    logits = littlenn(features)
+                    logits = smallnn(features)
                     batch_probs = F.softmax(logits, dim=1)
 
                     batch_predictions = torch.argmax(batch_probs, dim=1)
@@ -298,7 +301,7 @@ def spice_training_features(num_epochs: int=200, num_classes: int=50):
             print('\n')
             earlystopping(val_accuracy=acc)
             if earlystopping.early_stop == True:
-                torch.save(littlenn.state_dict(), 'NeuralNets/littleNN.pth')
+                torch.save(smallnn.state_dict(), 'NeuralNets/littleNN.pth')
                 break
 
 

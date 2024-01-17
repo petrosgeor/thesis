@@ -13,6 +13,9 @@ from torch.nn import functional as F
 from os.path import join
 
 class AwA2dataset_features(Dataset):
+    '''
+    Loads the ResNet101 features from the dataset AwA2
+    '''
     def __init__(self, path = 'AwA2-features/Animals_with_Attributes2/Features/ResNet101/'):
         self.path = path
         self.data, self.Ids, self.image_names = self.get_files()

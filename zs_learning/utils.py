@@ -84,6 +84,9 @@ def find_permutation_matrix(cost_matrix: torch.Tensor):
 
 
 def FreezeResnet(model):
+    '''
+    used to freeze the backbone
+    '''
     for name, param in model.backbone.named_parameters():
         param.requires_grad = False
     return model

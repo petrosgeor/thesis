@@ -5,6 +5,7 @@ import torch
 from scipy.optimize import linear_sum_assignment
 
 'code from "https://github.com/Yunfan-Li/Twin-Contrastive-Learning/blob/main/evaluate.py"'
+'used to evaluate the clustering results of an algorithm'
 
 def reorder_preds(predictions, targets):
     predictions = torch.from_numpy(predictions).cuda()

@@ -4,7 +4,6 @@ import torch.nn.functional as F
 from torchvision.transforms import v2
 from PIL import Image
 
-'from https://github.com/wvangansbeke/Unsupervised-Classification/blob/master/models/resnet_cifar.py'
 
 class ContrastiveModel(nn.Module):
     '''
@@ -66,9 +65,12 @@ class ClusteringModel(nn.Module):       # model used to conduct clustering
         return out
 
 
-class LittleNet(nn.Module):
+class SmallNet(nn.Module):
+    '''
+    A small NN, which will be added on top of the backbone (some type of ResNet)
+    '''
     def __init__(self,backbone_dim: int=512, nclusters: int=50):
-        super(LittleNet, self).__init__()
+        super(SmallNet, self).__init__()
         self.n_clusters = nclusters
         self.backbone_dim = backbone_dim
         self.backbone = nn.Sequential(
@@ -208,17 +210,6 @@ class ResNet(nn.Module):
         out = torch.flatten(out, 1)
         return out
 
-
-class SemanticNetwork(nn.Module):
-    def __init__(self):
-        super(SemanticNetwork, self).__init__()
-
-        self.sequential = nn.Sequential(
-                                        nn.Linear(85, 512),
-        )
-    
-    def forward(self, x):
-        return F.normalize(self.sequential(x), dim=1)
 
 def give_resnet18(**kwargs):
     return {'backbone': ResNet(BasicBlock, [2, 2, 2, 2], **kwargs), 'dim': 512}
